@@ -151,10 +151,10 @@ const TestQuestion = () => {
     }));
   };
 
-//   const handleSubmit = () => {
-//     console.log('Submitting answers:', answers);
-//     // Add API call to submit answers
-//   };
+  const handleSubmit = () => {
+    console.log('Submitting answers:', answers);
+    // Add API call to submit answers
+  };
 
   if (loading) {
     return (
