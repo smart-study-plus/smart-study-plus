@@ -34,27 +34,28 @@ export async function signin(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
-  if (formData.get('displayName') === '') {
-    redirect('/auth?m=signup&e=Display name is required.');
-  }
-
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-    options: {
-       
-      data: { display_name: formData.get('displayName') as string },
-    },
+    displayName: formData.get('displayName') as string,
   };
 
-  const { error } = await supabase.auth.signUp(data);
+  const { error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      data: {
+        display_name: data.displayName,
+      },
+    },
+  });
 
   if (error) {
-    redirect(`/auth?m=signin&e=${error.message}`);
+    return redirect('/auth?m=signup&e=' + error.message);
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  // Redirect with a special parameter to indicate email verification is needed
+  return redirect('/auth?m=signin&verification=pending');
 }
 
 export async function signOut() {

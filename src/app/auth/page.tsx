@@ -9,13 +9,25 @@ import { signin, signOut, signup } from './actions';
 import React, { useEffect } from 'react';
 import { router } from 'next/client';
 import AuthForm from '@/components/auth/auth-form';
+import { toast } from 'sonner';
 
 const Authentication = () => {
   const searchParams = useSearchParams();
   const method = searchParams.get('m');
   const err = searchParams.get('e');
+  const verification = searchParams.get('verification');
 
   useEffect(() => {
+    if (verification === 'pending') {
+      toast.info('Please verify your email', {
+        duration: 8000,
+        description:
+          'Check your inbox and spam folder for the verification email before signing in.',
+      });
+      // clean up the URL to prevent showing the toast again on refresh
+      window.history.replaceState({}, '', '/auth?m=signin');
+    }
+
     const handleSignOutAndRedirect = async () => {
       if (method === 'signout') {
         await signOut();
@@ -24,7 +36,7 @@ const Authentication = () => {
     };
 
     handleSignOutAndRedirect().then();
-  }, [method]);
+  }, [method, verification]);
 
   const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
