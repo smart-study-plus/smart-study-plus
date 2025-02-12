@@ -1,4 +1,4 @@
-name: Create vercel preview URL on pull request
+name: Create vercel deployment after PR is merged
 on:
   push:
     branches:
