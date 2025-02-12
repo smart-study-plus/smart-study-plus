@@ -43,7 +43,7 @@ const PracticeMode = () => {
 
   return (
     <div className="space-y-8">
-      <div className="bg-gradient-to-r from-[#F4976C] to-[#F28B4B] rounded-xl p-8 text-white">
+      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] rounded-xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-4">Practice Mode</h1>
         <p className="text-lg">
           Choose a topic to practice and improve your understanding

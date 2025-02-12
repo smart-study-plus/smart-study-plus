@@ -10,6 +10,7 @@ import RankingTable from '@/components/dashboard/ranking-table';
 
 import getGreeting from '@/utils/greeter';
 import getUser from '@/utils/supabase/get-user';
+import Link from 'next/link';
 
 const Dashboard = async () => {
   const greeting = getGreeting();
@@ -22,8 +23,20 @@ const Dashboard = async () => {
       </span>
       <DailyCheckIn />
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Status</h2>
+      <div className="bg-white p-6 rounded-xl">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Status</h2>
+          </div>
+          <div>
+            <Link
+              href="/study-guide"
+              className="text-[var(--color-text-secondary)] underline hover:text-[var(--color-text)]"
+            >
+              View Study Guide →
+            </Link>
+          </div>
+        </div>
         <div className="flex space-x-6">
           <StatusCard
             icon="📚"

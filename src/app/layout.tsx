@@ -23,7 +23,7 @@ const RootLayout = ({
   <html lang="en">
     <body>
       <Provider>
-        <div className="min-h-screen flex-grow">
+        <div className="min-h-screen flex-grow overflow-x-hidden">
           <Header />
           {children}
         </div>
