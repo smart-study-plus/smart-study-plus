@@ -65,11 +65,9 @@ const Header = async () => {
                     could use gravatar if that's still a thing?
                     */}
                     <img
-                      src={
-                        'https://media.discordapp.net/attachments/1177111856813449250/1298732615704248411/IMG_0183.gif?ex=67a90480&is=67a7b300&hm=eff9e5fe8936c97487bab97ab1e13164ccb17c7237d0cec976c67f15b061d0d8&=&width=474&height=638'
-                      }
-                      alt={user.user_metadata?.display_name}
-                      className="w-8 h-8 rounded-full"
+                      src="/default-user.png"
+                      alt={user.user_metadata?.display_name || 'User avatar'}
+                      className="w-8 h-8 rounded-full object-cover"
                     />
                     <div className="relative group inline-block">
                       <Link href="/auth?m=signout">
