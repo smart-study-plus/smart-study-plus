@@ -9,8 +9,9 @@ import { signin, signOut, signup } from './actions';
 import React, { useEffect } from 'react';
 import { router } from 'next/client';
 import AuthForm from '@/components/auth/auth-form';
+import { Suspense } from 'react';
 
-const Authentication = () => {
+const AuthContent = () => {
   const searchParams = useSearchParams();
   const method = searchParams.get('m');
   const err = searchParams.get('e');
@@ -47,4 +48,10 @@ const Authentication = () => {
   );
 };
 
-export default Authentication;
+export default function Authentication() {
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <AuthContent />
+      </Suspense>
+    );
+}
