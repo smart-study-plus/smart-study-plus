@@ -17,8 +17,8 @@ const Header = async () => {
   const user = data?.user ?? null;
 
   return (
-    <header className="w-full bg-[var(--color-background)] shadow">
-      <div className="max-w-[1440px] mx-auto px-6 py-4">
+    <header className="w-screen bg-[var(--color-background)] shadow">
+      <div className=" mx-auto px-6 py-4">
         <nav className="flex justify-between items-center">
           <Link
             href={user ? '/dashboard' : '/'}
