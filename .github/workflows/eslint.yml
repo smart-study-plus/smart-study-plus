@@ -26,4 +26,3 @@ jobs:
 
       - name: Run eslint 
         run: yarn eslint .
-
