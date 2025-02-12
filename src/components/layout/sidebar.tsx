@@ -15,13 +15,13 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 min-h-fit bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-64 min-h-fit bg-[var(--color-background)] border-r border-[var(--color-gray-200)] flex flex-col">
       <nav className="flex-1 px-4 py-4">
         {navItems.map((item) => (
           <Link
             key={item.path}
             href={item.path}
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg mb-1`}
+            className="flex items-center space-x-3 px-4 py-3 rounded-lg mb-1 text-[var(--color-text)] hover:bg-[var(--color-background-alt)]"
           >
             <span>{item.icon}</span>
             <span>{item.label}</span>

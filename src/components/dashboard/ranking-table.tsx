@@ -5,7 +5,7 @@
 import React from 'react';
 
 const RankingTable = () => (
-  <div className="bg-white rounded-xl p-6">
+  <div className="bg-[var(--color-background)] rounded-xl p-6">
     <h3 className="text-xl font-semibold mb-4">Ranking</h3>
     <div className="space-y-3">
       {[
@@ -14,21 +14,21 @@ const RankingTable = () => (
           name: 'John Doe',
           completion: 60,
           accuracy: 60,
-          color: 'bg-yellow-100',
+          color: 'bg-[var(--color-warning)]',
         },
         {
           rank: 2,
           name: 'Avery Johnson',
           completion: 55,
           accuracy: 55,
-          color: 'bg-gray-100',
+          color: 'bg-[var(--color-gray-100)]',
         },
         {
           rank: 3,
           name: 'James Bond',
           completion: 50,
           accuracy: 50,
-          color: 'bg-orange-100',
+          color: 'bg-[var(--color-primary)]',
         },
       ].map((user) => (
         <div

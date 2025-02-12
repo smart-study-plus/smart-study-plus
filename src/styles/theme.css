@@ -1,0 +1,44 @@
+:root {
+  /* Primary Colors */
+  --color-primary: #F4976C;
+  --color-primary-hover: #f3855c;
+  
+  /* Secondary Colors */
+  --color-secondary: #303C6C;
+  --color-secondary-hover: #252f54;
+  
+  /* Neutral Colors */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  /* Background Colors */
+  --color-background: #ffffff;
+  --color-background-alt: #f3f4f6;
+  
+  /* Text Colors */
+  --color-text: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+}
+
+/* Optional: Dark theme */
+[data-theme='dark'] {
+  --color-primary: #F4976C;
+  --color-primary-hover: #f3855c;
+  
+  /* Add dark theme colors here */
+} 

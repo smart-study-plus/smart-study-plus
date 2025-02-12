@@ -17,12 +17,12 @@ const Header = async () => {
   const user = data?.user ?? null;
 
   return (
-    <header className="w-full bg-white shadow">
+    <header className="w-full bg-[var(--color-background)] shadow">
       <div className="max-w-[1440px] mx-auto px-6 py-4">
         <nav className="flex justify-between items-center">
           <Link
             href={user ? '/dashboard' : '/'}
-            className="text-3xl font-extrabold text-[#F4976C]"
+            className="text-3xl font-extrabold text-[var(--color-primary)]"
           >
             SmartStudy+
           </Link>
@@ -35,19 +35,19 @@ const Header = async () => {
                 <>
                   <Link
                     href={'/'}
-                    className="font-medium text-gray-600 hover:text-gray-900"
+                    className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                   >
                     Home
                   </Link>
                   <Link
                     href={'/about'}
-                    className="font-medium text-gray-600 hover:text-gray-900"
+                    className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                   >
                     About
                   </Link>
                   <Link
                     href={'/topics'}
-                    className="font-medium text-gray-600 hover:text-gray-900"
+                    className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                   >
                     Topics
                   </Link>
@@ -80,21 +80,20 @@ const Header = async () => {
                       <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 text-sm text-white bg-black rounded opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visibility-visible transition-opacity duration-300">
                         Sign out
                       </span>
-
-                      {/* todo: wtf does this mean? */}
-                      <p className="text-sm text-gray-500">Premium User</p>
+                      {/* todo: develop account settings */}
+                      <p className="text-sm text-gray-500">Account Settings</p>
                     </div>
                   </div>
                 </>
               ) : (
                 <>
                   <Link href={'/auth?m=signin'}>
-                    <button className="px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium">
+                    <button className="px-4 py-2 rounded-full bg-[var(--color-gray-200)] text-[var(--color-gray-700)] hover:bg-[var(--color-gray-300)] font-medium">
                       Sign In
                     </button>
                   </Link>
                   <Link href={'/auth?m=signup'}>
-                    <button className="px-4 py-2 rounded-full bg-[#F4976C] text-white hover:bg-[#f3855c] font-medium">
+                    <button className="px-4 py-2 rounded-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] font-medium">
                       Sign Up
                     </button>
                   </Link>
