@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/sidebar';
 
 // todo: needs improvement
 export const metadata: Metadata = {
-  title: 'Practice Mode · SmartStudy+',
+  title: 'Practice Mode - SmartStudy+',
   description: 'Study better',
 };
 

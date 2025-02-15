@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
+ */
+
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/utils/supabase/middleware';
 

@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 
 const RankingTable = () => (
   <div className="bg-[var(--color-background)] rounded-xl p-6">
@@ -37,10 +38,12 @@ const RankingTable = () => (
         >
           <div className="flex items-center space-x-3">
             <span className="font-bold">{user.rank}</span>
-            <img
-              src={`https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}`}
+            <Image
+              src={`https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}&format=png`}
               alt={user.name}
-              className="w-8 h-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
             <span>{user.name}</span>
           </div>

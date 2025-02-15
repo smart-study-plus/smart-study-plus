@@ -7,7 +7,7 @@ import React from 'react';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'Welcome · SmartStudy+',
+  title: 'Welcome - SmartStudy+',
   description: 'Study better',
 };
 
