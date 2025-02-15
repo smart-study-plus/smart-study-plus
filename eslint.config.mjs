@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
+ */
+
 import { FlatCompat } from '@eslint/eslintrc';
 
 const compat = new FlatCompat({

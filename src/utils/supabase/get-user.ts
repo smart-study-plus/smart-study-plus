@@ -5,6 +5,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 
+// returns the currently authenticated user object from supabase, or redirects them to login
 export default async function getUser() {
   const supabase = await createClient();
 

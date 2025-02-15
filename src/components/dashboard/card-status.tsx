@@ -17,7 +17,7 @@ const StatusCard = ({ icon, title, count, total, color }: StatusCardProps) => {
     orange: {
       bg: 'var(--color-primary)',
       text: 'var(--color-primary)',
-      bgOpacity: 'rgba(244, 151, 108, 0.1)', 
+      bgOpacity: 'rgba(244, 151, 108, 0.1)',
     },
     pink: {
       bg: 'var(--color-secondary)',
