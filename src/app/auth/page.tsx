@@ -61,9 +61,9 @@ const AuthContent = () => {
 };
 
 export default function Authentication() {
-    return (
-      <Suspense fallback={<div>Loading...</div>}>
-        <AuthContent />
-      </Suspense>
-    );
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthContent />
+    </Suspense>
+  );
 }

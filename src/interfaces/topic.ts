@@ -7,5 +7,5 @@ export interface Topic {
   title: string;
   description: string;
   icon: string;
-  progress: number;
+  progress?: number;
 }

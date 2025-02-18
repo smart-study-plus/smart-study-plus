@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/sidebar';
 
 // todo: needs improvement
 export const metadata: Metadata = {
-  title: 'Dashboard · SmartStudy+',
+  title: 'Dashboard - SmartStudy+',
   description: 'Study better',
 };
 
