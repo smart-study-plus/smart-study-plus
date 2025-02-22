@@ -6,6 +6,6 @@ export interface Topic {
   id: number;
   title: string;
   description: string;
-  icon: string;
-  progress?: number;
+  progress: number;
+  module_id: string;
 }

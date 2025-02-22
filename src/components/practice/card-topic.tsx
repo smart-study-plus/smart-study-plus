@@ -2,39 +2,40 @@
  * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
  */
 
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Topic } from '@/interfaces/topic';
 
-const TopicCard = ({ topic }: { topic: Topic }) => (
-  <div className="flex flex-col bg-[var(--color-background)] min-h-full rounded-xl p-6 border border-[var(--color-gray-200)] hover:border-[var(--color-primary)] transition-colors">
-    <div className="flex justify-between items-start mb-4">
-      <div>
-        <span className="text-3xl ml-auto">{topic.icon}</span>
-        <h3 className="text-xl font-bold mb-2 text-[var(--color-text)]">
-          {topic.title}
-        </h3>
-        <p className="text-[var(--color-text-secondary)]">
-          {topic.description}
-        </p>
-      </div>
-    </div>
+interface TopicCardProps {
+  topic: Topic;
+}
 
-    {topic.progress && (
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-[var(--color-text-secondary)]">Progress</span>
-          <span className="text-[var(--color-primary)] font-medium">
-            {topic.progress}%
-          </span>
-        </div>
-        <div className="w-full h-2 bg-[var(--color-gray-100)] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[var(--color-primary)] rounded-full"
-            style={{ width: `${topic.progress}%` }}
-          />
-        </div>
+const TopicCard = ({ topic }: TopicCardProps) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/practice/${topic.module_id}`);
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all cursor-pointer"
+    >
+      <h2 className="text-xl font-semibold mb-2">{topic.title}</h2>
+      <p className="text-gray-600 mb-4">{topic.description}</p>
+
+      <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div
+          className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+          style={{ width: `${topic.progress}%` }}
+        />
       </div>
-    )}
-  </div>
-);
+      <span className="text-sm text-gray-500 mt-1">{topic.progress}%</span>
+    </div>
+  );
+};
+
 export default TopicCard;
