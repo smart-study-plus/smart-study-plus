@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 
 interface Question {
@@ -30,6 +31,7 @@ interface PageProps {
 }
 
 const ModulePracticePage = ({ params }: PageProps) => {
+  const router = useRouter();
   const [moduleData, setModuleData] = useState<ModuleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +70,10 @@ const ModulePracticePage = ({ params }: PageProps) => {
       }
       return newSet;
     });
+  };
+
+  const handleStartTest = (testId: string) => {
+    router.push(`/practice/test/${testId}`);
   };
 
   if (loading) {
@@ -120,7 +126,10 @@ const ModulePracticePage = ({ params }: PageProps) => {
                           {test.questions.length} questions • {test.difficulty}
                         </p>
                       </div>
-                      <button className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors">
+                      <button
+                        onClick={() => handleStartTest(test.test_id)}
+                        className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+                      >
                         Start
                       </button>
                     </div>
