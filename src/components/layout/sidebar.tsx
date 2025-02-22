@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
  */
-
+'use client';
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
@@ -20,6 +21,8 @@ interface NavItem {
 }
 
 const Sidebar = () => {
+  const pathname = usePathname();
+
   const navItems: NavItem[] = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: BookOpen, label: 'Practice Mode', path: '/practice' },
@@ -33,11 +36,21 @@ const Sidebar = () => {
       <nav className="flex-1 px-4 py-4">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isActive = pathname === item.path;
+
           return (
             <Link
               key={item.path}
               href={item.path}
-              className="flex items-center space-x-3 px-4 py-3 rounded-lg mb-1 text-[var(--color-text)] hover:bg-[var(--color-background-alt)]"
+              className={`
+                flex items-center space-x-3 px-4 py-3 rounded-lg mb-1
+                transition-colors duration-200
+                ${
+                  isActive
+                    ? 'bg-[var(--color-primary)] text-white'
+                    : 'text-[var(--color-text)] hover:bg-[var(--color-background-alt)]'
+                }
+              `}
             >
               <Icon className="w-5 h-5" strokeWidth={1.5} />
               <span>{item.label}</span>
