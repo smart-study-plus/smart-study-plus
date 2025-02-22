@@ -31,12 +31,19 @@ const Sidebar = () => {
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
+  const isActiveRoute = (path: string): boolean => {
+    if (path === '/') {
+      return pathname === path;
+    }
+    return pathname.startsWith(path);
+  };
+
   return (
     <div className="w-64 min-h-fit bg-[var(--color-background)] border-r border-[var(--color-gray-200)] flex flex-col">
       <nav className="flex-1 px-4 py-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.path;
+          const isActive = isActiveRoute(item.path);
 
           return (
             <Link
