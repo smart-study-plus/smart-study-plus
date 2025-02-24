@@ -101,6 +101,8 @@ const PracticeTestPage = () => {
         ),
       };
 
+      console.log('Submitting:', submission); // ✅ Log before sending
+
       const response = await fetchWithAuth(
         `http://localhost:8000/api/tests/practice-tests/${testId}/submit`,
         {
@@ -112,19 +114,26 @@ const PracticeTestPage = () => {
         }
       );
 
+      console.log('Response status:', response.status); // ✅ Log response
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error('Failed to submit test');
       }
 
       const result = await response.json();
+      console.log('Test result:', result); // ✅ Log result
+
       setTestResult(result);
 
-      // Clear saved answers after successful submission
+      // ✅ Clear saved answers after successful submission
       localStorage.removeItem(`test_${testId}_answers`);
 
-      // Navigate to results page
+      // // ✅ Redirect to results page
       router.push(`/practice/test/${testId}/results?score=${result.score}`);
     } catch (err) {
+      console.error('Submission error:', err); // ✅ Log errors
       setError(err instanceof Error ? err.message : 'Failed to submit test');
     } finally {
       setSubmitting(false);

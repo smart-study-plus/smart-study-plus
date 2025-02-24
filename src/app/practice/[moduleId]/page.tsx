@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 
 interface Question {
@@ -24,14 +24,9 @@ interface ModuleData {
   chapters: Chapter[];
 }
 
-interface PageProps {
-  params: {
-    moduleId: string;
-  };
-}
-
-const ModulePracticePage = ({ params }: PageProps) => {
+const ModulePracticePage = () => {
   const router = useRouter();
+  const { moduleId } = useParams() as { moduleId: string };
   const [moduleData, setModuleData] = useState<ModuleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +36,7 @@ const ModulePracticePage = ({ params }: PageProps) => {
     const fetchPracticeTests = async () => {
       try {
         const response = await fetchWithAuth(
-          `http://localhost:8000/api/tests/practice-tests/module/${params.moduleId}`
+          `http://localhost:8000/api/tests/practice-tests/module/${moduleId}`
         );
 
         if (!response.ok) {
@@ -58,7 +53,7 @@ const ModulePracticePage = ({ params }: PageProps) => {
     };
 
     fetchPracticeTests();
-  }, [params.moduleId]);
+  }, [moduleId]);
 
   const toggleChapter = (chapterId: string) => {
     setOpenChapters((prev) => {

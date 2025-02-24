@@ -15,27 +15,44 @@ const PracticeMode = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressData, setProgressData] = useState<{ [key: string]: any }>({});
 
   useEffect(() => {
-    const fetchTopics = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetchWithAuth(
+        // Fetch practice modules
+        const responseModules = await fetchWithAuth(
           'http://localhost:8000/api/tests/practice-tests'
         );
-
-        if (!response.ok) {
+        if (!responseModules.ok) {
           throw new Error('Failed to fetch topics');
         }
+        const moduleData: PracticeModule[] = await responseModules.json();
 
-        const data: PracticeModule[] = await response.json();
+        // Fetch user progress
+        const responseProgress = await fetchWithAuth(
+          'http://localhost:8000/api/tests/progress'
+        );
+        if (!responseProgress.ok) {
+          throw new Error('Failed to fetch progress');
+        }
+        const progress = await responseProgress.json();
 
-        const transformedTopics: Topic[] = data.map((module, index) => ({
-          id: index + 1,
-          title: module.name,
-          description: `Practice questions from ${module.name}`,
-          progress: 0, // might want to fetch actual progress from an API
-          module_id: module.module_id,
-        }));
+        setProgressData(progress.progress); // Store progress data
+
+        // Merge progress into modules
+        const transformedTopics: Topic[] = moduleData.map((module, index) => {
+          const moduleProgress = progress.progress.modules[
+            module.module_id
+          ] || { percentage: 0 };
+          return {
+            id: index + 1,
+            title: module.name,
+            description: `Practice questions from ${module.name}`,
+            progress: parseFloat(moduleProgress.percentage.toFixed(2)), 
+            module_id: module.module_id,
+          };
+        });
 
         setTopics(transformedTopics);
       } catch (err) {
@@ -45,18 +62,8 @@ const PracticeMode = () => {
       }
     };
 
-    fetchTopics();
+    fetchData();
   }, []);
-
-  const getIconForModule = (moduleName: string): string => {
-    const iconMap: { [key: string]: string } = {
-      'Financial Markets and Products': '📈',
-      'Quantitative Analysis': '📊',
-      'Valuation and Risk Models': '💹',
-      'Foundations of Risk Management': '🛡️',
-    };
-    return iconMap[moduleName] || '📚';
-  };
 
   if (loading) {
     return <div className="text-center p-8">Loading...</div>;
