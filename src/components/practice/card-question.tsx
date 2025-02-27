@@ -76,20 +76,21 @@ const QuestionCard = ({
         )}
 
         <div className="ml-8 space-y-3">
-          {Object.entries(question.options).map(([key, value]) => (
-            <button
-              key={key}
-              onClick={() => onSelectAnswer(question.question_id, key)}
-              className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                selectedAnswer === key
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] bg-opacity-10'
-                  : 'border-[var(--color-gray-200)] hover:border-[var(--color-primary)] hover:bg-[var(--color-background-alt)]'
-              }`}
-            >
-              <span className="font-medium mr-2">{key}.</span>
-              {value}
-            </button>
-          ))}
+          {question?.options &&
+            Object.entries(question.options ?? {}).map(([key, value]) => (
+              <button
+                key={key}
+                onClick={() => onSelectAnswer(question.question_id, key)}
+                className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                  selectedAnswer === key
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] bg-opacity-10'
+                    : 'border-[var(--color-gray-200)] hover:border-[var(--color-primary)] hover:bg-[var(--color-background-alt)]'
+                }`}
+              >
+                <span className="font-medium mr-2">{key}.</span>
+                {value}
+              </button>
+            ))}
         </div>
       </div>
     </div>

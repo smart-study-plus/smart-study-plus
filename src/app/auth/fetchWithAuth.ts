@@ -15,7 +15,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     throw new Error('Unauthorized: No active session');
   }
 
-  const token = session.access_token; // Get Supabase JWT token
+  const token = session.access_token;
+  const userId = session.user.id;
 
   // Merge headers to include Authorization
   const headers = {
@@ -24,5 +25,6 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     'Content-Type': 'application/json',
   };
 
+  // Directly return the response
   return fetch(url, { ...options, headers });
 }
