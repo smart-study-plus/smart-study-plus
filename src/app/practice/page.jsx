@@ -68,25 +68,24 @@ const PracticePage = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-4">
                 {studyGuides.map((title, index) => (
-                    <div
+                  <div
                     key={index}
                     onClick={() => handleCardClick(title)}
-                    className="bg-[var(--color-background)] rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group flex flex-col justify-between h-full"
-                    >
-                    <div>
-                        <h2 className="text-xl font-semibold text-[var(--color-text)] mb-2 break-words">
-                        {title}
-                        </h2>
-                    </div>
-                    <p className="text-[var(--color-text-secondary)] text-sm mt-auto">
+                    className="bg-[var(--color-background)] rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group w-full"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-semibold text-[var(--color-text)] break-words flex-1">
+                        {title.replace(/_/g, ' ')}
+                      </h2>
+                      <p className="text-[var(--color-text-secondary)] text-sm ml-4">
                         Click to view study guide
-                    </p>
+                      </p>
                     </div>
+                  </div>
                 ))}
               </div>
-
 
               {studyGuides.length === 0 && (
                 <div className="text-center p-8 bg-[var(--color-background)] rounded-xl border border-[var(--color-gray-200)]">

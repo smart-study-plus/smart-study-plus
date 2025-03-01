@@ -124,36 +124,36 @@ const QuizPage = () => {
     <div className="flex h-screen bg-[var(--color-background-alt)]">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">
+        <div className="container mx-auto px-8 py-10">
+          <div className="mb-10">
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">
               Practice Quiz
             </h1>
             {quiz && (
-              <p className="text-[var(--color-text-secondary)]">
+              <p className="text-xl text-[var(--color-text-secondary)] mt-3">
                 {quiz.section_title}
               </p>
             )}
           </div>
 
           {loading ? (
-            <div className="text-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-4 text-[var(--color-text-secondary)]">Loading quiz...</p>
+            <div className="text-center p-10">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
+              <p className="mt-6 text-xl text-[var(--color-text-secondary)]">Loading quiz...</p>
             </div>
           ) : error ? (
-            <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-red-500">Error: {error}</p>
+            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
+              <p className="text-xl text-red-500">Error: {error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+                className="mt-6 px-6 py-3 text-lg bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
               >
                 Try Again
               </button>
             </div>
           ) : (
             <>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {quiz?.questions?.map((question, index) => (
                   <QuestionCard
                     key={index}
@@ -171,11 +171,11 @@ const QuizPage = () => {
                 ))}
               </div>
               
-              <div className="mt-8 flex justify-end">
+              <div className="mt-10 flex justify-end">
                 <button
                   onClick={handleSubmit}
                   disabled={!isQuizComplete || submitting || !studyGuideId}
-                  className={`px-6 py-3 rounded-lg text-white transition-colors ${
+                  className={`px-8 py-4 rounded-lg text-white text-xl font-medium transition-colors ${
                     isQuizComplete && !submitting && studyGuideId
                       ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]'
                       : 'bg-gray-400 cursor-not-allowed'

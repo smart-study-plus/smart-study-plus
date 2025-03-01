@@ -65,10 +65,10 @@ const StudyGuidePage = () => {
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">
               {decodeURIComponent(title).replace(/_/g, ' ')}
             </h1>
-            <p className="text-[var(--color-text-secondary)]">
+            <p className="text-xl text-[var(--color-text-secondary)] mt-2">
               Study guide content
             </p>
           </div>
@@ -89,30 +89,30 @@ const StudyGuidePage = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {studyGuide?.chapters.map((chapter, chapterIndex) => (
-                <div key={chapterIndex} className="bg-[var(--color-background)] rounded-xl p-6 shadow-sm">
-                  <h2 className="text-2xl font-semibold text-[var(--color-text)] mb-4">
+                <div key={chapterIndex} className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
+                  <h2 className="text-3xl font-semibold text-[var(--color-text)] mb-6">
                     {chapter.title}
                   </h2>
-                  <Accordion type="single" collapsible className="space-y-4">
+                  <Accordion type="single" collapsible className="space-y-6">
                     {chapter.sections.map((section, sectionIndex) => (
                       <AccordionItem 
                         key={sectionIndex} 
                         value={`section-${chapterIndex}-${sectionIndex}`}
-                        className="border border-[var(--color-gray-200)] rounded-lg overflow-hidden"
+                        className="border-2 border-[var(--color-gray-200)] rounded-lg overflow-hidden"
                       >
-                        <AccordionTrigger className="px-4 py-2 hover:bg-[var(--color-background-alt)]">
+                        <AccordionTrigger className="px-6 py-4 hover:bg-[var(--color-background-alt)] text-xl font-medium">
                           {section.title}
                         </AccordionTrigger>
-                        <AccordionContent className="px-4 py-2">
-                          <ul className="space-y-2">
+                        <AccordionContent className="px-6 py-4">
+                          <ul className="space-y-4">
                             {section.concepts.map((concept, conceptIndex) => (
                               <li 
                                 key={conceptIndex}
-                                className="flex items-center text-[var(--color-text)] p-2 rounded-lg hover:bg-[var(--color-background-alt)]"
+                                className="flex items-center text-lg text-[var(--color-text)] p-3 rounded-lg hover:bg-[var(--color-background-alt)]"
                               >
-                                <span className="mr-2">•</span>
+                                <span className="mr-3 text-xl">•</span>
                                 {concept.concept}
                               </li>
                             ))}
@@ -120,7 +120,7 @@ const StudyGuidePage = () => {
                           {practiceTests[section.title] && (
                             <button
                               onClick={() => handleQuizClick(practiceTests[section.title])}
-                              className="mt-4 w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+                              className="mt-6 w-full px-6 py-4 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
                             >
                               View Quiz for {section.title}
                             </button>

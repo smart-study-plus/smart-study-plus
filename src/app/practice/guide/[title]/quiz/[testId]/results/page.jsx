@@ -45,55 +45,55 @@ const QuizResultsPage = () => {
     <div className="flex h-screen bg-[var(--color-background-alt)]">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">Quiz Results</h1>
+        <div className="container mx-auto px-8 py-10">
+          <div className="mb-10">
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">Quiz Results</h1>
             {results && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[var(--color-background)] p-4 rounded-lg shadow-sm">
-                  <p className="text-[var(--color-text-secondary)]">Score</p>
-                  <p className="text-2xl font-bold text-[var(--color-text)]">{results.score}</p>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
+                  <p className="text-xl text-[var(--color-text-secondary)]">Score</p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">{results.score}</p>
                 </div>
-                <div className="bg-[var(--color-background)] p-4 rounded-lg shadow-sm">
-                  <p className="text-[var(--color-text-secondary)]">Accuracy</p>
-                  <p className="text-2xl font-bold text-[var(--color-text)]">{results.accuracy.toFixed(2)}%</p>
+                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
+                  <p className="text-xl text-[var(--color-text-secondary)]">Accuracy</p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">{results.accuracy.toFixed(2)}%</p>
                 </div>
-                <div className="bg-[var(--color-background)] p-4 rounded-lg shadow-sm">
-                  <p className="text-[var(--color-text-secondary)]">Status</p>
-                  <p className="text-2xl font-bold text-[var(--color-text)] capitalize">{results.status}</p>
+                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
+                  <p className="text-xl text-[var(--color-text-secondary)]">Status</p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] capitalize mt-2">{results.status}</p>
                 </div>
               </div>
             )}
           </div>
 
           {loading ? (
-            <div className="text-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-4 text-[var(--color-text-secondary)]">Loading results...</p>
+            <div className="text-center p-10">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
+              <p className="mt-6 text-xl text-[var(--color-text-secondary)]">Loading results...</p>
             </div>
           ) : error ? (
-            <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-red-500">Error: {error}</p>
+            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
+              <p className="text-xl text-red-500">Error: {error}</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {results?.questions?.map((question, index) => (
-                <div key={index} className="bg-[var(--color-background)] rounded-lg p-6 shadow-sm">
-                  <div className="flex items-start gap-4">
+                <div key={index} className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
+                  <div className="flex items-start gap-6">
                     {question.is_correct ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                      <CheckCircle2 className="w-8 h-8 text-green-500 flex-shrink-0 mt-1" />
                     ) : (
-                      <XCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                      <XCircle className="w-8 h-8 text-red-500 flex-shrink-0 mt-1" />
                     )}
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium text-[var(--color-text)] mb-4">
+                      <h3 className="text-2xl font-medium text-[var(--color-text)] mb-6">
                         Question {index + 1}
                       </h3>
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div>
-                          <p className="text-[var(--color-text-secondary)] mb-2">Your Answer:</p>
+                          <p className="text-xl text-[var(--color-text-secondary)] mb-3">Your Answer:</p>
                           <p
-                            className={`font-medium ${
+                            className={`text-xl font-medium ${
                               question.is_correct ? 'text-green-600' : 'text-red-600'
                             }`}
                           >
@@ -102,13 +102,13 @@ const QuizResultsPage = () => {
                         </div>
                         {!question.is_correct && (
                           <div>
-                            <p className="text-[var(--color-text-secondary)] mb-2">Correct Answer:</p>
-                            <p className="font-medium text-green-600">{question.correct_answer}</p>
+                            <p className="text-xl text-[var(--color-text-secondary)] mb-3">Correct Answer:</p>
+                            <p className="text-xl font-medium text-green-600">{question.correct_answer}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-[var(--color-text-secondary)] mb-2">Explanation:</p>
-                          <p className="text-[var(--color-text)]">{question.explanation}</p>
+                          <p className="text-xl text-[var(--color-text-secondary)] mb-3">Explanation:</p>
+                          <p className="text-lg text-[var(--color-text)]">{question.explanation}</p>
                         </div>
                       </div>
                     </div>
