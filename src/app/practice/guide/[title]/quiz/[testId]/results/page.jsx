@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import Sidebar from '@/components/layout/sidebar';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { getUserId } from '@/app/auth/getUserId';
 
 const QuizResultsPage = () => {
-  const { testId } = useParams(); // Get testId from URL
+  const { testId, title } = useParams();
+  const router = useRouter();
   const [results, setResults] = useState(null);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,11 +42,25 @@ const QuizResultsPage = () => {
     fetchResults();
   }, [testId]);
 
+  const handleReturn = () => {
+    router.push(`/practice/guide/${encodeURIComponent(title)}`);
+  };
+
   return (
     <div className="flex h-screen bg-[var(--color-background-alt)]">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-8 py-10">
+          <div className="flex items-center mb-6">
+            <button
+              onClick={handleReturn}
+              className="flex items-center text-xl text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              <ArrowLeft className="w-8 h-8 mr-2" />
+              <span>Back to Study Guide</span>
+            </button>
+          </div>
+
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-[var(--color-text)]">Quiz Results</h1>
             {results && (

@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import Sidebar from '@/components/layout/sidebar';
 import QuestionCard from '@/components/practice/card-question';
-import {getUserId} from '@/app/auth/getUserId';
+import { getUserId } from '@/app/auth/getUserId';
+import { ArrowLeft } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
 
 const QuizPage = () => {
   const { testId, title } = useParams();
@@ -106,9 +108,10 @@ const QuizPage = () => {
     }
   };
 
-  // Move isQuizComplete calculation inside the component body for debugging
+  // Calculate progress percentage
   const totalQuestions = quiz?.questions?.length || 0;
   const answeredQuestions = Object.keys(selectedAnswers).length;
+  const progressPercentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const isQuizComplete = totalQuestions > 0 && answeredQuestions === totalQuestions;
 
   // Debug log
@@ -120,19 +123,49 @@ const QuizPage = () => {
     isSubmitting: submitting
   });
 
+  const handleReturn = () => {
+    router.push(`/practice/guide/${encodeURIComponent(title)}`);
+  };
+
   return (
     <div className="flex h-screen bg-[var(--color-background-alt)]">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-8 py-10">
+          <div className="flex items-center mb-6">
+            <button
+              onClick={handleReturn}
+              className="flex items-center text-xl text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              <ArrowLeft className="w-8 h-8 mr-2" />
+              <span>Back to Study Guide</span>
+            </button>
+          </div>
+
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-[var(--color-text)]">
               Practice Quiz
             </h1>
             {quiz && (
-              <p className="text-xl text-[var(--color-text-secondary)] mt-3">
-                {quiz.section_title}
-              </p>
+              <>
+                <p className="text-xl text-[var(--color-text-secondary)] mt-3">
+                  {quiz.section_title}
+                </p>
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-lg text-[var(--color-text-secondary)]">
+                      Progress: {progressPercentage.toFixed(0)}%
+                    </p>
+                    <p className="text-lg text-[var(--color-text-secondary)]">
+                      {answeredQuestions} of {totalQuestions} questions answered
+                    </p>
+                  </div>
+                  <Progress 
+                    value={progressPercentage} 
+                    className="h-4 bg-gray-200" 
+                  />
+                </div>
+              </>
             )}
           </div>
 
