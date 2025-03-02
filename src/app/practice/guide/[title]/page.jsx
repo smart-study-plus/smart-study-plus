@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import { getUserId } from '@/app/auth/getUserId';
 import { Progress } from "@/components/ui/progress"
+import { Loading } from "@/components/ui/loading";
 
 const StudyGuidePage = () => {
   const { title } = useParams();
@@ -97,80 +98,78 @@ const StudyGuidePage = () => {
             </p>
           </div>
 
-          <div className="mt-4 mb-4">
+          <div className="mb-8">
             <p className="text-lg text-[var(--color-text-secondary)]">Progress: {progress.toFixed(2)}%</p>
             <Progress value={progress} className="mt-2 h-4 bg-gray-300 rounded-full" />
           </div>
 
-
-          {loading ? (
-            <div className="text-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-4 text-[var(--color-text-secondary)]">Loading study guide...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-red-500">Error: {error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {studyGuide?.chapters.map((chapter, chapterIndex) => (
-                <div key={chapterIndex} className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
-                  <h2 className="text-3xl font-semibold text-[var(--color-text)] mb-6">
-                    {chapter.title}
-                  </h2>
-                  <Accordion type="single" collapsible className="space-y-6">
-                    {chapter.sections.map((section, sectionIndex) => (
-                      <AccordionItem 
-                        key={sectionIndex} 
-                        value={`section-${chapterIndex}-${sectionIndex}`}
-                        className="border-2 border-[var(--color-gray-200)] rounded-lg overflow-hidden"
-                      >
-                        <AccordionTrigger className="px-6 py-4 hover:bg-[var(--color-background-alt)] text-xl font-medium">
-                          {section.title}
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 py-4">
-                          <ul className="space-y-4">
-                            {section.concepts.map((concept, conceptIndex) => (
-                              <li 
-                                key={conceptIndex}
-                                className="flex items-center text-lg text-[var(--color-text)] p-3 rounded-lg hover:bg-[var(--color-background-alt)]"
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <Loading size="lg" text="Loading study guide..." />
+            ) : error ? (
+              <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
+                <p className="text-red-500">Error: {error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {studyGuide?.chapters.map((chapter, chapterIndex) => (
+                  <div key={chapterIndex} className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
+                    <h2 className="text-3xl font-semibold text-[var(--color-text)] mb-6">
+                      {chapter.title}
+                    </h2>
+                    <Accordion type="single" collapsible className="space-y-6">
+                      {chapter.sections.map((section, sectionIndex) => (
+                        <AccordionItem 
+                          key={sectionIndex} 
+                          value={`section-${chapterIndex}-${sectionIndex}`}
+                          className="border-2 border-[var(--color-gray-200)] rounded-lg overflow-hidden"
+                        >
+                          <AccordionTrigger className="px-6 py-4 hover:bg-[var(--color-background-alt)] text-xl font-medium">
+                            {section.title}
+                          </AccordionTrigger>
+                          <AccordionContent className="px-6 py-4">
+                            <ul className="space-y-4">
+                              {section.concepts.map((concept, conceptIndex) => (
+                                <li 
+                                  key={conceptIndex}
+                                  className="flex items-center text-lg text-[var(--color-text)] p-3 rounded-lg hover:bg-[var(--color-background-alt)]"
+                                >
+                                  <span className="mr-3 text-xl">•</span>
+                                  {concept.concept}
+                                </li>
+                              ))}
+                            </ul>
+                            {/* {practiceTests[section.title] && (
+                              <button
+                                onClick={() => handleQuizClick(practiceTests[section.title])}
+                                className="mt-6 w-full px-6 py-4 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
                               >
-                                <span className="mr-3 text-xl">•</span>
-                                {concept.concept}
-                              </li>
-                            ))}
-                          </ul>
-                          {/* {practiceTests[section.title] && (
-                            <button
-                              onClick={() => handleQuizClick(practiceTests[section.title])}
-                              className="mt-6 w-full px-6 py-4 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
-                            >
-                              View Quiz for {section.title}
-                            </button>
-                          )} */}
-                          {practiceTests[section.title] && (
-                            <button
-                              onClick={() => handleQuizClick(practiceTests[section.title])}
-                              className="mt-6 w-full px-6 py-4 text-lg font-medium rounded-lg transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
-                            >
-                              {completedTests.has(practiceTests[section.title]) ? 'View Results' : 'Start Quiz'}
-                            </button>
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </div>
-              ))}
-            </div>
-          )}
+                                View Quiz for {section.title}
+                              </button>
+                            )} */}
+                            {practiceTests[section.title] && (
+                              <button
+                                onClick={() => handleQuizClick(practiceTests[section.title])}
+                                className="mt-6 w-full px-6 py-4 text-lg font-medium rounded-lg transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+                              >
+                                {completedTests.has(practiceTests[section.title]) ? 'View Results' : 'Start Quiz'}
+                              </button>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

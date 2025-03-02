@@ -6,6 +6,7 @@ import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
 import Sidebar from '@/components/layout/sidebar';
 import { Progress } from "@/components/ui/progress";
+import { Loading } from "@/components/ui/loading";
 import { BookOpen } from 'lucide-react';
 
 const PracticePage = () => {
@@ -78,10 +79,7 @@ const PracticePage = () => {
           </div>
 
           {loading ? (
-            <div className="text-center p-10">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-6 text-xl text-[var(--color-text-secondary)]">Loading study guides...</p>
-            </div>
+            <Loading size="lg" text="Loading study guides..." />
           ) : error ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>

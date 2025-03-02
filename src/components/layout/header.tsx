@@ -17,8 +17,8 @@ const Header = async () => {
   const user = data?.user ?? null;
 
   return (
-    <nav className="bg-[var(--color-background)] flex-">
-      <div className="container mx-auto md:px-4 px-4 py-4 text-[var(--color-text)] flex sm:flex-row justify-between">
+    <nav className="bg-[var(--color-background)] flex-none px-2">
+      <div className="mx-auto md:px-4 px-4 py-4 text-[var(--color-text)] flex sm:flex-row justify-between">
         <Link
           href={user ? '/dashboard' : '/'}
           className="text-3xl flex font-extrabold drop-shadow-sm text-[var(--color-primary)]"
