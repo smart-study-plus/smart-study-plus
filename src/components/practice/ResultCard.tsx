@@ -187,16 +187,20 @@ export const ResultCard = ({
                   chatHistory.map((msg, idx) => (
                     <div
                       key={idx}
-                      className={`p-3 rounded-lg ${
-                        msg.role === 'user'
-                          ? 'bg-[var(--color-primary)] text-white ml-12'
-                          : 'bg-white mr-12'
-                      }`}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm">
-                        <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
-                        {msg.content}
-                      </p>
+                      <div
+                        className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                          msg.role === 'user'
+                            ? 'bg-[var(--color-primary)] text-white'
+                            : 'bg-white'
+                        }`}
+                      >
+                        <p className="text-md whitespace-pre-wrap break-words">
+                          <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
+                          {msg.content}
+                        </p>
+                      </div>
                     </div>
                   ))
                 )}
