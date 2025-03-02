@@ -6,6 +6,8 @@ import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import Sidebar from '@/components/layout/sidebar';
 import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { getUserId } from '@/app/auth/getUserId';
+import { Loading } from '@/components/ui/loading';
+import { ResultCard } from '@/components/practice/ResultCard';
 
 const QuizResultsPage = () => {
   const { testId, title } = useParams();
@@ -82,10 +84,7 @@ const QuizResultsPage = () => {
           </div>
 
           {loading ? (
-            <div className="text-center p-10">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-6 text-xl text-[var(--color-text-secondary)]">Loading results...</p>
-            </div>
+            <Loading size="lg" text="Loading results..." />
           ) : error ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>
@@ -93,42 +92,17 @@ const QuizResultsPage = () => {
           ) : (
             <div className="space-y-8">
               {results?.questions?.map((question, index) => (
-                <div key={index} className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
-                  <div className="flex items-start gap-6">
-                    {question.is_correct ? (
-                      <CheckCircle2 className="w-8 h-8 text-green-500 flex-shrink-0 mt-1" />
-                    ) : (
-                      <XCircle className="w-8 h-8 text-red-500 flex-shrink-0 mt-1" />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-medium text-[var(--color-text)] mb-6">
-                        Question {index + 1}
-                      </h3>
-                      <div className="space-y-6">
-                        <div>
-                          <p className="text-xl text-[var(--color-text-secondary)] mb-3">Your Answer:</p>
-                          <p
-                            className={`text-xl font-medium ${
-                              question.is_correct ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {question.user_answer}
-                          </p>
-                        </div>
-                        {!question.is_correct && (
-                          <div>
-                            <p className="text-xl text-[var(--color-text-secondary)] mb-3">Correct Answer:</p>
-                            <p className="text-xl font-medium text-green-600">{question.correct_answer}</p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-xl text-[var(--color-text-secondary)] mb-3">Explanation:</p>
-                          <p className="text-lg text-[var(--color-text)]">{question.explanation}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ResultCard
+                  key={index}
+                  questionNumber={index + 1}
+                  isCorrect={question.is_correct}
+                  userAnswer={question.user_answer}
+                  correctAnswer={!question.is_correct ? question.correct_answer : undefined}
+                  explanation={question.explanation}
+                  userId={results.user_id} 
+                  testId={results.test_id} 
+                  questionId={question.question_id}
+                />
               ))}
             </div>
           )}
