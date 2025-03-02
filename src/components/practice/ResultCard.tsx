@@ -30,6 +30,37 @@ export const ResultCard = ({
   >([]);
   const [loading, setLoading] = useState(false);
 
+  const handleToggleChat = async () => {
+    if (!showChat) {
+      try {
+        const response = await fetchWithAuth(
+          'http://localhost:8000/api/rag/chat-history',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              test_id: testId,
+              question_id: questionId,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to load chat history');
+        }
+
+        const data = await response.json();
+        setChatHistory(data.chat_history || []);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    }
+    setShowChat(!showChat);
+  };
+
   const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
 
@@ -125,7 +156,7 @@ export const ResultCard = ({
               </div>
             </div>
             <button
-              onClick={() => setShowChat(!showChat)}
+              onClick={handleToggleChat}
               className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
             >
               {showChat ? (
