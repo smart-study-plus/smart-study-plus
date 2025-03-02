@@ -114,15 +114,6 @@ const QuizPage = () => {
   const progressPercentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const isQuizComplete = totalQuestions > 0 && answeredQuestions === totalQuestions;
 
-  // Debug log
-  console.log('Quiz State:', {
-    totalQuestions,
-    answeredQuestions,
-    isQuizComplete,
-    hasStudyGuideId: !!studyGuideId,
-    isSubmitting: submitting
-  });
-
   const handleReturn = () => {
     router.push(`/practice/guide/${encodeURIComponent(title)}`);
   };
@@ -200,6 +191,8 @@ const QuizPage = () => {
                     }}
                     onSelectAnswer={handleSelectAnswer}
                     selectedAnswer={selectedAnswers[`${index}`]}
+                    userId={userId}
+                    testId={testId}
                   />
                 ))}
               </div>
