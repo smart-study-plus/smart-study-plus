@@ -3,13 +3,14 @@
  */
 
 import { createBrowserClient } from '@supabase/ssr';
+import { getSupabaseConfig } from '../config';
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
+    console.warn('Supabase configuration is missing');
+    return createBrowserClient('', '');
   }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
