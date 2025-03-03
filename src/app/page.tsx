@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
 import {
   BookOpen,
@@ -17,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { RiComputerLine } from 'react-icons/ri';
 import { MdDashboard } from 'react-icons/md';
-import AuthForm from '@/components/auth/auth-form';
+import {AuthForm} from '@/components/auth/auth-form';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
