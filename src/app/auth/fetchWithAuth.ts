@@ -16,7 +16,6 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   }
 
   const token = session.access_token;
-  const userId = session.user.id;
 
   // Merge headers to include Authorization
   const headers = {
