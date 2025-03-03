@@ -22,36 +22,53 @@ export function Header() {
     router.push('/');
   };
 
+  const handleLogoClick = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    router.push(session ? '/dashboard' : '/');
+  };
+
   const navItems = [
     {
       href: '/dashboard',
       label: 'Dashboard',
+      pattern: '/dashboard',
     },
     {
       href: '/practice',
       label: 'Practice',
+      pattern: '/practice',
     },
     {
       href: '/tests',
       label: 'Tests',
+      pattern: '/tests',
     },
   ];
 
+  const isActiveRoute = (pattern: string) => {
+    return pathname.startsWith(pattern);
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <Brain className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">Smart Study+</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-white">
+      <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div
+          onClick={handleLogoClick}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          <Brain className="h-5 w-5 text-primary" />
+          <span className="text-lg font-bold">Smart Study+</span>
         </div>
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
                 'text-sm font-medium transition-colors hover:text-foreground',
-                pathname === item.href
+                isActiveRoute(item.pattern)
                   ? 'text-primary font-semibold'
                   : 'text-muted-foreground'
               )}

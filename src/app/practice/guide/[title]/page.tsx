@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
-import Sidebar from '@/components/layout/sidebar';
+import { Header } from '@/components/layout/header';
 import {
   Accordion,
   AccordionContent,
@@ -147,35 +147,35 @@ const StudyGuidePage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--color-background-alt)]">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">
+    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+      <Header />
+      <main className="flex-1">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-[var(--color-text)]">
               {title ? decodeURIComponent(title).replace(/_/g, ' ') : ''}
             </h1>
-            <p className="text-xl text-[var(--color-text-secondary)] mt-2">
+            <p className="text-base text-[var(--color-text-secondary)] mt-2">
               Study guide content
             </p>
           </div>
 
-          <div className="mb-8">
-            <p className="text-lg text-[var(--color-text-secondary)]">
+          <div className="mb-6">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               Progress: {progress.toFixed(2)}%
             </p>
             <Progress
               value={progress}
-              className="mt-2 h-4 bg-gray-300 rounded-full"
+              className="mt-2 h-3 bg-gray-300 rounded-full"
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="space-y-6">
             {loading ? (
               <Loading size="lg" text="Loading study guide..." />
             ) : error ? (
-              <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
-                <p className="text-red-500">Error: {error}</p>
+              <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+                <p className="text-base text-red-500">Error: {error}</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
@@ -184,33 +184,33 @@ const StudyGuidePage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {studyGuide?.chapters.map((chapter, chapterIndex) => (
                   <div
                     key={chapterIndex}
-                    className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm"
+                    className="bg-[var(--color-background)] rounded-lg p-6 shadow-sm"
                   >
-                    <h2 className="text-3xl font-semibold text-[var(--color-text)] mb-6">
+                    <h2 className="text-2xl font-semibold text-[var(--color-text)] mb-4">
                       {chapter.title}
                     </h2>
-                    <Accordion type="single" collapsible className="space-y-6">
+                    <Accordion type="single" collapsible className="space-y-4">
                       {chapter.sections.map((section, sectionIndex) => (
                         <AccordionItem
                           key={sectionIndex}
                           value={`section-${chapterIndex}-${sectionIndex}`}
-                          className="border-2 border-[var(--color-gray-200)] rounded-lg overflow-hidden"
+                          className="border border-[var(--color-gray-200)] rounded-lg overflow-hidden"
                         >
-                          <AccordionTrigger className="px-6 py-4 hover:bg-[var(--color-background-alt)] text-xl font-medium">
+                          <AccordionTrigger className="px-4 py-3 hover:bg-[var(--color-background-alt)] text-base font-medium">
                             {section.title}
                           </AccordionTrigger>
-                          <AccordionContent className="px-6 py-4">
-                            <ul className="space-y-4">
+                          <AccordionContent className="px-4 py-3">
+                            <ul className="space-y-3">
                               {section.concepts.map((concept, conceptIndex) => (
                                 <li
                                   key={conceptIndex}
-                                  className="flex items-center text-lg text-[var(--color-text)] p-3 rounded-lg hover:bg-[var(--color-background-alt)]"
+                                  className="flex items-center text-base text-[var(--color-text)] p-2 rounded-lg hover:bg-[var(--color-background-alt)]"
                                 >
-                                  <span className="mr-3 text-xl">•</span>
+                                  <span className="mr-2 text-base">•</span>
                                   {concept.concept}
                                 </li>
                               ))}
@@ -220,7 +220,7 @@ const StudyGuidePage: React.FC = () => {
                                 onClick={() =>
                                   handleQuizClick(practiceTests[section.title])
                                 }
-                                className="mt-6 w-full px-6 py-4 text-lg font-medium rounded-lg transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+                                className="mt-4 w-full px-4 py-3 text-base font-medium rounded-lg transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
                               >
                                 {completedTests.has(
                                   practiceTests[section.title]
@@ -239,7 +239,7 @@ const StudyGuidePage: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

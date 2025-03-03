@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
-import Sidebar from '@/components/layout/sidebar';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
 import { BookOpen } from 'lucide-react';
+import { Header } from '@/components/layout/header';
+import { Button } from '@/components/ui/button';
 
 interface StudyGuide {
   title: string;
@@ -97,15 +98,15 @@ const PracticePage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--color-background-alt)]">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-8 py-10">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">
+    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+      <Header />
+      <main className="flex-1">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-[var(--color-text)]">
               Practice Mode
             </h1>
-            <p className="text-xl text-[var(--color-text-secondary)] mt-3">
+            <p className="text-base text-[var(--color-text-secondary)] mt-2">
               Select a study guide to practice with
             </p>
           </div>
@@ -113,43 +114,42 @@ const PracticePage: React.FC = () => {
           {loading ? (
             <Loading size="lg" text="Loading study guides..." />
           ) : error ? (
-            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-xl text-red-500">Error: {error}</p>
+            <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
+              <p className="text-base text-red-500">Error: {error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-6 px-6 py-3 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+                className="mt-4 px-4 py-2 text-base font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
               >
                 Try Again
               </button>
             </div>
           ) : (
             <>
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {studyGuides.map((title: string, index: number) => (
                   <div
                     key={index}
                     onClick={() => handleCardClick(title)}
-                    className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group w-full"
+                    className="bg-[var(--color-background)] rounded-lg p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group w-full"
                   >
                     <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-semibold text-[var(--color-text)] break-words flex-1">
+                      <h2 className="text-xl font-semibold text-[var(--color-text)] break-words flex-1">
                         {title.replace(/_/g, ' ')}
                       </h2>
-                      <p className="text-lg text-[var(--color-text-secondary)] ml-6">
-                        Click to view study guide
-                      </p>
+                      <Button variant="outline" size="sm" className="shrink-0">
+                        View Study Guide
+                      </Button>
                     </div>
 
-                    {/* Progress Bar for Each Study Guide */}
-                    <div className="mt-6">
-                      <div className="flex justify-between items-center mb-3">
-                        <p className="text-lg text-[var(--color-text-secondary)]">
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           Progress: {progressMap[title]?.toFixed(0) || 0}%
                         </p>
                       </div>
                       <Progress
                         value={progressMap[title] || 0}
-                        className="h-4 bg-gray-200 rounded-full"
+                        className="h-3 bg-gray-200 rounded-full"
                       />
                     </div>
                   </div>
@@ -157,12 +157,12 @@ const PracticePage: React.FC = () => {
               </div>
 
               {studyGuides.length === 0 && (
-                <div className="text-center p-10 bg-[var(--color-background)] rounded-xl border-2 border-[var(--color-gray-200)]">
+                <div className="text-center p-8 bg-[var(--color-background)] rounded-lg border border-[var(--color-gray-200)]">
                   <BookOpen
                     className="mx-auto text-[var(--color-text-secondary)]"
-                    size={64}
+                    size={48}
                   />
-                  <p className="mt-6 text-xl text-[var(--color-text-secondary)]">
+                  <p className="mt-4 text-base text-[var(--color-text-secondary)]">
                     No study guides available. Please check back later.
                   </p>
                 </div>
@@ -170,7 +170,7 @@ const PracticePage: React.FC = () => {
             </>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
