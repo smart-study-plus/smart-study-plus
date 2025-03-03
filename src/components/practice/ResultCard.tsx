@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, XCircle, MessageCircle, X } from 'lucide-react';
-import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
+import { AIChat } from './AIChat';
 
 interface ResultCardProps {
   questionNumber: number;
@@ -24,91 +24,6 @@ export const ResultCard = ({
   questionId,
 }: ResultCardProps) => {
   const [showChat, setShowChat] = useState(false);
-  const [userMessage, setUserMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<
-    { role: string; content: string }[]
-  >([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleToggleChat = async () => {
-    if (!showChat) {
-      try {
-        const response = await fetchWithAuth(
-          'http://localhost:8000/api/rag/chat-history',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_id: userId,
-              test_id: testId,
-              question_id: questionId,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to load chat history');
-        }
-
-        const data = await response.json();
-        setChatHistory(data.chat_history || []);
-      } catch (error) {
-        console.error('Error loading chat history:', error);
-      }
-    }
-    setShowChat(!showChat);
-  };
-
-  const handleSendMessage = async () => {
-    if (!userMessage.trim()) return;
-
-    setLoading(true);
-    const messageToSend = userMessage;
-    setUserMessage('');
-
-    const updatedHistory = [
-      ...chatHistory,
-      { role: 'user', content: messageToSend },
-    ];
-    setChatHistory(updatedHistory);
-
-    try {
-      const response = await fetchWithAuth(
-        'http://localhost:8000/api/rag/answer-chat',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            test_id: testId,
-            question_id: questionId,
-            user_message: messageToSend,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch response');
-      }
-
-      const data = await response.json();
-      setChatHistory((prev) => [
-        ...prev,
-        { role: 'assistant', content: data.answer },
-      ]);
-    } catch (error) {
-      setChatHistory((prev) => [
-        ...prev,
-        { role: 'assistant', content: '❌ Error fetching response.' },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
@@ -156,7 +71,7 @@ export const ResultCard = ({
               </div>
             </div>
             <button
-              onClick={handleToggleChat}
+              onClick={() => setShowChat(!showChat)}
               className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
             >
               {showChat ? (
@@ -174,63 +89,13 @@ export const ResultCard = ({
           </div>
         </div>
 
-        {showChat && (
-          <div className="mt-6 border-t pt-6">
-            <h4 className="text-lg font-medium mb-4">AI Tutor Chat</h4>
-            <div className="bg-[var(--color-background-alt)] rounded-lg p-4 mb-4">
-              <div className="h-64 overflow-y-auto mb-4 space-y-3">
-                {chatHistory.length === 0 ? (
-                  <p className="text-[var(--color-text-secondary)] text-center py-4">
-                    Start a conversation about this question
-                  </p>
-                ) : (
-                  chatHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                          msg.role === 'user'
-                            ? 'bg-[var(--color-primary)] text-white'
-                            : 'bg-white'
-                        }`}
-                      >
-                        <p className="text-md whitespace-pre-wrap break-words">
-                          <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
-                          {msg.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="flex-1 p-2 border rounded bg-white"
-                  placeholder="Ask a question about this topic..."
-                  value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  disabled={loading}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
-                  disabled={loading || !userMessage.trim()}
-                >
-                  {loading ? '...' : 'Send'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <AIChat
+          userId={userId}
+          testId={testId}
+          questionId={questionId}
+          isVisible={showChat}
+          onToggle={() => setShowChat(!showChat)}
+        />
       </div>
     </div>
   );

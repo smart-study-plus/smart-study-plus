@@ -5,64 +5,94 @@ import { useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
 import Sidebar from '@/components/layout/sidebar';
-import { Progress } from "@/components/ui/progress";
-import { Loading } from "@/components/ui/loading";
+import { Progress } from '@/components/ui/progress';
+import { Loading } from '@/components/ui/loading';
 import { BookOpen } from 'lucide-react';
 
-const PracticePage = () => {
-  const [studyGuides, setStudyGuides] = useState([]);
-  const [progressMap, setProgressMap] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface StudyGuide {
+  title: string;
+  practice_tests: Array<{
+    practice_test_id: string;
+  }>;
+}
+
+interface CompletedTest {
+  test_id: string;
+}
+
+interface ProgressMap {
+  [key: string]: number;
+}
+
+const PracticePage: React.FC = () => {
+  const [studyGuides, setStudyGuides] = useState<string[]>([]);
+  const [progressMap, setProgressMap] = useState<ProgressMap>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchStudyGuides = async () => {
+    const fetchStudyGuides = async (): Promise<void> => {
       try {
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
         // Fetch all study guides
-        const response = await fetchWithAuth('http://localhost:8000/api/study-guide/all');
+        const response = await fetchWithAuth(
+          'http://localhost:8000/api/study-guide/all'
+        );
         if (!response.ok) throw new Error('Failed to fetch study guides');
 
         const data = await response.json();
-        const guides = data.study_guides || [];
+        const guides: string[] = data.study_guides || [];
         setStudyGuides(guides);
 
         // Fetch completed tests
-        const completedTestsResponse = await fetchWithAuth(`http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}`);
-        if (!completedTestsResponse.ok) throw new Error('Failed to fetch completed tests');
+        const completedTestsResponse = await fetchWithAuth(
+          `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}`
+        );
+        if (!completedTestsResponse.ok)
+          throw new Error('Failed to fetch completed tests');
 
-        const completedTestsData = await completedTestsResponse.json();
-        const completedTestsMap = new Set(completedTestsData.map(test => test.test_id));
+        const completedTestsData: CompletedTest[] =
+          await completedTestsResponse.json();
+        const completedTestsMap = new Set(
+          completedTestsData.map((test: CompletedTest) => test.test_id)
+        );
 
         // Fetch practice tests and calculate progress for each study guide
-        const progressData = {};
+        const progressData: ProgressMap = {};
         await Promise.all(
-          guides.map(async (title) => {
-            const testResponse = await fetchWithAuth(`http://localhost:8000/api/study-guide/practice-tests/${encodeURIComponent(title)}`);
+          guides.map(async (title: string) => {
+            const testResponse = await fetchWithAuth(
+              `http://localhost:8000/api/study-guide/practice-tests/${encodeURIComponent(title)}`
+            );
             if (testResponse.ok) {
-              const testData = await testResponse.json();
+              const testData: StudyGuide = await testResponse.json();
               const totalTests = testData.practice_tests.length;
-              const completedTests = testData.practice_tests.filter(test => completedTestsMap.has(test.practice_test_id)).length;
-              progressData[title] = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
+              const completedTests = testData.practice_tests.filter((test) =>
+                completedTestsMap.has(test.practice_test_id)
+              ).length;
+              progressData[title] =
+                totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
             }
           })
         );
 
         setProgressMap(progressData);
-      } catch (err) {
-        setError(err.message || 'An error occurred');
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'An error occurred';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStudyGuides();
+    void fetchStudyGuides();
   }, []);
 
-  const handleCardClick = (title) => {
+  const handleCardClick = (title: string): void => {
     router.push(`/practice/guide/${encodeURIComponent(title)}`);
   };
 
@@ -72,7 +102,9 @@ const PracticePage = () => {
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-8 py-10">
           <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">Practice Mode</h1>
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">
+              Practice Mode
+            </h1>
             <p className="text-xl text-[var(--color-text-secondary)] mt-3">
               Select a study guide to practice with
             </p>
@@ -83,8 +115,8 @@ const PracticePage = () => {
           ) : error ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => window.location.reload()}
                 className="mt-6 px-6 py-3 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
               >
                 Try Again
@@ -93,7 +125,7 @@ const PracticePage = () => {
           ) : (
             <>
               <div className="space-y-6">
-                {studyGuides.map((title, index) => (
+                {studyGuides.map((title: string, index: number) => (
                   <div
                     key={index}
                     onClick={() => handleCardClick(title)}
@@ -115,9 +147,9 @@ const PracticePage = () => {
                           Progress: {progressMap[title]?.toFixed(0) || 0}%
                         </p>
                       </div>
-                      <Progress 
-                        value={progressMap[title] || 0} 
-                        className="h-4 bg-gray-200 rounded-full" 
+                      <Progress
+                        value={progressMap[title] || 0}
+                        className="h-4 bg-gray-200 rounded-full"
                       />
                     </div>
                   </div>
@@ -126,7 +158,10 @@ const PracticePage = () => {
 
               {studyGuides.length === 0 && (
                 <div className="text-center p-10 bg-[var(--color-background)] rounded-xl border-2 border-[var(--color-gray-200)]">
-                  <BookOpen className="mx-auto text-[var(--color-text-secondary)]" size={64} />
+                  <BookOpen
+                    className="mx-auto text-[var(--color-text-secondary)]"
+                    size={64}
+                  />
                   <p className="mt-6 text-xl text-[var(--color-text-secondary)]">
                     No study guides available. Please check back later.
                   </p>

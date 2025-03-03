@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
-import rehypeMathjax from 'rehype-mathjax';
-import ReactMarkdown from 'react-markdown';
 
 interface HintSectionProps {
   userId: string;

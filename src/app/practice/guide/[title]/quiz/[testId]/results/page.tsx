@@ -4,21 +4,43 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import Sidebar from '@/components/layout/sidebar';
-import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { getUserId } from '@/app/auth/getUserId';
 import { Loading } from '@/components/ui/loading';
 import { ResultCard } from '@/components/practice/ResultCard';
 
-const QuizResultsPage = () => {
-  const { testId, title } = useParams();
+interface QuizQuestion {
+  question_id: string;
+  is_correct: boolean;
+  user_answer: string;
+  correct_answer?: string;
+  explanation: string;
+}
+
+interface QuizResults {
+  user_id: string;
+  test_id: string;
+  score: number;
+  accuracy: number;
+  status: string;
+  questions: QuizQuestion[];
+}
+
+const QuizResultsPage: React.FC = () => {
+  const params = useParams();
+  const testId = typeof params.testId === 'string' ? params.testId : '';
+  const title = typeof params.title === 'string' ? params.title : '';
   const router = useRouter();
-  const [results, setResults] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const [results, setResults] = useState<QuizResults | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchResults = async (): Promise<void> => {
+      if (!testId) return;
+
       try {
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
@@ -32,19 +54,22 @@ const QuizResultsPage = () => {
           throw new Error('Failed to fetch results');
         }
 
-        const data = await response.json();
+        const data: QuizResults = await response.json();
         setResults(data);
-      } catch (err) {
-        setError(err.message || 'An error occurred');
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'An error occurred';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResults();
+    void fetchResults();
   }, [testId]);
 
-  const handleReturn = () => {
+  const handleReturn = (): void => {
+    if (!title) return;
     router.push(`/practice/guide/${encodeURIComponent(title)}`);
   };
 
@@ -64,20 +89,34 @@ const QuizResultsPage = () => {
           </div>
 
           <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">Quiz Results</h1>
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">
+              Quiz Results
+            </h1>
             {results && (
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">Score</p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">{results.score}</p>
+                  <p className="text-xl text-[var(--color-text-secondary)]">
+                    Score
+                  </p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">
+                    {results.score}
+                  </p>
                 </div>
                 <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">Accuracy</p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">{results.accuracy.toFixed(2)}%</p>
+                  <p className="text-xl text-[var(--color-text-secondary)]">
+                    Accuracy
+                  </p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">
+                    {results.accuracy.toFixed(2)}%
+                  </p>
                 </div>
                 <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">Status</p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] capitalize mt-2">{results.status}</p>
+                  <p className="text-xl text-[var(--color-text-secondary)]">
+                    Status
+                  </p>
+                  <p className="text-4xl font-bold text-[var(--color-text)] capitalize mt-2">
+                    {results.status}
+                  </p>
                 </div>
               </div>
             )}
@@ -97,10 +136,12 @@ const QuizResultsPage = () => {
                   questionNumber={index + 1}
                   isCorrect={question.is_correct}
                   userAnswer={question.user_answer}
-                  correctAnswer={!question.is_correct ? question.correct_answer : undefined}
+                  correctAnswer={
+                    !question.is_correct ? question.correct_answer : undefined
+                  }
                   explanation={question.explanation}
-                  userId={results.user_id} 
-                  testId={results.test_id} 
+                  userId={results.user_id}
+                  testId={results.test_id}
                   questionId={question.question_id}
                 />
               ))}
