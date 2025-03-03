@@ -293,7 +293,7 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-[58rem] text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-white">
-                {`Ready to Transform Your Study Experience?`}
+                Ready to Transform Your Study Experience&#39;?
               </h2>
               <p className="mt-4 text-white/90 md:text-xl">
                 Join Smart Study+ today and start creating intelligent study
