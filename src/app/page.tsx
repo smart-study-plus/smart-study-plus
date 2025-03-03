@@ -207,8 +207,8 @@ export default function Home() {
                 </h2>
                 <p className="text-lg text-[var(--color-text-secondary)]">
                   Monitor your progress with detailed analytics on your
-                  dashboard. See which concepts you've mastered and which areas
-                  need more attention.
+                  dashboard. See which concepts you&apos;ve mastered and which
+                  areas need more attention.
                 </p>
                 <ul className="space-y-2">
                   <li className="flex items-center">
