@@ -5,10 +5,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React from 'react';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
 import { Provider } from 'jotai';
-
 import { Prompt } from 'next/font/google';
 
 // todo: needs improvement
@@ -29,13 +26,7 @@ const RootLayout = ({
 }>) => (
   <html lang="en" className={prompt.className}>
     <body>
-      <Provider>
-        <div className="min-h-screen flex-grow overflow-x-hidden">
-          <Header />
-          {children}
-        </div>
-        <Footer />
-      </Provider>
+      <Provider>{children}</Provider>
     </body>
   </html>
 );
