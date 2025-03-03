@@ -55,7 +55,11 @@ const AuthContent = () => {
 
   return (
     <div className="bg-gray-100 h-screen flex justify-center items-center">
-      <AuthForm method={method} err={err} onSubmit={handleFormSubmission} />
+      <AuthForm
+        method={method}
+        err={err}
+        onSuccess={() => router.push('/dashboard')}
+      />
     </div>
   );
 };
