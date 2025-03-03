@@ -8,10 +8,16 @@ import React from 'react';
 import { Provider } from 'jotai';
 import { Prompt } from 'next/font/google';
 
-// todo: needs improvement
 export const metadata: Metadata = {
-  title: 'SmartStudy+',
-  description: 'Study better',
+  title: 'Smart Study+',
+  description: 'AI-powered study guide generator and practice platform',
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/svg+xml',
+      url: '/favicon.svg',
+    },
+  ],
 };
 
 const prompt = Prompt({
