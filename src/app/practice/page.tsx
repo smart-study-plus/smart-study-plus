@@ -37,6 +37,9 @@ const PracticePage: React.FC = () => {
   useEffect(() => {
     const fetchStudyGuides = async (): Promise<void> => {
       try {
+        // Ensure we only run this after the component mounts
+        if (typeof window === 'undefined') return;
+
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
@@ -92,7 +95,10 @@ const PracticePage: React.FC = () => {
       }
     };
 
-    void fetchStudyGuides();
+    // Run this only when the component is mounted
+    if (typeof window !== 'undefined') {
+      void fetchStudyGuides();
+    }
   }, []);
 
   const handleCardClick = (title: string): void => {
