@@ -205,7 +205,10 @@ export default function Home() {
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-[var(--color-text)]">
                   Track Your Learning Journey
                 </h2>
-                <p className="text-lg text-[var(--color-text-secondary)]">Monitor your progress with detailed analytics on your dashboard. See which concepts you've mastered and which areas need more attention.
+                <p className="text-lg text-[var(--color-text-secondary)]">
+                  Monitor your progress with detailed analytics on your
+                  dashboard. See which concepts you've mastered and which areas
+                  need more attention.
                 </p>
                 <ul className="space-y-2">
                   <li className="flex items-center">
@@ -290,7 +293,7 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-[58rem] text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-white">
-                Ready to Transform Your Study Experience&#39;?
+                Ready to Transform Your Study Experience?
               </h2>
               <p className="mt-4 text-white/90 md:text-xl">
                 Join Smart Study+ today and start creating intelligent study
