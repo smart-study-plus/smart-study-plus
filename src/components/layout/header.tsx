@@ -58,8 +58,8 @@ export function Header() {
           onClick={handleLogoClick}
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <Brain className="h-5 w-5 text-primary" />
-          <span className="text-lg font-bold">Smart Study+</span>
+          <Brain className="h-6 w-6 text-primary" />
+          <span className="text-2xl font-bold">SmartStudy+</span>
         </div>
         <nav className="flex items-center gap-4">
           {navItems.map((item) => (
@@ -77,7 +77,7 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
+        <Button variant="ghost" size="lg" onClick={handleLogout}>
           Log out
         </Button>
       </div>

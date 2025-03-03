@@ -1,22 +1,18 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3,
   BookOpen,
-  Brain,
   ClipboardCheck,
   FileText,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [userName, setUserName] = useState<string>('Student');
   const supabase = createClient();
 
@@ -32,23 +28,35 @@ export default function DashboardPage() {
     getUser();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
-
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="mb-8 text-3xl font-bold">Welcome back, {userName}!</h1>
+      <main className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <h1 className="mb-8 text-5xl font-bold">Welcome back, {userName}!</h1>
           <Tabs defaultValue="overview" className="space-y-8">
-            <TabsList className="bg-background">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="progress">Progress</TabsTrigger>
-            </TabsList>
+            <div className="flex justify-start">
+              <TabsList className="bg-background">
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+                >
+                  Overview
+                </TabsTrigger>
+                {/* <TabsTrigger
+                  value="analytics"
+                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+                >
+                  Analytics
+                </TabsTrigger>
+                <TabsTrigger
+                  value="progress"
+                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+                >
+                  Progress
+                </TabsTrigger> */}
+              </TabsList>
+            </div>
             <TabsContent value="overview" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
