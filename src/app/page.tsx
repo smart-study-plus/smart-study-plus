@@ -205,10 +205,7 @@ export default function Home() {
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-[var(--color-text)]">
                   Track Your Learning Journey
                 </h2>
-                <p className="text-lg text-[var(--color-text-secondary)]">
-                  Monitor your progress with detailed analytics on your
-                  dashboard. See which concepts you've mastered and which areas
-                  need more attention.
+                <p className="text-lg text-[var(--color-text-secondary)]">Monitor your progress with detailed analytics on your dashboard. See which concepts you've mastered and which areas need more attention.
                 </p>
                 <ul className="space-y-2">
                   <li className="flex items-center">
