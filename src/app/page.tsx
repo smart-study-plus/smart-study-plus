@@ -29,26 +29,30 @@ const Home = async () => {
       id: 1,
       title: 'Instagram Influencing',
       description: 'A Guide on Becoming Homeless',
-      icon: '📈',
+      progress: 0,
+      module_id: '1',
     },
     {
       id: 2,
       title: 'Tax Evasion Strategies',
       description: 'Hiding Your Fortune in a Swiss Bank Account',
-      icon: '💼',
+      progress: 0,
+      module_id: '2',
     },
     {
       id: 3,
       title: 'National Treasure',
       description:
         "Stealing the World's Most Valuable Artifacts and Selling them on the Black Market",
-      icon: '🖋️',
+      progress: 0,
+      module_id: '3',
     },
     {
       id: 4,
       title: 'Cat Cafe Management',
       description: "How To Keep the Cats Off Your Customer's Food",
-      icon: '🍵',
+      progress: 0,
+      module_id: '4',
     },
   ];
 
