@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getUserId } from '@/app/auth/getUserId';
 import { Loading } from '@/components/ui/loading';
 import { ResultCard } from '@/components/practice/ResultCard';
+import { ENDPOINTS } from '@/config/urls';
 
 interface QuizQuestion {
   question_id: string;
@@ -48,7 +49,7 @@ const QuizResultsPage: React.FC = () => {
         setUserId(authUserId);
 
         const response = await fetchWithAuth(
-          `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}/${testId}`
+          ENDPOINTS.testResults(authUserId, testId)
         );
 
         if (!response.ok) {

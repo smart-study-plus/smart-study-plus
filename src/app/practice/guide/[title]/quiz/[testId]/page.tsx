@@ -8,6 +8,7 @@ import QuestionCard from '@/components/practice/card-question';
 import { getUserId } from '@/app/auth/getUserId';
 import { ArrowLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { ENDPOINTS } from '@/config/urls';
 
 interface Question {
   question: string;
@@ -59,12 +60,8 @@ const QuizPage: React.FC = () => {
 
         // Fetch both quiz and study guide data in parallel
         const [quizResponse, studyGuideResponse] = await Promise.all([
-          fetchWithAuth(
-            `http://localhost:8000/api/study-guide/practice-test/${testId}`
-          ),
-          fetchWithAuth(
-            `http://localhost:8000/api/study-guide/${encodeURIComponent(title)}`
-          ),
+          fetchWithAuth(ENDPOINTS.practiceTest(testId)),
+          fetchWithAuth(ENDPOINTS.studyGuide(title)),
         ]);
 
         if (!quizResponse.ok || !studyGuideResponse.ok) {
@@ -120,16 +117,13 @@ const QuizPage: React.FC = () => {
         answers: formattedAnswers,
       };
 
-      const response = await fetchWithAuth(
-        'http://localhost:8000/api/study-guide/practice-tests/submit',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submissionData),
-        }
-      );
+      const response = await fetchWithAuth(ENDPOINTS.submitTest, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to submit quiz');

@@ -13,6 +13,7 @@ import {
 import { getUserId } from '@/app/auth/getUserId';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
+import { ENDPOINTS } from '@/config/urls';
 
 interface Concept {
   concept: string;
@@ -72,15 +73,9 @@ const StudyGuidePage: React.FC = () => {
         // Fetch study guide, practice tests, and completed tests
         const [guideResponse, testsResponse, completedTestsResponse] =
           await Promise.all([
-            fetchWithAuth(
-              `http://localhost:8000/api/study-guide/${encodeURIComponent(title)}`
-            ),
-            fetchWithAuth(
-              `http://localhost:8000/api/study-guide/practice-tests/${encodeURIComponent(title)}`
-            ),
-            fetchWithAuth(
-              `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}`
-            ),
+            fetchWithAuth(ENDPOINTS.studyGuide(title)),
+            fetchWithAuth(ENDPOINTS.practiceTests(title)),
+            fetchWithAuth(ENDPOINTS.testResults(authUserId)),
           ]);
 
         if (
