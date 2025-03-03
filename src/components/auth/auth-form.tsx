@@ -50,33 +50,68 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setEmail(e.target.value)
-          }
-          required
-          className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setPassword(e.target.value)
-          }
-          required
-          className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
-        />
-      </div>
-      {error && <div className="text-sm text-red-500">{error}</div>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Loading...' : method === 'sign-up' ? 'Sign Up' : 'Sign In'}
-      </Button>
-    </form>
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900">
+        {method === 'sign-up' ? 'Create your account' : 'Welcome back'}
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
+              required
+              className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
+              required
+              className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+          </div>
+        </div>
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+        <Button
+          type="submit"
+          className="w-full py-3 bg-black text-white"
+          disabled={loading}
+        >
+          {loading
+            ? 'Please wait...'
+            : method === 'signup'
+              ? 'Create Account'
+              : 'Sign In'}
+        </Button>
+      </form>
+    </div>
   );
 }

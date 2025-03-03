@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { RiComputerLine } from 'react-icons/ri';
 import { MdDashboard } from 'react-icons/md';
-import {AuthForm} from '@/components/auth/auth-form';
+import { AuthForm } from '@/components/auth/auth-form';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -115,16 +115,13 @@ export default function Home() {
                   into comprehensive study guides with chapter-based quizzes,
                   progress analytics, and mock tests to master key concepts.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 hover:translate-y-1 transition-transform duration-300">
                   <Button
                     size="lg"
                     className="px-8"
                     onClick={() => openAuthModal('signup')}
                   >
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="lg">
-                    Learn More
                   </Button>
                 </div>
               </div>
