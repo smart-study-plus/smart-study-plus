@@ -51,7 +51,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      <header className="fixed w-full border-b border-[var(--color-gray-200)] bg-[var(--color-background)] backdrop-blur supports-[backdrop-filter]:bg-[var(--color-background)]/60">
+      <header className="fixed w-full border-b border-[var(--color-gray-200)] bg-white backdrop-blur supports-[backdrop-filter]:bg-[var(--color-background)]/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="h-6 w-6 text-[var(--color-primary)]" />
@@ -238,7 +238,7 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-[58rem] text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[var(--color-text)]">
-                How Smart Study+ Works
+                How SmartStudy+ Works
               </h2>
               <p className="mt-4 text-[var(--color-text-secondary)] md:text-xl">
                 A complete learning system designed for student success
@@ -292,17 +292,9 @@ export default function Home() {
                 Ready to Transform Your Study Experience?
               </h2>
               <p className="mt-4 text-white/90 md:text-xl">
-                Join Smart Study+ today and start creating intelligent study
+                Join SmartStudy+ today and start creating intelligent study
                 guides from your materials.
               </p>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="mt-8 px-8"
-                onClick={() => openAuthModal('signup')}
-              >
-                Get Started Now
-              </Button>
             </div>
           </div>
         </section>
