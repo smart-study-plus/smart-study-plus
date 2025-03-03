@@ -43,7 +43,7 @@ export default function Home() {
           <div className="relative">
             <button
               onClick={() => setShowAuthModal(false)}
-              className="absolute -top-2 -right-2 bg-[var(--color-background)] rounded-full p-1 hover:bg-[var(--color-gray-100)] transition-colors"
+              className="absolute -top-2 -right-2 bg-[var(--color-background)] rounded-full p-1 hover:bg-[var(--color-gray-100)] transition-colors z-[60]"
             >
               <X className="h-5 w-5 text-[var(--color-text)]" />
             </button>
