@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import {
   BookOpen,
   Brain,
@@ -11,15 +12,47 @@ import {
   CheckCircle,
   ClipboardCheck,
   BarChart3,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RiComputerLine } from 'react-icons/ri';
 import { MdDashboard } from 'react-icons/md';
+import AuthForm from '@/components/auth/auth-form';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMethod, setAuthMethod] = useState<'signin' | 'signup' | null>(
+    null
+  );
+  const router = useRouter();
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    router.push('/dashboard');
+  };
+
+  const openAuthModal = (method: 'signin' | 'signup') => {
+    setAuthMethod(method);
+    setShowAuthModal(true);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-background)]">
-      <header className="border-b border-[var(--color-gray-200)] bg-[var(--color-background)] backdrop-blur supports-[backdrop-filter]:bg-[var(--color-background)]/60">
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="relative">
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute -top-2 -right-2 bg-[var(--color-background)] rounded-full p-1 hover:bg-[var(--color-gray-100)] transition-colors"
+            >
+              <X className="h-5 w-5 text-[var(--color-text)]" />
+            </button>
+            <AuthForm method={authMethod} onSuccess={handleAuthSuccess} />
+          </div>
+        </div>
+      )}
+      <header className="fixed w-full border-b border-[var(--color-gray-200)] bg-[var(--color-background)] backdrop-blur supports-[backdrop-filter]:bg-[var(--color-background)]/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="h-6 w-6 text-[var(--color-primary)]" />
@@ -48,10 +81,21 @@ export default function Home() {
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openAuthModal('signin')}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-transparent"
+            >
               Log in
             </Button>
-            <Button size="sm">Sign up</Button>
+            <Button
+              size="sm"
+              onClick={() => openAuthModal('signup')}
+              className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+            >
+              Sign up
+            </Button>
           </div>
         </div>
       </header>
@@ -73,7 +117,11 @@ export default function Home() {
                   progress analytics, and mock tests to master key concepts.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button size="lg" className="px-8">
+                  <Button
+                    size="lg"
+                    className="px-8"
+                    onClick={() => openAuthModal('signup')}
+                  >
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="lg">
@@ -251,7 +299,12 @@ export default function Home() {
                 Join Smart Study+ today and start creating intelligent study
                 guides from your materials.
               </p>
-              <Button size="lg" variant="secondary" className="mt-8 px-8">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="mt-8 px-8"
+                onClick={() => openAuthModal('signup')}
+              >
                 Get Started Now
               </Button>
             </div>

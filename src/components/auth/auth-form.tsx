@@ -1,31 +1,71 @@
-/*
- * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
- */
-
 'use client';
 
-import React, { FC } from 'react';
-import SocialLogins from '@/components/auth/social-logins';
-
-// already extracted if we want to do something cool like have a signup form on the landing
+import React, { FC, useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
 interface AuthFormProps {
   method: string | null;
   err?: string | null;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSuccess?: () => void;
 }
 
-const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
+const AuthForm: FC<AuthFormProps> = ({
+  method,
+  err: initialError,
+  onSuccess,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(initialError || null);
+  const supabase = createClient();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const displayName = formData.get('displayName') as string;
+
+    try {
+      if (method === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              display_name: displayName,
+            },
+          },
+        });
+        if (error) throw error;
+      }
+
+      onSuccess?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 className="text-2xl font-bold mb-4 text-[#F4976C]">
+    <div className="bg-[var(--color-background)] p-8 rounded-lg shadow-lg w-full max-w-sm">
+      <h2 className="text-2xl font-bold mb-6 text-[var(--color-text)]">
         {method === 'signin' ? 'Welcome back' : "Let's get started"}
       </h2>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium my-2 text-gray-700"
+            className="block text-sm font-medium mb-1.5 text-[var(--color-text-secondary)]"
           >
             Email
           </label>
@@ -33,14 +73,15 @@ const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
             id="email"
             name="email"
             type="email"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
+            className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
             required
+            disabled={isLoading}
           />
         </div>
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium my-2 text-gray-700"
+            className="block text-sm font-medium mb-1.5 text-[var(--color-text-secondary)]"
           >
             Password
           </label>
@@ -48,8 +89,9 @@ const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
             id="password"
             name="password"
             type="password"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
+            className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -57,7 +99,7 @@ const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
           <div>
             <label
               htmlFor="displayName"
-              className="block text-sm font-medium my-2 text-gray-700"
+              className="block text-sm font-medium mb-1.5 text-[var(--color-text-secondary)]"
             >
               Display Name
             </label>
@@ -65,21 +107,27 @@ const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
               id="displayName"
               name="displayName"
               type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
+              className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
+              disabled={isLoading}
             />
           </div>
         )}
 
-        <span className="text-red-400">{err}</span>
+        {error && (
+          <span className="text-[var(--color-error)] text-sm">{error}</span>
+        )}
 
         <button
           type="submit"
-          className="w-full bg-[#F4976C] text-white mt-4 py-2 px-4 rounded-md hover:bg-[#f3855c] transition-colors font-medium"
+          className="w-full bg-[var(--color-primary)] text-white mt-6 py-2.5 px-4 rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors font-medium disabled:opacity-50"
+          disabled={isLoading}
         >
-          {method === 'signin' ? 'Sign In' : 'Create Account'}
+          {isLoading
+            ? 'Please wait...'
+            : method === 'signin'
+              ? 'Sign In'
+              : 'Create Account'}
         </button>
-
-        <SocialLogins />
       </form>
     </div>
   );
