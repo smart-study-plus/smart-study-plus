@@ -5,15 +5,16 @@
 'use client';
 
 import { redirect, useSearchParams } from 'next/navigation';
-import { signin, signOut, signup } from './actions';
-import React, { useEffect } from 'react';
-import { router } from 'next/client';
-import AuthForm from '@/components/auth/auth-form';
+import { signOut } from './actions';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthForm } from '@/components/auth/auth-form';
 import { toast } from 'sonner';
 import { Suspense } from 'react';
 
 const AuthContent = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const method = searchParams.get('m');
   const err = searchParams.get('e');
   const verification = searchParams.get('verification');
@@ -32,30 +33,29 @@ const AuthContent = () => {
     const handleSignOutAndRedirect = async () => {
       if (method === 'signout') {
         await signOut();
-        await router.push('/');
+        router.push('/');
       }
     };
 
-    handleSignOutAndRedirect().then();
-  }, [method, verification]);
+    handleSignOutAndRedirect().catch(console.error);
+  }, [method, verification, router]);
 
-  const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-
-    if (method === 'signin') {
-      await signin(formData); // Trigger the signin action
-    } else if (method === 'signup') {
-      await signup(formData); // Trigger the signup action
-    } else {
-      redirect('/auth?m=signin&e=Invalid method provided');
-    }
-  };
+  if (!method || (method !== 'signin' && method !== 'sign-up')) {
+    redirect('/auth?m=signin');
+  }
 
   return (
     <div className="bg-gray-100 h-screen flex justify-center items-center">
-      <AuthForm method={method} err={err} onSubmit={handleFormSubmission} />
+      <div className="bg-[var(--color-background)] p-8 rounded-lg shadow-lg w-full max-w-sm">
+        <h2 className="text-2xl font-bold mb-6 text-[var(--color-text)]">
+          {method === 'signin' ? 'Welcome back' : "Let's get started"}
+        </h2>
+        <AuthForm
+          method={method}
+          err={err}
+          onSuccess={() => router.push('/dashboard')}
+        />
+      </div>
     </div>
   );
 };

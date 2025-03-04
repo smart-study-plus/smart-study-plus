@@ -1,88 +1,82 @@
-/*
- * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
- */
-
 'use client';
 
-import React, { FC } from 'react';
-import SocialLogins from '@/components/auth/social-logins';
-
-// already extracted if we want to do something cool like have a signup form on the landing
+import { FormEvent, useState, ChangeEvent } from 'react';
+import { createClient } from '@/utils/supabase/client';
+import { Button } from '@/components/ui/button';
 
 interface AuthFormProps {
   method: string | null;
   err?: string | null;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSuccess?: () => void;
 }
 
-const AuthForm: FC<AuthFormProps> = ({ method, err, onSubmit }) => {
+export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(err || null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { error: authError } =
+        method === 'sign-up'
+          ? await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                emailRedirectTo: `${window.location.origin}/auth/callback`,
+              },
+            })
+          : await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+      if (authError) throw authError;
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 className="text-2xl font-bold mb-4 text-[#F4976C]">
-        {method === 'signin' ? 'Welcome back' : "Let's get started"}
-      </h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium my-2 text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
-            required
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium my-2 text-gray-700"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
-            required
-          />
-        </div>
-
-        {method === 'signup' && (
-          <div>
-            <label
-              htmlFor="displayName"
-              className="block text-sm font-medium my-2 text-gray-700"
-            >
-              Display Name
-            </label>
-            <input
-              id="displayName"
-              name="displayName"
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F4976C]"
-            />
-          </div>
-        )}
-
-        <span className="text-red-400">{err}</span>
-
-        <button
-          type="submit"
-          className="w-full bg-[#F4976C] text-white mt-4 py-2 px-4 rounded-md hover:bg-[#f3855c] transition-colors font-medium"
-        >
-          {method === 'signin' ? 'Sign In' : 'Create Account'}
-        </button>
-
-        <SocialLogins />
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
+          required
+          className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setPassword(e.target.value)
+          }
+          required
+          className="w-full p-3 border border-[var(--color-gray-200)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-background)]"
+        />
+      </div>
+      {error && <div className="text-sm text-red-500">{error}</div>}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Loading...' : method === 'sign-up' ? 'Sign Up' : 'Sign In'}
+      </Button>
+    </form>
   );
-};
-
-export default AuthForm;
+}

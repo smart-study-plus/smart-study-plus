@@ -5,14 +5,20 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // allow all images to be handled by nextjs
-  images: {
-    remotePatterns: [
+  reactStrictMode: true,
+  output: 'standalone',
+  async headers() {
+    return [
       {
-        protocol: 'https',
-        hostname: '**',
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        ],
       },
-    ],
+    ];
   },
 };
 
