@@ -70,7 +70,7 @@ export const HintSection = ({
       const generateData = await generateResponse.json();
       setHint(generateData.hint);
     } catch (error) {
-      setHint('❌ Failed to load hint.');
+      setHint('Failed to load hint.');
     } finally {
       setLoadingHint(false);
     }
@@ -85,7 +85,7 @@ export const HintSection = ({
   if (!isVisible) return null;
 
   const parseMarkdown = (text: string) => {
-    if (!text) return null;
+    if (!text) return '';
 
     text = text.replace(/(\d+\.)?\s*\*\*(.*?)\*\*/g, (_, num, content) => {
       return `${num ? `<br><strong>${num} ${content}</strong>` : `<br><strong>${content}</strong>`}`;
@@ -94,13 +94,13 @@ export const HintSection = ({
     text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
     text = text.replace(
-      /\\\((.*?)\\\)/g,
-      (_, equation) => `<MathJax inline>${equation}</MathJax>`
+      /\$(.*?)\$/g,
+      (_, equation) => `\$begin:math:text$${equation}\\$end:math:text$`
     );
 
     text = text.replace(
-      /\$\$([\s\S]*?)\$\$/gm,
-      (_, equation) => `<MathJax>${equation}</MathJax>`
+      /\$\$(.*?)\$\$/gm,
+      (_, equation) => `\$begin:math:display$${equation}\\$end:math:display$`
     );
 
     return text;
@@ -127,12 +127,9 @@ export const HintSection = ({
             </p>
           ) : (
             <MathJax>
-              <div
-                className="text-lg text-[var(--color-text-secondary)]"
-                dangerouslySetInnerHTML={{
-                  __html: parseMarkdown(hint ?? '') || '',
-                }}
-              />
+              <p className="text-lg text-[var(--color-text-secondary)]">
+                {parseMarkdown(hint ?? '')}
+              </p>
             </MathJax>
           )}
         </div>

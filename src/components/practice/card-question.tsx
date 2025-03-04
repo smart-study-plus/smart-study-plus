@@ -100,7 +100,7 @@ const QuestionCard = ({
                 onClick={() => onSelectAnswer(question.question_id, key)}
                 className={`w-full text-left p-5 rounded-lg border text-lg transition-colors ${
                   selectedAnswer === key
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] bg-opacity-10'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
                     : 'border-[var(--color-gray-200)] hover:border-[var(--color-primary)] hover:bg-[var(--color-background-alt)]'
                 }`}
               >

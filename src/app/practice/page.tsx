@@ -55,7 +55,7 @@ const PracticePage: React.FC = () => {
 
         // Fetch completed tests
         const completedTestsResponse = await fetchWithAuth(
-          `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}`
+          `http://localhost:8000/api/study-guide/practice/results/${authUserId}`
         );
         if (!completedTestsResponse.ok)
           throw new Error('Failed to fetch completed tests');
@@ -71,7 +71,7 @@ const PracticePage: React.FC = () => {
         await Promise.all(
           guides.map(async (title: string) => {
             const testResponse = await fetchWithAuth(
-              `http://localhost:8000/api/study-guide/practice-tests/${encodeURIComponent(title)}`
+              `http://localhost:8000/api/study-guide/practice/${encodeURIComponent(title)}`
             );
             if (testResponse.ok) {
               const testData: StudyGuide = await testResponse.json();

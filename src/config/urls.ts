@@ -5,12 +5,12 @@ export const ENDPOINTS = {
   studyGuide: (title: string) =>
     `${API_URL}/api/study-guide/${encodeURIComponent(title)}`,
   practiceTests: (title: string) =>
-    `${API_URL}/api/study-guide/practice-tests/${encodeURIComponent(title)}`,
+    `${API_URL}/api/study-guide/practice/${encodeURIComponent(title)}`,
   practiceTest: (testId: string) =>
-    `${API_URL}/api/study-guide/practice-test/${testId}`,
+    `${API_URL}/api/study-guide/practice/${testId}`,
   testResults: (userId: string, testId?: string) =>
     testId
-      ? `${API_URL}/api/study-guide/practice-tests/results/${userId}/${testId}`
-      : `${API_URL}/api/study-guide/practice-tests/results/${userId}`,
-  submitTest: `${API_URL}/api/study-guide/practice-tests/submit`,
+      ? `${API_URL}/api/study-guide/practice/results/${userId}/${testId}`
+      : `${API_URL}/api/study-guide/practice/results/${userId}`,
+  submitTest: `${API_URL}/api/study-guide/practice/submit`,
 };
