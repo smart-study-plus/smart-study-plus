@@ -2,12 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  BarChart3,
-  BookOpen,
-  ClipboardCheck,
-  FileText,
-} from 'lucide-react';
+import { BarChart3, BookOpen, ClipboardCheck, FileText } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
@@ -36,10 +31,10 @@ export default function DashboardPage() {
           <h1 className="mb-8 text-5xl font-bold">Welcome back, {userName}!</h1>
           <Tabs defaultValue="overview" className="space-y-8">
             <div className="flex justify-start">
-              <TabsList className="bg-background">
+              <TabsList className="bg-[var(--color-background)]">
                 <TabsTrigger
                   value="overview"
-                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+                  className="data-[state=active]:border-[var(--color-primary)] data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
                 >
                   Overview
                 </TabsTrigger>
@@ -57,118 +52,133 @@ export default function DashboardPage() {
                 </TabsTrigger> */}
               </TabsList>
             </div>
-            <TabsContent value="overview" className="space-y-6">
+            <TabsContent
+              value="overview"
+              className="space-y-6 transform-gpu transition-all duration-200 ease-out"
+            >
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
+                <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium text-[var(--color-text)]">
                       Total Study Time
                     </CardTitle>
-                    <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                    <ClipboardCheck className="h-4 w-4 text-[var(--color-text-muted)]" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">24.5 hours</div>
-                    <p className="text-xs text-muted-foreground">
+                    <div className="text-2xl font-bold text-[var(--color-text)]">
+                      24.5 hours
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       +2.5 hours from last week
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium text-[var(--color-text)]">
                       Completed Chapters
                     </CardTitle>
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <BookOpen className="h-4 w-4 text-[var(--color-text-muted)]" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">15/20</div>
-                    <p className="text-xs text-muted-foreground">
+                    <div className="text-2xl font-bold text-[var(--color-text)]">
+                      15/20
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       75% completion rate
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium text-[var(--color-text)]">
                       Practice Tests Taken
                     </CardTitle>
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <FileText className="h-4 w-4 text-[var(--color-text-muted)]" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">32</div>
-                    <p className="text-xs text-muted-foreground">
+                    <div className="text-2xl font-bold text-[var(--color-text)]">
+                      32
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       +8 from last week
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium text-[var(--color-text)]">
                       Average Score
                     </CardTitle>
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <BarChart3 className="h-4 w-4 text-[var(--color-text-muted)]" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">85%</div>
-                    <p className="text-xs text-muted-foreground">
+                    <div className="text-2xl font-bold text-[var(--color-text)]">
+                      85%
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       +5% from last week
                     </p>
                   </CardContent>
                 </Card>
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                <Card className="col-span-4 border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.01] hover:shadow-lg">
                   <CardHeader>
-                    <CardTitle>Weekly Progress</CardTitle>
+                    <CardTitle className="text-[var(--color-text)]">
+                      Weekly Progress
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pl-2">
-                    <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                    <div className="h-[200px] flex items-center justify-center text-[var(--color-text-muted)]">
                       [Weekly progress chart placeholder]
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="col-span-3">
+                <Card className="col-span-3 border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.01] hover:shadow-lg">
                   <CardHeader>
-                    <CardTitle>Top Performing Subjects</CardTitle>
+                    <CardTitle className="text-[var(--color-text)]">
+                      Top Performing Subjects
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center">
                         <div className="w-full flex-1 space-y-1">
-                          <p className="text-sm font-medium leading-none">
+                          <p className="text-sm font-medium leading-none text-[var(--color-text)]">
                             Mathematics
                           </p>
-                          <div className="h-2 w-full rounded-full bg-muted">
-                            <div className="h-full w-[75%] rounded-full bg-primary" />
+                          <div className="h-2 w-full rounded-full bg-[var(--color-gray-200)]">
+                            <div className="h-full w-[75%] rounded-full bg-[var(--color-primary)]" />
                           </div>
                         </div>
-                        <span className="ml-4 text-sm text-muted-foreground">
+                        <span className="ml-4 text-sm text-[var(--color-text-muted)]">
                           75%
                         </span>
                       </div>
                       <div className="flex items-center">
                         <div className="w-full flex-1 space-y-1">
-                          <p className="text-sm font-medium leading-none">
+                          <p className="text-sm font-medium leading-none text-[var(--color-text)]">
                             Physics
                           </p>
-                          <div className="h-2 w-full rounded-full bg-muted">
-                            <div className="h-full w-[68%] rounded-full bg-primary" />
+                          <div className="h-2 w-full rounded-full bg-[var(--color-gray-200)]">
+                            <div className="h-full w-[68%] rounded-full bg-[var(--color-primary)]" />
                           </div>
                         </div>
-                        <span className="ml-4 text-sm text-muted-foreground">
+                        <span className="ml-4 text-sm text-[var(--color-text-muted)]">
                           68%
                         </span>
                       </div>
                       <div className="flex items-center">
                         <div className="w-full flex-1 space-y-1">
-                          <p className="text-sm font-medium leading-none">
+                          <p className="text-sm font-medium leading-none text-[var(--color-text)]">
                             Chemistry
                           </p>
-                          <div className="h-2 w-full rounded-full bg-muted">
-                            <div className="h-full w-[62%] rounded-full bg-primary" />
+                          <div className="h-2 w-full rounded-full bg-[var(--color-gray-200)]">
+                            <div className="h-full w-[62%] rounded-full bg-[var(--color-primary)]" />
                           </div>
                         </div>
-                        <span className="ml-4 text-sm text-muted-foreground">
+                        <span className="ml-4 text-sm text-[var(--color-text-muted)]">
                           62%
                         </span>
                       </div>
@@ -177,8 +187,11 @@ export default function DashboardPage() {
                 </Card>
               </div>
             </TabsContent>
-            <TabsContent value="analytics" className="space-y-4">
-              <Card>
+            <TabsContent
+              value="analytics"
+              className="space-y-4 transform-gpu transition-all duration-200 ease-out"
+            >
+              <Card className="transform-gpu transition-all duration-200 hover:scale-[1.01] hover:shadow-lg">
                 <CardHeader>
                   <CardTitle>Detailed Analytics</CardTitle>
                 </CardHeader>
@@ -189,8 +202,11 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="progress" className="space-y-4">
-              <Card>
+            <TabsContent
+              value="progress"
+              className="space-y-4 transform-gpu transition-all duration-200 ease-out"
+            >
+              <Card className="transform-gpu transition-all duration-200 hover:scale-[1.01] hover:shadow-lg">
                 <CardHeader>
                   <CardTitle>Learning Progress</CardTitle>
                 </CardHeader>

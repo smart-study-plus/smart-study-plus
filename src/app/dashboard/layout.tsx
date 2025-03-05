@@ -15,6 +15,10 @@ const DashboardLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) => <div className="min-h-screen bg-background">{children}</div>;
+}>) => (
+  <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    {children}
+  </div>
+);
 
 export default DashboardLayout;

@@ -52,14 +52,16 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-[var(--color-background)]">
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div
           onClick={handleLogoClick}
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <Brain className="h-6 w-6 text-primary" />
-          <span className="text-2xl font-bold">SmartStudy+</span>
+          <Brain className="h-6 w-6 text-[var(--color-primary)]" />
+          <span className="text-2xl font-bold text-[var(--color-text)]">
+            SmartStudy+
+          </span>
         </div>
         <nav className="flex items-center gap-4">
           {navItems.map((item) => (
@@ -67,17 +69,22 @@ export function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'text-sm font-medium transition-colors hover:text-foreground',
+                'text-sm font-medium transition-colors hover:text-[var(--color-text)]',
                 isActiveRoute(item.pattern)
-                  ? 'text-primary font-semibold'
-                  : 'text-muted-foreground'
+                  ? 'text-[var(--color-primary)] font-semibold'
+                  : 'text-[var(--color-text-muted)]'
               )}
             >
               {item.label}
             </Link>
           ))}
         </nav>
-        <Button variant="ghost" size="lg" onClick={handleLogout}>
+        <Button
+          variant="ghost"
+          size="lg"
+          onClick={handleLogout}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-gray-100)]"
+        >
           Log out
         </Button>
       </div>

@@ -5,7 +5,7 @@ export const ENDPOINTS = {
   studyGuide: (title: string) =>
     `${API_URL}/api/study-guide/${encodeURIComponent(title)}`,
   practiceTests: (title: string) =>
-    `${API_URL}/api/study-guide/practice/${encodeURIComponent(title)}`,
+    `${API_URL}/api/study-guide/practice/guide/${encodeURIComponent(title)}`,
   practiceTest: (testId: string) =>
     `${API_URL}/api/study-guide/practice/${testId}`,
   testResults: (userId: string, testId?: string) =>
