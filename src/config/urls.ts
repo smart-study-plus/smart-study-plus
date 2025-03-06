@@ -10,6 +10,8 @@ export const ENDPOINTS = {
     `${API_URL}/api/study-guide/practice/guide/${encodeURIComponent(title)}`,
   practiceTest: (testId: string) =>
     `${API_URL}/api/study-guide/practice/${testId}`,
+  testAnalytics: (userId: string) =>
+    `${API_URL}/api/user/test-analytics/${encodeURIComponent(userId)}`,
   testResults: (userId: string, testId?: string) =>
     testId
       ? `${API_URL}/api/study-guide/practice/results/${userId}/${testId}`

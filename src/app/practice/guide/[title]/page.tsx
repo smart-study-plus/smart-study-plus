@@ -46,6 +46,10 @@ interface CompletedTest {
   test_id: string;
 }
 
+interface TestResultsResponse {
+  test_results: CompletedTest[];
+}
+
 interface TestMap {
   [key: string]: string;
 }
@@ -89,7 +93,7 @@ const StudyGuidePage: React.FC = () => {
         const [guideData, testsData, completedTestsData]: [
           StudyGuideData,
           PracticeTestsData,
-          CompletedTest[],
+          TestResultsResponse,
         ] = await Promise.all([
           guideResponse.json(),
           testsResponse.json(),
@@ -106,7 +110,9 @@ const StudyGuidePage: React.FC = () => {
 
         // Get list of completed test IDs
         const completedTestIds = new Set(
-          completedTestsData.map((test: CompletedTest) => test.test_id)
+          completedTestsData.test_results.map(
+            (test: CompletedTest) => test.test_id
+          )
         );
 
         setStudyGuide(guideData);

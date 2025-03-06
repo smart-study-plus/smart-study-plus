@@ -247,7 +247,7 @@ const QuizPage: React.FC = () => {
                   disabled={!isQuizComplete || submitting || !studyGuideId}
                   variant="default"
                   size="lg"
-                  className="text-xl"
+                  className="text-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting
                     ? 'Submitting...'

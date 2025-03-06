@@ -24,6 +24,10 @@ interface CompletedTest {
   test_id: string;
 }
 
+interface TestResultsResponse {
+  test_results: CompletedTest[];
+}
+
 interface ProgressMap {
   [key: string]: number;
 }
@@ -38,7 +42,7 @@ const PracticePage: React.FC = () => {
   useEffect(() => {
     const fetchStudyGuides = async (): Promise<void> => {
       try {
-        // Ensure we only run this after the component mounts
+        // Ensure this only runs after the component mounts
         if (typeof window === 'undefined') return;
 
         const authUserId = await getUserId();
@@ -58,14 +62,21 @@ const PracticePage: React.FC = () => {
         const completedTestsResponse = await fetchWithAuth(
           ENDPOINTS.testResults(authUserId)
         );
-        if (!completedTestsResponse.ok)
-          throw new Error('Failed to fetch completed tests');
 
-        const completedTestsData: CompletedTest[] =
-          await completedTestsResponse.json();
-        const completedTestsMap = new Set(
-          completedTestsData.map((test: CompletedTest) => test.test_id)
-        );
+        let completedTestsMap = new Set<string>();
+
+        if (!completedTestsResponse.ok) {
+          console.warn('No test results found for user.');
+          setProgressMap({}); // Ensure empty state is handled
+        } else {
+          const completedTestsData: TestResultsResponse =
+            await completedTestsResponse.json();
+          completedTestsMap = new Set(
+            completedTestsData.test_results.map(
+              (test: CompletedTest) => test.test_id
+            )
+          );
+        }
 
         // Fetch practice tests and calculate progress for each study guide
         const progressData: ProgressMap = {};
