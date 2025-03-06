@@ -39,11 +39,6 @@ const hoverScale = {
   tap: { scale: 0.95 },
 };
 
-const hoverRotate = {
-  hover: { rotate: 5 },
-  tap: { rotate: -5 },
-};
-
 export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMethod, setAuthMethod] = useState<'signin' | 'signup' | null>(

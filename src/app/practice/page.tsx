@@ -11,6 +11,7 @@ import { Loading } from '@/components/ui/loading';
 import { BookOpen } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
+import { ENDPOINTS } from '@/config/urls';
 
 interface StudyGuide {
   title: string;
@@ -55,7 +56,7 @@ const PracticePage: React.FC = () => {
 
         // Fetch completed tests
         const completedTestsResponse = await fetchWithAuth(
-          `http://localhost:8000/api/study-guide/practice/results/${authUserId}`
+          ENDPOINTS.testResults(authUserId)
         );
         if (!completedTestsResponse.ok)
           throw new Error('Failed to fetch completed tests');
@@ -71,7 +72,7 @@ const PracticePage: React.FC = () => {
         await Promise.all(
           guides.map(async (title: string) => {
             const testResponse = await fetchWithAuth(
-              `http://localhost:8000/api/study-guide/practice/${encodeURIComponent(title)}`
+              ENDPOINTS.practiceTests(title)
             );
             if (testResponse.ok) {
               const testData: StudyGuide = await testResponse.json();

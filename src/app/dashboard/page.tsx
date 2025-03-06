@@ -6,21 +6,53 @@ import { BarChart3, BookOpen, ClipboardCheck, FileText } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
+import { ENDPOINTS } from '@/config/urls';
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>('Student');
+  const [studyHours, setStudyHours] = useState<string>('Loading...');
+  const [studyMessage, setStudyMessage] = useState<string>('');
   const supabase = createClient();
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUserAndStudyHours = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user?.user_metadata?.display_name) {
         setUserName(user.user_metadata.display_name);
       }
+
+      if (user?.id) {
+        fetchStudyHours(user.id);
+      }
     };
-    getUser();
+
+    const fetchStudyHours = async (userId: string) => {
+      try {
+        const response = await fetch(ENDPOINTS.studyHours(userId), {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${await supabase.auth.getSession().then((res) => res.data.session?.access_token)}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch study hours');
+        }
+
+        const data = await response.json();
+        setStudyHours(`${data.total_hours} hours`);
+        setStudyMessage(data.message);
+      } catch (error) {
+        console.error('Error fetching study hours:', error);
+        setStudyHours('0 hours');
+        setStudyMessage('Unable to retrieve data.');
+      }
+    };
+
+    getUserAndStudyHours();
   }, []);
 
   return (
@@ -38,18 +70,6 @@ export default function DashboardPage() {
                 >
                   Overview
                 </TabsTrigger>
-                {/* <TabsTrigger
-                  value="analytics"
-                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
-                >
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger
-                  value="progress"
-                  className="data-[state=active]:border-2 data-[state=active]:rounded-md data-[state=active]:shadow-sm"
-                >
-                  Progress
-                </TabsTrigger> */}
               </TabsList>
             </div>
             <TabsContent
@@ -57,20 +77,18 @@ export default function DashboardPage() {
               className="space-y-6 transform-gpu transition-all duration-200 ease-out"
             >
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <Card className="border-gray-200 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-[var(--color-text)]">
-                      Total Study Time
+                    <CardTitle className="text-sm font-medium text-gray-900">
+                      Total Study Time (Week)
                     </CardTitle>
-                    <ClipboardCheck className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    <ClipboardCheck className="h-4 w-4 text-gray-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-[var(--color-text)]">
-                      24.5 hours
+                    <div className="text-2xl font-bold text-gray-900">
+                      {studyHours}
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      +2.5 hours from last week
-                    </p>
+                    <p className="text-xs text-gray-500">{studyMessage}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-[var(--color-gray-200)] transform-gpu transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">

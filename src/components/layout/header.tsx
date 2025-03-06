@@ -11,6 +11,7 @@ import { Brain } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
+import { ENDPOINTS } from '@/config/urls';
 
 export function Header() {
   const router = useRouter();
@@ -18,6 +19,25 @@ export function Header() {
   const supabase = createClient();
 
   const handleLogout = async () => {
+    const supabase = createClient();
+    const session_id = localStorage.getItem('session_id');
+
+    if (session_id) {
+      const token = (await supabase.auth.getSession()).data.session
+        ?.access_token;
+
+      await fetch(ENDPOINTS.endSession, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id }),
+      });
+
+      localStorage.removeItem('session_id');
+    }
+
     await supabase.auth.signOut();
     router.push('/');
   };

@@ -3,6 +3,7 @@
 import { FormEvent, useState, ChangeEvent } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
+import { ENDPOINTS } from '@/config/urls';
 
 interface AuthFormProps {
   method: string | null;
@@ -38,6 +39,24 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
             });
 
       if (authError) throw authError;
+
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (token) {
+        const response = await fetch(ENDPOINTS.startSession , {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ device: 'browser' }), // Detect mobile if needed
+        });
+
+        if (response.ok) {
+          const { session_id } = await response.json();
+          localStorage.setItem('session_id', session_id); // Store session ID for logout
+        }
+      }
+
 
       if (onSuccess) {
         onSuccess();
