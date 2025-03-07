@@ -121,7 +121,7 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
         )}
         <Button
           type="submit"
-          className="w-full py-3 bg-black text-white"
+          className="w-full py-3 bg-gradient-to-tl from-[var(--color-primary)] to-green-200 text-white"
           disabled={loading}
         >
           {loading

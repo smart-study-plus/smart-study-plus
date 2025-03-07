@@ -171,7 +171,7 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 whileHover={{ scale: 1.05, rotate: 5 }}
-                className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)]/20 p-4 shadow-lg flex items-center justify-center"
+                className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-purple-200 p-4 shadow-lg flex items-center justify-center"
               >
                 <RiComputerLine className="w-32 h-32 text-white/80" />
               </motion.div>
@@ -253,7 +253,7 @@ export default function Home() {
                 viewport={{ margin: '-100px' }}
                 transition={{ duration: 0.5 }}
                 whileHover={{ scale: 1.05, rotate: -5 }}
-                className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)]/60 p-4 shadow-lg order-last lg:order-first flex items-center justify-center"
+                className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-purple-200 p-4 shadow-lg order-last lg:order-first flex items-center justify-center"
               >
                 <MdDashboard className="w-32 h-32 text-white/80" />
               </motion.div>
