@@ -8,9 +8,10 @@ import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Clock, Sparkles } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { ENDPOINTS } from '@/config/urls';
 
 interface StudyGuide {
@@ -18,6 +19,9 @@ interface StudyGuide {
   practice_tests: Array<{
     practice_test_id: string;
   }>;
+  chapters?: number;
+  estimatedTime?: string;
+  difficulty?: string;
 }
 
 interface CompletedTest {
@@ -33,7 +37,7 @@ interface ProgressMap {
 }
 
 const PracticePage: React.FC = () => {
-  const [studyGuides, setStudyGuides] = useState<string[]>([]);
+  const [studyGuides, setStudyGuides] = useState<StudyGuide[]>([]);
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,23 +46,26 @@ const PracticePage: React.FC = () => {
   useEffect(() => {
     const fetchStudyGuides = async (): Promise<void> => {
       try {
-        // Ensure this only runs after the component mounts
         if (typeof window === 'undefined') return;
 
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
-        // Fetch all study guides
         const response = await fetchWithAuth(
           'http://localhost:8000/api/study-guide/all'
         );
         if (!response.ok) throw new Error('Failed to fetch study guides');
 
         const data = await response.json();
-        const guides: string[] = data.study_guides || [];
+        const guides: StudyGuide[] =
+          data.study_guides.map((title: string) => ({
+            title,
+            practice_tests: [],
+            // chapters: Math.floor(Math.random() * 10) + 5, // Temporary mock data
+            // estimatedTime: `${Math.floor(Math.random() * 8) + 4} hours`,
+          })) || [];
         setStudyGuides(guides);
 
-        // Fetch completed tests
         const completedTestsResponse = await fetchWithAuth(
           ENDPOINTS.testResults(authUserId)
         );
@@ -67,7 +74,7 @@ const PracticePage: React.FC = () => {
 
         if (!completedTestsResponse.ok) {
           console.warn('No test results found for user.');
-          setProgressMap({}); // Ensure empty state is handled
+          setProgressMap({});
         } else {
           const completedTestsData: TestResultsResponse =
             await completedTestsResponse.json();
@@ -78,12 +85,11 @@ const PracticePage: React.FC = () => {
           );
         }
 
-        // Fetch practice tests and calculate progress for each study guide
         const progressData: ProgressMap = {};
         await Promise.all(
-          guides.map(async (title: string) => {
+          guides.map(async (guide: StudyGuide) => {
             const testResponse = await fetchWithAuth(
-              ENDPOINTS.practiceTests(title)
+              ENDPOINTS.practiceTests(guide.title)
             );
             if (testResponse.ok) {
               const testData: StudyGuide = await testResponse.json();
@@ -91,7 +97,7 @@ const PracticePage: React.FC = () => {
               const completedTests = testData.practice_tests.filter((test) =>
                 completedTestsMap.has(test.practice_test_id)
               ).length;
-              progressData[title] =
+              progressData[guide.title] =
                 totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
             }
           })
@@ -107,7 +113,6 @@ const PracticePage: React.FC = () => {
       }
     };
 
-    // Run this only when the component is mounted
     if (typeof window !== 'undefined') {
       void fetchStudyGuides();
     }
@@ -118,78 +123,129 @@ const PracticePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">
-              Practice Mode
-            </h1>
-            <p className="text-base text-[var(--color-text-secondary)] mt-2">
-              Select a study guide to practice with
-            </p>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+            Practice Mode
+          </h1>
+          <p className="text-xl text-gray-600">
+            Select a study guide to practice with
+          </p>
+        </div>
+
+        {loading ? (
+          <Loading size="lg" text="Loading study guides..." />
+        ) : error ? (
+          <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
+            <p className="text-base text-red-500">Error: {error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+              variant="default"
+            >
+              Try Again
+            </Button>
           </div>
-
-          {loading ? (
-            <Loading size="lg" text="Loading study guides..." />
-          ) : error ? (
-            <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-base text-red-500">Error: {error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-4 px-4 py-2 text-base font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+        ) : (
+          <div className="grid gap-8">
+            {studyGuides.map((guide, index) => (
+              <Card
+                key={index}
+                className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
               >
-                Try Again
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-4">
-                {studyGuides.map((title: string, index: number) => (
-                  <div
-                    key={index}
-                    onClick={() => handleCardClick(title)}
-                    className="bg-[var(--color-background)] rounded-lg p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group w-full"
-                  >
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-semibold text-[var(--color-text)] break-words flex-1">
-                        {title.replace(/_/g, ' ')}
-                      </h2>
-                      <Button variant="outline" size="sm" className="shrink-0">
-                        View Study Guide
-                      </Button>
-                    </div>
+                <CardContent className="p-8">
+                  <div className="relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-primary)]/5 to-purple-300/5 rounded-full -translate-y-32 translate-x-32 group-hover:translate-x-28 transition-transform duration-500"></div>
 
-                    <div className="mt-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm text-[var(--color-text-secondary)]">
-                          Progress: {progressMap[title]?.toFixed(0) || 0}%
-                        </p>
+                    <div className="grid md:grid-cols-3 gap-8">
+                      <div className="md:col-span-2 space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-5 w-5 text-[var(--color-primary)]" />
+                            <h2 className="text-2xl font-bold text-gray-900">
+                              {guide.title.replace(/_/g, ' ')}
+                            </h2>
+                          </div>
+                          <p className="text-gray-600">
+                            Comprehensive guide covering key concepts and
+                            practice exercises
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span>
+                              Progress:{' '}
+                              {progressMap[guide.title]?.toFixed(0) || 0}%
+                            </span>
+                            <span className="font-medium text-[var(--color-primary)]">
+                              {progressMap[guide.title]?.toFixed(0) || 0}/100
+                            </span>
+                          </div>
+                          <Progress
+                            value={progressMap[guide.title] || 0}
+                            className="h-2"
+                          />
+                        </div>
+
+                        {/* <div className="flex gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <BookOpen className="h-4 w-4" />
+                            <span>{guide.chapters} Chapters</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{guide.estimatedTime}</span>
+                          </div>
+                        </div> */}
                       </div>
-                      <Progress
-                        value={progressMap[title] || 0}
-                        className="h-3 bg-gray-200 rounded-full"
-                      />
+
+                      <div className="md:border-l md:pl-8 flex flex-col justify-center items-center md:items-start gap-4">
+                        <div className="text-center md:text-left">
+                          <p className="text-sm font-medium text-gray-600">
+                            Current Status
+                          </p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {progressMap[guide.title] === 0
+                              ? 'Not Started'
+                              : 'In Progress'}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => handleCardClick(guide.title)}
+                          className="w-full md:w-auto bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90 transition-all duration-300"
+                        >
+                          View Study Guide
+                          <BookOpen className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-              {studyGuides.length === 0 && (
-                <div className="text-center p-8 bg-[var(--color-background)] rounded-lg border border-[var(--color-gray-200)]">
-                  <BookOpen
-                    className="mx-auto text-[var(--color-text-secondary)]"
-                    size={48}
-                  />
-                  <p className="mt-4 text-base text-[var(--color-text-secondary)]">
-                    No study guides available. Please check back later.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        {!loading && studyGuides.length === 0 && (
+          <Card className="bg-white shadow-lg p-8 text-center">
+            <CardContent className="space-y-4">
+              <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-[var(--color-primary)]" />
+              </div>
+              <h3 className="text-xl font-bold">No Study Guides Available</h3>
+              <p className="text-gray-600">
+                Upload your study materials to get started with AI-powered study
+                guides.
+              </p>
+              <Button className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90">
+                Upload Materials
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

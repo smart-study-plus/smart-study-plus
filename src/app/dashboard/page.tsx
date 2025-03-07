@@ -1,23 +1,19 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock,
   Target,
   Award,
-  ChevronDown,
   X,
   Check,
   Zap,
-  ArrowRight,
   Loader2,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { ENDPOINTS } from '@/config/urls';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   Accordion,

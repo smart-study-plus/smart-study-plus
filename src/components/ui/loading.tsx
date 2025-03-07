@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface LoadingProps {
   text?: string;
@@ -8,29 +9,25 @@ interface LoadingProps {
 export const Loading = ({ text = 'Loading...', size = 'md' }: LoadingProps) => {
   const sizeClasses = {
     sm: {
-      spinner: 'h-12 w-12',
-      text: 'text-lg',
+      spinner: 'h-6 w-6',
+      text: 'text-base',
     },
     md: {
-      spinner: 'h-16 w-16',
-      text: 'text-xl',
+      spinner: 'h-8 w-8',
+      text: 'text-lg',
     },
     lg: {
-      spinner: 'h-20 w-20',
-      text: 'text-2xl',
+      spinner: 'h-10 w-10',
+      text: 'text-xl',
     },
   };
 
   return (
-    <div className="text-center p-10">
-      <div
-        className={`animate-spin rounded-full border-b-2 border-[var(--color-primary)] mx-auto ${sizeClasses[size].spinner}`}
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <Loader2
+        className={`${sizeClasses[size].spinner} animate-spin text-[var(--color-primary)]`}
       />
-      <p
-        className={`mt-6 text-[var(--color-text-secondary)] font-medium ${sizeClasses[size].text}`}
-      >
-        {text}
-      </p>
+      <p className={`${sizeClasses[size].text} text-gray-600`}>{text}</p>
     </div>
   );
 };
