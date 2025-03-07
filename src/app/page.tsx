@@ -84,51 +84,53 @@ export default function Home() {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed w-full border-b border-[var(--color-gray-200)] bg-white backdrop-blur supports-[backdrop-filter]:bg-[var(--color-background)]/60"
+        className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-white shadow-sm"
       >
-        <div className="container mx-auto px-4 flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-[var(--color-primary)]" />
-            <span className="text-xl font-bold text-[var(--color-text)]">
-              Smart Study+
-            </span>
-          </div>
-          <nav className="hidden md:flex gap-6">
-            <Link
-              href="#features"
-              className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#get-started"
-              className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              Get Started
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openAuthModal('signin')}
-              className="text-[var(--color-primary)] border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-colors"
-            >
-              Log in
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => openAuthModal('signup')}
-              className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-colors"
-            >
-              Sign up
-            </Button>
+        <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+              <Brain className="h-8 w-8 text-[var(--color-primary)]" />
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
+                SmartStudy+
+              </span>
+            </div>
+            <nav className="hidden md:flex space-x-8">
+              <Link
+                href="#features"
+                className="text-base font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
+              >
+                Features
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="text-base font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
+              >
+                How It Works
+              </Link>
+              <Link
+                href="#get-started"
+                className="text-base font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
+              >
+                Get Started
+              </Link>
+            </nav>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => openAuthModal('signin')}
+                className="text-[var(--color-primary)] border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
+              >
+                Log in
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => openAuthModal('signup')}
+                className="bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity"
+              >
+                Sign up
+              </Button>
+            </div>
           </div>
         </div>
       </motion.header>

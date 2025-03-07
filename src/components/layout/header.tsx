@@ -72,41 +72,43 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-[var(--color-background)]">
-      <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div
-          onClick={handleLogoClick}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          <Brain className="h-6 w-6 text-[var(--color-primary)]" />
-          <span className="text-2xl font-bold text-[var(--color-text)]">
-            SmartStudy+
-          </span>
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-white shadow-sm">
+      <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div
+            onClick={handleLogoClick}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <Brain className="h-8 w-8 text-[var(--color-primary)]" />
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
+              SmartStudy+
+            </span>
+          </div>
+          <nav className="hidden md:flex space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'text-base font-medium transition-colors hover:text-[var(--color-text)]',
+                  isActiveRoute(item.pattern)
+                    ? 'text-[var(--color-primary)] font-semibold'
+                    : 'text-[var(--color-text-muted)]'
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleLogout}
+            className="hover:bg-gray-100 transition-colors"
+          >
+            Log out
+          </Button>
         </div>
-        <nav className="flex items-center gap-4">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'text-sm font-medium transition-colors hover:text-[var(--color-text)]',
-                isActiveRoute(item.pattern)
-                  ? 'text-[var(--color-primary)] font-semibold'
-                  : 'text-[var(--color-text-muted)]'
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={handleLogout}
-          className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-gray-100)]"
-        >
-          Log out
-        </Button>
       </div>
     </header>
   );

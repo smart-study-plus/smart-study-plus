@@ -6,6 +6,7 @@
   /* Primary Colors */
   --color-primary: #0d9488;
   --color-primary-hover: #0f766e;
+  --color-primary-gradient: #9333ea; /* Purple-600 for gradient */
 
   /* Secondary Colors */
   --color-secondary: #64748b;
@@ -26,6 +27,7 @@
   /* Status Colors */
   --color-success: #10b981;
   --color-error: #ef4444;
+  --color-error-light: #fee2e2;
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
 
@@ -43,6 +45,7 @@
 [data-theme='dark'] {
   --color-primary: #2dd4bf;
   --color-primary-hover: #14b8a6;
+  --color-primary-gradient: #a855f7; /* Adjusted purple for dark theme */
 
   --color-background: #0f172a;
   --color-background-alt: #1e293b;
