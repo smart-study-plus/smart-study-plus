@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { Header } from '@/components/layout/header';
+import Link from 'next/link';
 import {
   Accordion,
   AccordionContent,
@@ -14,6 +15,14 @@ import { getUserId } from '@/app/auth/getUserId';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
 import { ENDPOINTS } from '@/config/urls';
+import {
+  ChevronLeft,
+  CheckCircle,
+  Lock,
+  PlayCircle,
+  BarChart,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Concept {
   concept: string;
@@ -22,6 +31,8 @@ interface Concept {
 interface Section {
   title: string;
   concepts: Concept[];
+  completed?: boolean;
+  locked?: boolean;
 }
 
 interface Chapter {
@@ -74,7 +85,6 @@ const StudyGuidePage: React.FC = () => {
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
-        // Fetch study guide, practice tests, and completed tests
         const [guideResponse, testsResponse, completedTestsResponse] =
           await Promise.all([
             fetchWithAuth(ENDPOINTS.studyGuide(title)),
@@ -108,14 +118,24 @@ const StudyGuidePage: React.FC = () => {
           {}
         );
 
-        // Get list of completed test IDs
         const completedTestIds = new Set(
           completedTestsData.test_results.map(
             (test: CompletedTest) => test.test_id
           )
         );
 
-        setStudyGuide(guideData);
+        const processedGuideData = {
+          ...guideData,
+          chapters: guideData.chapters.map((chapter) => ({
+            ...chapter,
+            sections: chapter.sections.map((section) => ({
+              ...section,
+              completed: completedTestIds.has(testMap[section.title] || ''),
+            })),
+          })),
+        };
+
+        setStudyGuide(processedGuideData);
         setPracticeTests(testMap);
         setCompletedTests(completedTestIds);
 
@@ -140,12 +160,10 @@ const StudyGuidePage: React.FC = () => {
     if (!title) return;
 
     if (completedTests.has(testId)) {
-      // Redirect to results page if test is already completed
       router.push(
         `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}/results`
       );
     } else {
-      // Otherwise, start the quiz
       router.push(
         `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}`
       );
@@ -153,99 +171,123 @@ const StudyGuidePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">
-              {title ? decodeURIComponent(title).replace(/_/g, ' ') : ''}
-            </h1>
-            <p className="text-base text-[var(--color-text-secondary)] mt-2">
-              Study guide content
-            </p>
-          </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <Link
+            href="/practice"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back to Practice
+          </Link>
 
-          <div className="mb-6">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              Progress: {progress.toFixed(2)}%
-            </p>
-            <Progress
-              value={progress}
-              className="mt-2 h-3 bg-gray-300 rounded-full"
-            />
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {decodeURIComponent(title).replace(/_/g, ' ')}
+              </h1>
+              <p className="mt-2 text-gray-600">Study Guide Content</p>
+            </div>
           </div>
+        </div>
 
-          <div className="space-y-6">
-            {loading ? (
-              <Loading size="lg" text="Loading study guide..." />
-            ) : error ? (
-              <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-base text-red-500">Error: {error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {studyGuide?.chapters.map((chapter, chapterIndex) => (
-                  <div
-                    key={chapterIndex}
-                    className="bg-[var(--color-background)] rounded-lg p-6 shadow-sm"
-                  >
-                    <h2 className="text-2xl font-semibold text-[var(--color-text)] mb-4">
-                      {chapter.title}
-                    </h2>
-                    <Accordion type="single" collapsible className="space-y-4">
-                      {chapter.sections.map((section, sectionIndex) => (
-                        <AccordionItem
-                          key={sectionIndex}
-                          value={`section-${chapterIndex}-${sectionIndex}`}
-                          className="border border-[var(--color-gray-200)] rounded-lg overflow-hidden"
-                        >
-                          <AccordionTrigger className="px-4 py-3 hover:bg-[var(--color-background-alt)] text-base font-medium">
+        {loading ? (
+          <Loading size="lg" text="Loading study guide..." />
+        ) : error ? (
+          <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
+            <p className="text-base text-red-500">Error: {error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+              variant="default"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="md:col-span-3 bg-white rounded-xl shadow-lg p-6">
+              <Accordion type="single" collapsible className="w-full">
+                {studyGuide?.chapters.map((chapter) =>
+                  chapter.sections.map((section, index) => (
+                    <AccordionItem
+                      key={`${chapter.title}-${index}`}
+                      value={`${chapter.title}-${index}`}
+                      className="border border-gray-100 rounded-lg mb-4 overflow-hidden hover:border-[var(--color-primary)]/50 transition-colors"
+                    >
+                      <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          {section.completed ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <PlayCircle className="h-5 w-5 text-[var(--color-primary)]" />
+                          )}
+                          <span className="text-left font-medium">
                             {section.title}
-                          </AccordionTrigger>
-                          <AccordionContent className="px-4 py-3">
-                            <ul className="space-y-3">
-                              {section.concepts.map((concept, conceptIndex) => (
-                                <li
-                                  key={conceptIndex}
-                                  className="flex items-center text-base text-[var(--color-text)] p-2 rounded-lg hover:bg-[var(--color-background-alt)]"
-                                >
-                                  <span className="mr-2 text-base">•</span>
-                                  {concept.concept}
-                                </li>
-                              ))}
-                            </ul>
-                            {practiceTests[section.title] && (
-                              <button
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <div className="mt-4 space-y-3">
+                          {section.concepts.map((concept, conceptIndex) => (
+                            <div
+                              key={conceptIndex}
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                              <span className="text-gray-700">
+                                {concept.concept}
+                              </span>
+                            </div>
+                          ))}
+                          {practiceTests[section.title] && (
+                            <div className="pt-4">
+                              <Button
                                 onClick={() =>
                                   handleQuizClick(practiceTests[section.title])
                                 }
-                                className="mt-4 w-full px-4 py-3 text-base font-medium rounded-lg transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+                                className="w-full bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
                               >
                                 {completedTests.has(
                                   practiceTests[section.title]
                                 )
                                   ? 'View Results'
                                   : 'Start Quiz'}
-                              </button>
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))
+                )}
+              </Accordion>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <BarChart className="h-5 w-5 text-[var(--color-primary)]" />
+                  Section Progress
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Overall Progress</span>
+                      <span className="font-medium text-gray-900">
+                        {progress.toFixed(2)}%
+                      </span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
                   </div>
-                ))}
+                </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   );
 };

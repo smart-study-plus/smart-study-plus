@@ -6,11 +6,12 @@ import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
 import { getUserId } from '@/app/auth/getUserId';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { ENDPOINTS } from '@/config/urls';
 import { Button } from '@/components/ui/button';
-
+import { Loading } from '@/components/ui/loading';
+import Link from 'next/link';
 interface Question {
   question: string;
   choices: string[];
@@ -145,7 +146,6 @@ const QuizPage: React.FC = () => {
     }
   };
 
-  // Calculate progress percentage
   const totalQuestions = quiz?.questions?.length || 0;
   const answeredQuestions = Object.keys(selectedAnswers).length;
   const progressPercentage =
@@ -164,14 +164,13 @@ const QuizPage: React.FC = () => {
       <main className="flex-1">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex items-center mb-6">
-            <Button
-              onClick={handleReturn}
-              variant="ghost"
-              className="flex items-center text-xl text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
+            <Link
+              href="/practice"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
             >
-              <ArrowLeft className="w-8 h-8 mr-2" />
-              <span>Back to Study Guide</span>
-            </Button>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Practice
+            </Link>
           </div>
 
           <div className="mb-10">
@@ -202,12 +201,7 @@ const QuizPage: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="text-center p-10">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
-              <p className="mt-6 text-xl text-[var(--color-text-secondary)]">
-                Loading quiz...
-              </p>
-            </div>
+            <Loading size="lg" text="Loading quiz..." />
           ) : error ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>

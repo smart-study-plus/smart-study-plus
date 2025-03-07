@@ -89,13 +89,13 @@ export const ResultCard = ({
           </div>
         </div>
 
-        <AIChat
+        {/* <AIChat
           userId={userId}
           testId={testId}
           questionId={questionId}
           isVisible={showChat}
           onToggle={() => setShowChat(!showChat)}
-        />
+        /> */}
       </div>
     </div>
   );
