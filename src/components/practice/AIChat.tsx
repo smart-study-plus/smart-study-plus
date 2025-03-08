@@ -1,7 +1,10 @@
 import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from 'react';
 import { X, Loader2, MessageSquare } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import {
   Dialog,
   DialogContent,
@@ -15,28 +18,6 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
-
-const parseMarkdown = (text: string): string => {
-  if (!text) return '';
-
-  text = text.replace(/(\d+\.)?\s*\*\*(.*?)\*\*/g, (_, num, content) => {
-    return `${num ? `<br><strong>${num} ${content}</strong>` : `<br><strong>${content}</strong>`}`;
-  });
-
-  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-  text = text.replace(
-    /\\\((.*?)\\\)/g,
-    (_, equation) => `<MathJax inline>${equation}</MathJax>`
-  );
-
-  text = text.replace(
-    /\$\$([\s\S]*?)\$\$/gm,
-    (_, equation) => `<MathJax>${equation}</MathJax>`
-  );
-
-  return text;
-};
 
 interface AIChatProps {
   userId: string;
@@ -146,6 +127,20 @@ export const AIChat: React.FC<AIChatProps> = ({
     }
   };
 
+  const formatMathNotation = (text: string): string => {
+    if (!text) return '';
+
+    text = text.replace(/\\\((.*?)\\\)/g, (_, equation) => `$${equation}$`);
+
+    text = text.replace(
+      /\\\[(.*?)\\\]/gm,
+      (_, equation) => `\n\n$$${equation}$$\n\n`
+    );
+
+    return text;
+  };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -158,67 +153,66 @@ export const AIChat: React.FC<AIChatProps> = ({
         <DialogHeader>
           <DialogTitle>AI Tutor Chat</DialogTitle>
         </DialogHeader>
-        <MathJaxContext>
-          <div className="bg-white rounded-lg p-4">
-            <div className="h-[500px] overflow-y-auto mb-4 space-y-3">
-              {loadingHistory ? (
-                <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-secondary)]">
-                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                  <p>Loading chat history...</p>
-                </div>
-              ) : error ? (
-                <div className="text-red-500 text-center py-4">{error}</div>
-              ) : chatHistory.length === 0 ? (
-                <p className="text-[var(--color-text-secondary)] text-center py-4">
-                  Start a conversation about this question
-                </p>
-              ) : (
-                chatHistory.map((msg, idx) => (
+        <div className="bg-white rounded-lg p-4">
+          <div className="h-[500px] overflow-y-auto mb-4 space-y-3">
+            {loadingHistory ? (
+              <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-secondary)]">
+                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                <p>Loading chat history...</p>
+              </div>
+            ) : error ? (
+              <div className="text-red-500 text-center py-4">{error}</div>
+            ) : chatHistory.length === 0 ? (
+              <p className="text-[var(--color-text-secondary)] text-center py-4">
+                Start a conversation about this question
+              </p>
+            ) : (
+              chatHistory.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={idx}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                      msg.role === 'user'
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : 'bg-white'
+                    }`}
                   >
-                    <div
-                      className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                        msg.role === 'user'
-                          ? 'bg-[var(--color-primary)] text-white'
-                          : 'bg-white'
-                      }`}
-                    >
-                      <p className="text-md whitespace-pre-wrap break-words">
-                        <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
-                        <MathJax
-                          dangerouslySetInnerHTML={{
-                            __html: parseMarkdown(msg.content),
-                          }}
-                        />
-                      </p>
+                    <div className="text-md whitespace-pre-wrap break-words">
+                      <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {formatMathNotation(msg.content)}
+                      </ReactMarkdown>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="flex-1 p-2 border rounded bg-white"
-                placeholder="Ask a question about this topic..."
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-                onKeyPress={(e) =>
-                  e.key === 'Enter' && !e.shiftKey && void handleSendMessage()
-                }
-                disabled={loading || loadingHistory}
-              />
-              <Button
-                onClick={() => void handleSendMessage()}
-                disabled={loading || loadingHistory || !userMessage.trim()}
-              >
-                {loading ? '...' : 'Send'}
-              </Button>
-            </div>
+                </div>
+              ))
+            )}
           </div>
-        </MathJaxContext>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="flex-1 p-2 border rounded bg-white"
+              placeholder="Ask a question about this topic..."
+              value={userMessage}
+              onChange={(e) => setUserMessage(e.target.value)}
+              onKeyPress={(e) =>
+                e.key === 'Enter' && !e.shiftKey && void handleSendMessage()
+              }
+              disabled={loading || loadingHistory}
+            />
+            <Button
+              onClick={() => void handleSendMessage()}
+              disabled={loading || loadingHistory || !userMessage.trim()}
+            >
+              {loading ? '...' : 'Send'}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

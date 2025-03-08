@@ -93,7 +93,10 @@ export const HintSection = ({
 
     text = text.replace(/\\\((.*?)\\\)/g, (_, equation) => `$${equation}$`);
 
-    text = text.replace(/\\\[(.*?)\\\]/gm, (_, equation) => `$$${equation}$$`);
+    text = text.replace(
+      /\\\[(.*?)\\\]/gm,
+      (_, equation) => `\n\n$$${equation}$$\n\n`
+    );
 
     return text;
   };
