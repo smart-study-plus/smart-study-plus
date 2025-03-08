@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Target, Award, X, Check, Zap, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { ENDPOINTS } from '@/config/urls';
 import { Progress } from '@/components/ui/progress';
+import useSWR from 'swr';
 import {
   Accordion,
   AccordionContent,
@@ -48,84 +48,39 @@ interface TestAnalytics {
   weekly_progress: WeeklyProgress[];
 }
 
+const fetcher = async (url: string) => {
+  const supabase = createClient();
+  const token = await supabase.auth
+    .getSession()
+    .then((res) => res.data.session?.access_token);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch data');
+  return res.json();
+};
+
 export default function DashboardPage() {
-  const [userName, setUserName] = useState<string>('Student');
-  const [studyHours, setStudyHours] = useState<string>('N/A');
-  const [testAnalytics, setTestAnalytics] = useState<TestAnalytics | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
-  useEffect(() => {
-    const getUserAndAnalytics = async () => {
-      setIsLoading(true);
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+  const { data: userData, error: userError } = useSWR('user', async () => {
+    const { data } = await supabase.auth.getUser();
+    return data?.user;
+  });
 
-        if (user?.user_metadata?.display_name) {
-          setUserName(user.user_metadata.display_name);
-        }
+  const userId = userData?.id;
+  const { data: studyHours, error: studyError } = useSWR(
+    userId ? ENDPOINTS.studyHours(userId) : null,
+    fetcher
+  );
+  const { data: testAnalytics, error: testError } = useSWR(
+    userId ? ENDPOINTS.testAnalytics(userId) : null,
+    fetcher
+  );
 
-        if (user?.id) {
-          await Promise.all([
-            fetchStudyHours(user.id),
-            fetchTestAnalytics(user.id),
-          ]);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchStudyHours = async (userId: string) => {
-      try {
-        const response = await fetch(ENDPOINTS.studyHours(userId), {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${await supabase.auth.getSession().then((res) => res.data.session?.access_token)}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch study hours');
-        }
-
-        const data = await response.json();
-        setStudyHours(`${data.total_hours} hours`);
-      } catch (error) {
-        console.error('Error fetching study hours:', error);
-        setStudyHours('N/A');
-      }
-    };
-
-    const fetchTestAnalytics = async (userId: string) => {
-      try {
-        const response = await fetch(ENDPOINTS.testAnalytics(userId), {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${await supabase.auth.getSession().then((res) => res.data.session?.access_token)}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch test analytics');
-        }
-
-        const data = await response.json();
-        setTestAnalytics(data);
-      } catch (error) {
-        console.error('Error fetching test analytics:', error);
-        setTestAnalytics(null);
-      }
-    };
-
-    getUserAndAnalytics();
-  }, []);
+  const isLoading = !userData || !studyHours || !testAnalytics;
+  const hasError = studyError || testError || userError;
+  const userName = userData?.user_metadata?.display_name || 'Student';
 
   return (
     <RouteGuard requireAuth>
@@ -146,7 +101,13 @@ export default function DashboardPage() {
               </p>
             </motion.div>
 
-            {isLoading ? (
+            {hasError ? (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <p className="text-lg text-red-600">
+                  Error loading dashboard data
+                </p>
+              </div>
+            ) : isLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
                 <p className="text-lg text-gray-600">
@@ -177,9 +138,11 @@ export default function DashboardPage() {
                         </CardTitle>
                         <div className="flex items-baseline">
                           <span className="text-4xl font-bold text-gray-900">
-                            {studyHours}
+                            {studyHours?.total_hours || 'N/A'}
                           </span>
-                          <span className="ml-2 text-gray-600">this week</span>
+                          <span className="ml-2 text-gray-600">
+                            hours this week
+                          </span>
                         </div>
                       </CardContent>
                     </motion.div>
@@ -196,9 +159,7 @@ export default function DashboardPage() {
                         </CardTitle>
                         <div className="flex items-baseline">
                           <span className="text-4xl font-bold text-gray-900">
-                            {testAnalytics
-                              ? testAnalytics.average_score.toFixed(2)
-                              : 'N/A'}
+                            {testAnalytics?.average_score.toFixed(2) || 'N/A'}
                           </span>
                           <span className="ml-2 text-gray-600">points</span>
                         </div>
@@ -217,7 +178,7 @@ export default function DashboardPage() {
                         </CardTitle>
                         <div className="flex items-baseline">
                           <span className="text-4xl font-bold text-gray-900">
-                            {testAnalytics ? testAnalytics.total_tests : 'N/A'}
+                            {testAnalytics?.total_tests || 'N/A'}
                           </span>
                           <span className="ml-2 text-gray-600">total</span>
                         </div>
