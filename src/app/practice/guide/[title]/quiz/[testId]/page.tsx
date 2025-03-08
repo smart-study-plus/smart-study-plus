@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
-import { getUserId } from '@/app/auth/getUserId';
 import { ChevronLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { ENDPOINTS } from '@/config/urls';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
 import Link from 'next/link';
+import useSWR from 'swr';
+import { createClient } from '@/utils/supabase/client';
+
 interface Question {
   question: string;
   choices: string[];
@@ -37,59 +38,53 @@ interface SubmissionResult {
   submission_id: string;
 }
 
+// Fetcher for authenticated requests
+const fetcher = async (url: string) => {
+  const supabase = createClient();
+  const token = await supabase.auth
+    .getSession()
+    .then((res) => res.data.session?.access_token);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch data');
+  return res.json();
+};
+
 const QuizPage: React.FC = () => {
   const params = useParams();
   const testId = typeof params.testId === 'string' ? params.testId : '';
   const title = typeof params.title === 'string' ? params.title : '';
   const router = useRouter();
+  const supabase = createClient();
 
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [studyGuideId, setStudyGuideId] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  // Fetch user data
+  const { data: userData } = useSWR('user', async () => {
+    const { data } = await supabase.auth.getUser();
+    return data?.user;
+  });
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      if (!testId || !title) return;
+  // Fetch quiz content
+  const { data: quiz, error: quizError } = useSWR<Quiz>(
+    testId ? ENDPOINTS.practiceTest(testId) : null,
+    fetcher
+  );
 
-      try {
-        const authUserId = await getUserId();
-        if (!authUserId) throw new Error('User authentication required');
-        setUserId(authUserId);
+  // Fetch study guide data
+  const { data: studyGuideData, error: studyGuideError } =
+    useSWR<StudyGuideResponse>(
+      title ? ENDPOINTS.studyGuide(title) : null,
+      fetcher
+    );
 
-        // Fetch both quiz and study guide data in parallel
-        const [quizResponse, studyGuideResponse] = await Promise.all([
-          fetchWithAuth(ENDPOINTS.practiceTest(testId)),
-          fetchWithAuth(ENDPOINTS.studyGuide(title)),
-        ]);
+  const [selectedAnswers, setSelectedAnswers] = React.useState<SelectedAnswers>(
+    {}
+  );
+  const [submitting, setSubmitting] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-        if (!quizResponse.ok || !studyGuideResponse.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
-        const [quizData, studyGuideData]: [Quiz, StudyGuideResponse] =
-          await Promise.all([quizResponse.json(), studyGuideResponse.json()]);
-
-        const retrievedStudyGuideId =
-          studyGuideData.study_guide_id || studyGuideData._id;
-        if (!retrievedStudyGuideId) throw new Error('Study guide ID not found');
-
-        setQuiz(quizData);
-        setStudyGuideId(retrievedStudyGuideId);
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'An error occurred';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchData();
-  }, [testId, title]);
+  const loading = !quiz || !studyGuideData || !userData;
+  const anyError = quizError || studyGuideError || error;
 
   const handleSelectAnswer = (questionId: string, answer: string): void => {
     setSelectedAnswers((prev) => ({
@@ -99,12 +94,13 @@ const QuizPage: React.FC = () => {
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!userId || !testId || !studyGuideId || !title) return;
+    if (!userData?.id || !testId || !studyGuideData || !title) return;
 
     try {
       setSubmitting(true);
+      const studyGuideId = studyGuideData.study_guide_id || studyGuideData._id;
+      if (!studyGuideId) throw new Error('Study guide ID not found');
 
-      // Format answers for submission
       const formattedAnswers = Object.entries(selectedAnswers).map(
         ([questionId, answer]) => ({
           question_id: questionId,
@@ -113,34 +109,29 @@ const QuizPage: React.FC = () => {
       );
 
       const submissionData = {
-        user_id: userId,
+        user_id: userData.id,
         test_id: testId,
         study_guide_id: studyGuideId,
         answers: formattedAnswers,
       };
 
-      const response = await fetchWithAuth(ENDPOINTS.submitTest, {
+      const response = await fetch(ENDPOINTS.submitTest, {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(submissionData),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit quiz');
-      }
+      if (!response.ok) throw new Error('Failed to submit quiz');
 
       const result: SubmissionResult = await response.json();
-
-      // Navigate to results page with the submission data
       router.push(
         `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}/results?submission=${result.submission_id}`
       );
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to submit quiz';
-      setError(errorMessage);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit quiz');
     } finally {
       setSubmitting(false);
     }
@@ -202,7 +193,7 @@ const QuizPage: React.FC = () => {
 
           {loading ? (
             <Loading size="lg" text="Loading quiz..." />
-          ) : error ? (
+          ) : anyError ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>
               <Button
@@ -229,7 +220,7 @@ const QuizPage: React.FC = () => {
                     }}
                     onSelectAnswer={handleSelectAnswer}
                     selectedAnswer={selectedAnswers[index.toString()]}
-                    userId={userId || ''}
+                    userId={userData?.id || ''}
                     testId={testId}
                   />
                 ))}
@@ -238,7 +229,7 @@ const QuizPage: React.FC = () => {
               <div className="mt-10 flex justify-end">
                 <Button
                   onClick={handleSubmit}
-                  disabled={!isQuizComplete || submitting || !studyGuideId}
+                  disabled={!isQuizComplete || submitting || !studyGuideData}
                   variant="default"
                   size="lg"
                   className="text-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
