@@ -87,7 +87,7 @@ const StudyGuidePage: React.FC = () => {
   );
 
   const { data: completedTestsData, error: completedError } = useSWR(
-    userId ? ENDPOINTS.testResults(userId) : null,
+    userId && studyGuide ? ENDPOINTS.testResults(userId) : null,
     fetcher
   );
 
@@ -117,16 +117,21 @@ const StudyGuidePage: React.FC = () => {
   ) || {}) as TestMap;
 
   const completedTests = new Set(
-    completedTestsData?.test_results.map(
-      (test: CompletedTest) => test.test_id
-    ) || []
+    completedTestsData?.test_results
+      ?.filter(
+        (test: CompletedTest) =>
+          test.study_guide_id === studyGuide?.study_guide_id
+      )
+      .map((test: CompletedTest) => test.test_id) || []
   );
 
   const progress = (() => {
     if (!testsData?.practice_tests || !completedTestsData?.test_results)
       return 0;
+
     const totalTests = testsData.practice_tests.length;
-    const completedCount = completedTestsData.test_results.length;
+    const completedCount = completedTests.size; 
+
     return totalTests > 0 ? (completedCount / totalTests) * 100 : 0;
   })();
 

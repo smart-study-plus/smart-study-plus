@@ -24,6 +24,7 @@ export interface Quiz {
 
 export interface CompletedTest {
   test_id: string;
+  study_guide_id: string;
 }
 
 export interface TestResultsResponse {

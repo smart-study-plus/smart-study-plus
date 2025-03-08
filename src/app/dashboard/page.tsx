@@ -194,7 +194,7 @@ export default function DashboardPage() {
                       <CardHeader className="border-b border-gray-100">
                         <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
                           <Zap className="h-6 w-6 text-yellow-500 mr-2" />
-                          Frequently Missed Questions
+                          Recently Missed Questions
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-6">
