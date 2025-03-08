@@ -20,24 +20,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { AIChat } from '@/components/practice/AIChat';
-
-interface QuizQuestion {
-  question_id: string;
-  is_correct: boolean;
-  user_answer: string;
-  correct_answer?: string;
-  explanation: string;
-  question: string;
-}
-
-interface QuizResults {
-  user_id: string;
-  test_id: string;
-  score: number;
-  accuracy: number;
-  status: string;
-  questions: QuizQuestion[];
-}
+import { QuizQuestion, QuizResults } from '@/interfaces/test';
 
 const QuizResultsPage: React.FC = () => {
   const params = useParams();

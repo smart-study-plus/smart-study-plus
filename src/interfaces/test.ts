@@ -37,3 +37,21 @@ export interface SelectedAnswers {
 export interface SubmissionResult {
   submission_id: string;
 }
+
+export interface QuizQuestion {
+  question_id: string;
+  is_correct: boolean;
+  user_answer: string;
+  correct_answer?: string;
+  explanation: string;
+  question: string;
+}
+
+export interface QuizResults {
+  user_id: string;
+  test_id: string;
+  score: number;
+  accuracy: number;
+  status: string;
+  questions: QuizQuestion[];
+}
