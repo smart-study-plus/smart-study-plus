@@ -216,14 +216,18 @@ const QuizResultsPage: React.FC = () => {
                             </p>
                           </div>
 
-                          {question.notes && question.notes.trim() !== '' && (
-                            <div className="bg-yellow-50 rounded-lg p-4 mb-6 border border-yellow-300">
-                              <h4 className="font-medium text-yellow-900 mb-2">
-                                Your Notes:
-                              </h4>
-                              <p className="text-yellow-700">{question.notes}</p>
-                            </div>
-                          )}
+                          {question.notes &&
+                            question.notes.trim() !== '' &&
+                            question.notes !== 'No note available' && (
+                              <div className="bg-yellow-50 rounded-lg p-4 mb-6 border border-yellow-300">
+                                <h4 className="font-medium text-yellow-900 mb-2">
+                                  Your Notes:
+                                </h4>
+                                <p className="text-yellow-700">
+                                  {question.notes}
+                                </p>
+                              </div>
+                            )}
 
                           <AIChat
                             userId={results.user_id}
