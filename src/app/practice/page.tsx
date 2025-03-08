@@ -1,31 +1,67 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
-import Sidebar from '@/components/layout/sidebar';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Clock, Sparkles } from 'lucide-react';
+import { Header } from '@/components/layout/header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { ENDPOINTS } from '@/config/urls';
+import { motion } from 'framer-motion';
 
 interface StudyGuide {
   title: string;
   practice_tests: Array<{
     practice_test_id: string;
   }>;
+  chapters?: number;
+  estimatedTime?: string;
+  difficulty?: string;
 }
 
 interface CompletedTest {
   test_id: string;
 }
 
+interface TestResultsResponse {
+  test_results: CompletedTest[];
+}
+
 interface ProgressMap {
   [key: string]: number;
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
+
 const PracticePage: React.FC = () => {
-  const [studyGuides, setStudyGuides] = useState<string[]>([]);
+  const [studyGuides, setStudyGuides] = useState<StudyGuide[]>([]);
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,38 +70,50 @@ const PracticePage: React.FC = () => {
   useEffect(() => {
     const fetchStudyGuides = async (): Promise<void> => {
       try {
+        if (typeof window === 'undefined') return;
+
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
-        // Fetch all study guides
         const response = await fetchWithAuth(
           'http://localhost:8000/api/study-guide/all'
         );
         if (!response.ok) throw new Error('Failed to fetch study guides');
 
         const data = await response.json();
-        const guides: string[] = data.study_guides || [];
+        const guides: StudyGuide[] =
+          data.study_guides.map((title: string) => ({
+            title,
+            practice_tests: [],
+            // chapters: Math.floor(Math.random() * 10) + 5, // Temporary mock data
+            // estimatedTime: `${Math.floor(Math.random() * 8) + 4} hours`,
+          })) || [];
         setStudyGuides(guides);
 
-        // Fetch completed tests
         const completedTestsResponse = await fetchWithAuth(
-          `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}`
-        );
-        if (!completedTestsResponse.ok)
-          throw new Error('Failed to fetch completed tests');
-
-        const completedTestsData: CompletedTest[] =
-          await completedTestsResponse.json();
-        const completedTestsMap = new Set(
-          completedTestsData.map((test: CompletedTest) => test.test_id)
+          ENDPOINTS.testResults(authUserId)
         );
 
-        // Fetch practice tests and calculate progress for each study guide
+        let completedTestsMap = new Set<string>();
+
+        if (!completedTestsResponse.ok) {
+          console.warn('No test results found for user.');
+          setProgressMap({});
+        } else {
+          const completedTestsData: TestResultsResponse =
+            await completedTestsResponse.json();
+          completedTestsMap = new Set(
+            completedTestsData.test_results.map(
+              (test: CompletedTest) => test.test_id
+            )
+          );
+        }
+
         const progressData: ProgressMap = {};
         await Promise.all(
-          guides.map(async (title: string) => {
+          guides.map(async (guide: StudyGuide) => {
             const testResponse = await fetchWithAuth(
-              `http://localhost:8000/api/study-guide/practice-tests/${encodeURIComponent(title)}`
+              ENDPOINTS.practiceTests(guide.title)
             );
             if (testResponse.ok) {
               const testData: StudyGuide = await testResponse.json();
@@ -73,7 +121,7 @@ const PracticePage: React.FC = () => {
               const completedTests = testData.practice_tests.filter((test) =>
                 completedTestsMap.has(test.practice_test_id)
               ).length;
-              progressData[title] =
+              progressData[guide.title] =
                 totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
             }
           })
@@ -89,7 +137,9 @@ const PracticePage: React.FC = () => {
       }
     };
 
-    void fetchStudyGuides();
+    if (typeof window !== 'undefined') {
+      void fetchStudyGuides();
+    }
   }, []);
 
   const handleCardClick = (title: string): void => {
@@ -97,80 +147,149 @@ const PracticePage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--color-background-alt)]">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-8 py-10">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">
-              Practice Mode
-            </h1>
-            <p className="text-xl text-[var(--color-text-secondary)] mt-3">
-              Select a study guide to practice with
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+            Practice Mode
+          </h1>
+          <p className="text-xl text-gray-600">
+            Select a study guide to practice with
+          </p>
+        </motion.div>
 
-          {loading ? (
-            <Loading size="lg" text="Loading study guides..." />
-          ) : error ? (
-            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-xl text-red-500">Error: {error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-6 px-6 py-3 text-lg font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-6">
-                {studyGuides.map((title: string, index: number) => (
-                  <div
-                    key={index}
-                    onClick={() => handleCardClick(title)}
-                    className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-[var(--color-gray-200)] hover:border-[var(--color-primary)] group w-full"
-                  >
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-semibold text-[var(--color-text)] break-words flex-1">
-                        {title.replace(/_/g, ' ')}
-                      </h2>
-                      <p className="text-lg text-[var(--color-text-secondary)] ml-6">
-                        Click to view study guide
-                      </p>
-                    </div>
+        {loading ? (
+          <Loading size="lg" text="Loading study guides..." />
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center p-6 bg-red-50 rounded-xl border border-red-200"
+          >
+            <p className="text-base text-red-500">Error: {error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+              variant="default"
+            >
+              Try Again
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid gap-8"
+          >
+            {studyGuides.map((guide, index) => (
+              <motion.div key={index} variants={item}>
+                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden">
+                  <CardContent className="p-8">
+                    <div className="relative">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-primary)]/5 to-purple-300/5 rounded-full -translate-y-32 translate-x-32 group-hover:translate-x-28 transition-transform duration-500"></div>
 
-                    {/* Progress Bar for Each Study Guide */}
-                    <div className="mt-6">
-                      <div className="flex justify-between items-center mb-3">
-                        <p className="text-lg text-[var(--color-text-secondary)]">
-                          Progress: {progressMap[title]?.toFixed(0) || 0}%
-                        </p>
+                      <div className="grid md:grid-cols-3 gap-8">
+                        <div className="md:col-span-2 space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-5 w-5 text-[var(--color-primary)]" />
+                              <h2 className="text-2xl font-bold text-gray-900">
+                                {guide.title.replace(/_/g, ' ')}
+                              </h2>
+                            </div>
+                            <p className="text-gray-600">
+                              Comprehensive guide covering key concepts and
+                              practice exercises
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-sm text-gray-600">
+                              <span>
+                                Progress:{' '}
+                                {progressMap[guide.title]?.toFixed(0) || 0}%
+                              </span>
+                              <span className="font-medium text-[var(--color-primary)]">
+                                {progressMap[guide.title]?.toFixed(0) || 0}/100
+                              </span>
+                            </div>
+                            <Progress
+                              value={progressMap[guide.title] || 0}
+                              className="h-2"
+                            />
+                          </div>
+
+                          {/* <div className="flex gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <BookOpen className="h-4 w-4" />
+                              <span>{guide.chapters} Chapters</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{guide.estimatedTime}</span>
+                            </div>
+                          </div> */}
+                        </div>
+
+                        <div className="md:border-l md:pl-8 flex flex-col justify-center items-center md:items-start gap-4">
+                          <div className="text-center md:text-left">
+                            <p className="text-sm font-medium text-gray-600">
+                              Current Status
+                            </p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {progressMap[guide.title] === 0
+                                ? 'Not Started'
+                                : 'In Progress'}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => handleCardClick(guide.title)}
+                            className="w-full md:w-auto bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90 transition-all duration-300"
+                          >
+                            View Study Guide
+                            <BookOpen className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <Progress
-                        value={progressMap[title] || 0}
-                        className="h-4 bg-gray-200 rounded-full"
-                      />
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
-              {studyGuides.length === 0 && (
-                <div className="text-center p-10 bg-[var(--color-background)] rounded-xl border-2 border-[var(--color-gray-200)]">
-                  <BookOpen
-                    className="mx-auto text-[var(--color-text-secondary)]"
-                    size={64}
-                  />
-                  <p className="mt-6 text-xl text-[var(--color-text-secondary)]">
-                    No study guides available. Please check back later.
-                  </p>
+        {!loading && studyGuides.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            <Card className="bg-white shadow-lg p-8 text-center">
+              <CardContent className="space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-[var(--color-primary)]" />
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+                <h3 className="text-xl font-bold">No Study Guides Available</h3>
+                <p className="text-gray-600">
+                  Upload your study materials to get started with AI-powered
+                  study guides.
+                </p>
+                <Button className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90">
+                  Upload Materials
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </main>
     </div>
   );
 };

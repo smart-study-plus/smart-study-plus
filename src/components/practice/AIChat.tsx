@@ -1,7 +1,15 @@
 import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, MessageSquare } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -34,28 +42,25 @@ interface AIChatProps {
   userId: string;
   testId: string;
   questionId: string;
-  isVisible: boolean;
-  onToggle: () => void;
 }
 
 export const AIChat: React.FC<AIChatProps> = ({
   userId,
   testId,
   questionId,
-  isVisible,
-  onToggle,
 }) => {
   const [userMessage, setUserMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (isVisible) {
+    if (isOpen) {
       void loadChatHistory();
     }
-  }, [isVisible, userId, testId, questionId]);
+  }, [isOpen, userId, testId, questionId]);
 
   const loadChatHistory = async (): Promise<void> => {
     setLoadingHistory(true);
@@ -141,91 +146,80 @@ export const AIChat: React.FC<AIChatProps> = ({
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      void handleSendMessage();
-    }
-  };
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setUserMessage(e.target.value);
-  };
-
-  if (!isVisible) return null;
-
   return (
-    <MathJaxContext>
-      <div className="mt-6 border-t pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium">AI Tutor Chat</h4>
-          <button
-            onClick={onToggle}
-            className="inline-flex items-center gap-2 px-3 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
-          >
-            <X className="w-5 h-5" />
-            Close
-          </button>
-        </div>
-        <div className="bg-[var(--color-background-alt)] rounded-lg p-4 mb-4">
-          <div className="h-64 overflow-y-auto mb-4 space-y-3">
-            {loadingHistory ? (
-              <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-secondary)]">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                <p>Loading chat history...</p>
-              </div>
-            ) : error ? (
-              <div className="text-red-500 text-center py-4">{error}</div>
-            ) : chatHistory.length === 0 ? (
-              <p className="text-[var(--color-text-secondary)] text-center py-4">
-                Start a conversation about this question
-              </p>
-            ) : (
-              chatHistory.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                      msg.role === 'user'
-                        ? 'bg-[var(--color-primary)] text-white'
-                        : 'bg-white'
-                    }`}
-                  >
-                    <p className="text-md whitespace-pre-wrap break-words">
-                      <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
-                      <MathJax
-                        dangerouslySetInnerHTML={{
-                          __html: parseMarkdown(msg.content),
-                        }}
-                      />
-                    </p>
-                  </div>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <MessageSquare className="h-4 w-4" />
+          Chat with AI
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[800px] w-[90vw] bg-white">
+        <DialogHeader>
+          <DialogTitle>AI Tutor Chat</DialogTitle>
+        </DialogHeader>
+        <MathJaxContext>
+          <div className="bg-white rounded-lg p-4">
+            <div className="h-[500px] overflow-y-auto mb-4 space-y-3">
+              {loadingHistory ? (
+                <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-secondary)]">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                  <p>Loading chat history...</p>
                 </div>
-              ))
-            )}
+              ) : error ? (
+                <div className="text-red-500 text-center py-4">{error}</div>
+              ) : chatHistory.length === 0 ? (
+                <p className="text-[var(--color-text-secondary)] text-center py-4">
+                  Start a conversation about this question
+                </p>
+              ) : (
+                chatHistory.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                        msg.role === 'user'
+                          ? 'bg-[var(--color-primary)] text-white'
+                          : 'bg-white'
+                      }`}
+                    >
+                      <p className="text-md whitespace-pre-wrap break-words">
+                        <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong>{' '}
+                        <MathJax
+                          dangerouslySetInnerHTML={{
+                            __html: parseMarkdown(msg.content),
+                          }}
+                        />
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="flex-1 p-2 border rounded bg-white"
+                placeholder="Ask a question about this topic..."
+                value={userMessage}
+                onChange={(e) => setUserMessage(e.target.value)}
+                onKeyPress={(e) =>
+                  e.key === 'Enter' && !e.shiftKey && void handleSendMessage()
+                }
+                disabled={loading || loadingHistory}
+              />
+              <Button
+                onClick={() => void handleSendMessage()}
+                disabled={loading || loadingHistory || !userMessage.trim()}
+              >
+                {loading ? '...' : 'Send'}
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="flex-1 p-2 border rounded bg-white"
-              placeholder="Ask a question about this topic..."
-              value={userMessage}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              disabled={loading || loadingHistory}
-            />
-            <button
-              onClick={() => void handleSendMessage()}
-              className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
-              disabled={loading || loadingHistory || !userMessage.trim()}
-            >
-              {loading ? '...' : 'Send'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </MathJaxContext>
+        </MathJaxContext>
+      </DialogContent>
+    </Dialog>
   );
 };

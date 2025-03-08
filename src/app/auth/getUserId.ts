@@ -1,20 +1,28 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-// Fetch the user_id separately from Supabase
 export async function getUserId() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    console.error('User is not authenticated.');
+  if (typeof window === 'undefined') {
+    console.warn('Skipping Supabase auth check during SSR.');
     return null;
   }
 
-  return user.id; // Return user_id
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Supabase environment variables are missing.');
+    return null;
+  }
+
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error fetching user ID:', error);
+    return null;
+  }
 }

@@ -2,136 +2,114 @@
  * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
  */
 
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/server';
-import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Brain } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { cn } from '@/lib/utils';
+import { ENDPOINTS } from '@/config/urls';
 
-const Header = async () => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error) {
-    // ignore
-  }
+export function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const supabase = createClient();
 
-  const user = data?.user ?? null;
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const session_id = localStorage.getItem('session_id');
+
+    if (session_id) {
+      const token = (await supabase.auth.getSession()).data.session
+        ?.access_token;
+
+      await fetch(ENDPOINTS.endSession, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id }),
+      });
+
+      localStorage.removeItem('session_id');
+    }
+
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  const handleLogoClick = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    router.push(session ? '/dashboard' : '/');
+  };
+
+  const navItems = [
+    {
+      href: '/dashboard',
+      label: 'Dashboard',
+      pattern: '/dashboard',
+    },
+    {
+      href: '/practice',
+      label: 'Practice',
+      pattern: '/practice',
+    },
+    {
+      href: '/tests',
+      label: 'Tests',
+      pattern: '/tests',
+    },
+  ];
+
+  const isActiveRoute = (pattern: string) => {
+    return pathname.startsWith(pattern);
+  };
 
   return (
-    <nav className="bg-[var(--color-background)] flex-none px-2">
-      <div className="mx-auto md:px-4 px-4 py-4 text-[var(--color-text)] flex sm:flex-row justify-between">
-        <Link
-          href={user ? '/dashboard' : '/'}
-          className="text-3xl flex font-extrabold drop-shadow-sm text-[var(--color-primary)]"
-        >
-          SmartStudy+
-        </Link>
-        {/* basic mobile reactivity, this needs to be improved */}
-        {!user ? (
-          <div>
-            <div className="flex px-4 md:hidden">
-              <Link href={'/auth?m=signin'}>
-                <button className="px-4 py-2 min-w-24 rounded-full bg-[var(--color-gray-200)] text-[var(--color-gray-700)] hover:bg-[var(--color-gray-300)] font-medium">
-                  Sign In
-                </button>
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-white shadow-sm">
+      <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div
+            onClick={handleLogoClick}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <Brain className="h-8 w-8 text-[var(--color-primary)]" />
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
+              SmartStudy+
+            </span>
+          </div>
+          <nav className="hidden md:flex space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'text-base font-medium transition-colors hover:text-[var(--color-text)]',
+                  isActiveRoute(item.pattern)
+                    ? 'text-[var(--color-primary)] font-semibold'
+                    : 'text-[var(--color-text-muted)]'
+                )}
+              >
+                {item.label}
               </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="flex sm:hidden items-center space-x-3 px-4">
-            <Image
-              src="/default-user.png"
-              alt={user.user_metadata?.display_name || 'User avatar'}
-              width={24}
-              height={24}
-              className="rounded-full object-cover"
-            />
-            <div className="relative group inline-block">
-              <Link href="/auth?m=signout">
-                <p className="font-medium text-gray-900">
-                  {user.user_metadata?.display_name}
-                </p>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <div className="md:flex ml-auto items-center hidden sm:space-y-0 space-y-4">
-          <div className="space-x-8 sm:block hidden sm:space-x-4 pr-4">
-            {user ? (
-              <></>
-            ) : (
-              <>
-                <Link
-                  href={'/'}
-                  className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
-                >
-                  Home
-                </Link>
-                <Link
-                  href={'/about'}
-                  className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
-                >
-                  About
-                </Link>
-                <Link
-                  href={'/topics'}
-                  className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
-                >
-                  Topics
-                </Link>
-              </>
-            )}
-          </div>
-
-          <div className="flex space-x-4">
-            {user ? (
-              <>
-                <div className="flex items-center space-x-3 px-4">
-                  <Image
-                    src="/default-user.png"
-                    alt={user.user_metadata?.display_name || 'User avatar'}
-                    width={24}
-                    height={24}
-                    className="rounded-full object-cover"
-                  />
-                  <div className="relative group inline-block">
-                    <Link href="/auth?m=signout">
-                      <p className="font-medium text-gray-900">
-                        {user.user_metadata?.display_name}
-                      </p>
-                    </Link>
-
-                    {/* todo: fix */}
-                    <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 text-sm text-white bg-black rounded opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visibility-visible transition-opacity duration-300">
-                      Sign out
-                    </span>
-
-                    <p className="text-sm text-gray-500">Account Settings</p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="sm:w-auto hidden md:flex w-full text-right">
-                  <Link href={'/auth?m=signin'}>
-                    <button className="px-4 py-2 rounded-full bg-[var(--color-gray-200)] sm:inline-flex text-[var(--color-gray-700)] hover:bg-[var(--color-gray-300)] font-medium">
-                      Sign In
-                    </button>
-                  </Link>
-                </div>
-                <Link href={'/auth?m=signup'}>
-                  <button className="px-4 py-2 rounded-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] font-medium sm:block hidden">
-                    Sign Up
-                  </button>
-                </Link>
-              </>
-            )}
-          </div>
+            ))}
+          </nav>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleLogout}
+            className="hover:bg-gray-100 transition-colors"
+          >
+            Log out
+          </Button>
         </div>
-        {/*</nav>*/}
       </div>
-    </nav>
+    </header>
   );
-};
-
-export default Header;
+}

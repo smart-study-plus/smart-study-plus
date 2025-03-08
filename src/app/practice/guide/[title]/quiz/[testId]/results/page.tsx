@@ -1,14 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
-import Sidebar from '@/components/layout/sidebar';
-import { ArrowLeft } from 'lucide-react';
+import { Header } from '@/components/layout/header';
+import Link from 'next/link';
 import { getUserId } from '@/app/auth/getUserId';
 import { Loading } from '@/components/ui/loading';
-import { ResultCard } from '@/components/practice/ResultCard';
+import { ENDPOINTS } from '@/config/urls';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import {
+  ChevronLeft,
+  CheckCircle,
+  XCircle,
+  Trophy,
+  Target,
+  CheckCircle2,
+  Brain,
+} from 'lucide-react';
+import { AIChat } from '@/components/practice/AIChat';
 
 interface QuizQuestion {
   question_id: string;
@@ -16,6 +28,7 @@ interface QuizQuestion {
   user_answer: string;
   correct_answer?: string;
   explanation: string;
+  question: string;
 }
 
 interface QuizResults {
@@ -34,7 +47,6 @@ const QuizResultsPage: React.FC = () => {
   const router = useRouter();
 
   const [results, setResults] = useState<QuizResults | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,10 +57,9 @@ const QuizResultsPage: React.FC = () => {
       try {
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
-        setUserId(authUserId);
 
         const response = await fetchWithAuth(
-          `http://localhost:8000/api/study-guide/practice-tests/results/${authUserId}/${testId}`
+          ENDPOINTS.testResults(authUserId, testId)
         );
 
         if (!response.ok) {
@@ -69,87 +80,175 @@ const QuizResultsPage: React.FC = () => {
     void fetchResults();
   }, [testId]);
 
-  const handleReturn = (): void => {
-    if (!title) return;
-    router.push(`/practice/guide/${encodeURIComponent(title)}`);
-  };
-
   return (
-    <div className="flex h-screen bg-[var(--color-background-alt)]">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-8 py-10">
-          <div className="flex items-center mb-6">
-            <button
-              onClick={handleReturn}
-              className="flex items-center text-xl text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
-            >
-              <ArrowLeft className="w-8 h-8 mr-2" />
-              <span>Back to Study Guide</span>
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Link
+          href={`/practice/guide/${encodeURIComponent(title)}`}
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back to Study Guide
+        </Link>
 
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">
-              Quiz Results
-            </h1>
-            {results && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">
-                    Score
-                  </p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">
-                    {results.score}
-                  </p>
-                </div>
-                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">
-                    Accuracy
-                  </p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] mt-2">
-                    {results.accuracy.toFixed(2)}%
-                  </p>
-                </div>
-                <div className="bg-[var(--color-background)] p-6 rounded-xl shadow-sm">
-                  <p className="text-xl text-[var(--color-text-secondary)]">
-                    Status
-                  </p>
-                  <p className="text-4xl font-bold text-[var(--color-text)] capitalize mt-2">
-                    {results.status}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {loading ? (
-            <Loading size="lg" text="Loading results..." />
-          ) : error ? (
-            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-xl text-red-500">Error: {error}</p>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {results?.questions?.map((question, index) => (
-                <ResultCard
-                  key={index}
-                  questionNumber={index + 1}
-                  isCorrect={question.is_correct}
-                  userAnswer={question.user_answer}
-                  correctAnswer={
-                    !question.is_correct ? question.correct_answer : undefined
-                  }
-                  explanation={question.explanation}
-                  userId={results.user_id}
-                  testId={results.test_id}
-                  questionId={question.question_id}
-                />
-              ))}
-            </div>
-          )}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Quiz Results</h1>
+          <p className="mt-2 text-gray-600">
+            Review your answers and learn from the explanations
+          </p>
         </div>
-      </div>
+
+        {loading ? (
+          <Loading size="lg" text="Loading results..." />
+        ) : error ? (
+          <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
+            <p className="text-base text-red-500">Error: {error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+              variant="default"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          results && (
+            <>
+              <div className="grid gap-6 md:grid-cols-3 mb-8">
+                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-6 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[var(--color-primary)]/20 to-purple-300/20 rounded-bl-full"></div>
+                    <Trophy className="h-8 w-8 text-[var(--color-primary)] mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Score
+                    </h3>
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {results.score}
+                      </span>
+                      <span className="ml-2 text-gray-600">points</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-6 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-200/30 to-orange-300/30 rounded-bl-full"></div>
+                    <Target className="h-8 w-8 text-yellow-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Accuracy
+                    </h3>
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {results.accuracy.toFixed(2)}%
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-6 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-200/30 to-emerald-300/30 rounded-bl-full"></div>
+                    <CheckCircle2 className="h-8 w-8 text-green-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Status
+                    </h3>
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900 capitalize">
+                        {results.status}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-6">
+                {results.questions.map((question, index) => (
+                  <Card
+                    key={question.question_id}
+                    className={cn(
+                      'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
+                      question.is_correct
+                        ? 'border-l-4 border-l-green-500'
+                        : 'border-l-4 border-l-red-500'
+                    )}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={cn(
+                            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                            question.is_correct ? 'bg-green-100' : 'bg-red-100'
+                          )}
+                        >
+                          {question.is_correct ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Question {index + 1}
+                          </h3>
+                          <p className="text-gray-700 mb-4">
+                            {question.question}
+                          </p>
+
+                          <div className="space-y-2 mb-6">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600">
+                                Your Answer:
+                              </span>
+                              <span
+                                className={cn(
+                                  'font-medium',
+                                  question.is_correct
+                                    ? 'text-green-600'
+                                    : 'text-red-600'
+                                )}
+                              >
+                                {question.user_answer}
+                              </span>
+                            </div>
+
+                            {!question.is_correct && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">
+                                  Correct Answer:
+                                </span>
+                                <span className="font-medium text-green-600">
+                                  {question.correct_answer}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              Explanation:
+                            </h4>
+                            <p className="text-gray-700">
+                              {question.explanation}
+                            </p>
+                          </div>
+
+                          <AIChat
+                            userId={results.user_id}
+                            testId={testId}
+                            questionId={question.question_id}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )
+        )}
+      </main>
     </div>
   );
 };
