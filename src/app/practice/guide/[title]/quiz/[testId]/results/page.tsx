@@ -18,7 +18,6 @@ import {
   Trophy,
   Target,
   CheckCircle2,
-  Brain,
 } from 'lucide-react';
 import { AIChat } from '@/components/practice/AIChat';
 

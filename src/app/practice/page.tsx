@@ -14,28 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ENDPOINTS } from '@/config/urls';
 import { motion } from 'framer-motion';
-
-interface StudyGuide {
-  title: string;
-  practice_tests: Array<{
-    practice_test_id: string;
-  }>;
-  chapters?: number;
-  estimatedTime?: string;
-  difficulty?: string;
-}
-
-interface CompletedTest {
-  test_id: string;
-}
-
-interface TestResultsResponse {
-  test_results: CompletedTest[];
-}
-
-interface ProgressMap {
-  [key: string]: number;
-}
+import { StudyGuide, ProgressMap } from '@/interfaces/topic';
+import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
 
 const container = {
   hidden: { opacity: 0 },

@@ -152,7 +152,7 @@ export default function Home() {
                   </div>
                   <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-[var(--color-text)]">
                     Transform Your Study Materials Into Interactive Guides
-                  </h1>
+        </h1>
                   <p className="max-w-[600px] text-lg text-[var(--color-text-secondary)] md:text-xl">
                     Smart Study+ uses AI to convert your lecture slides and PDFs
                     into comprehensive study guides with chapter-based quizzes,
@@ -229,19 +229,19 @@ export default function Home() {
                     Transform static content into engaging study materials with
                     practice tests for each chapter.
                   </p>
-                </div>
+        </div>
                 <div className="flex flex-col items-center text-center">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
                     <Brain className="h-6 w-6 text-[var(--color-primary)]" />
-                  </div>
+        </div>
                   <h3 className="mt-4 text-xl font-bold text-[var(--color-text)]">
                     Comprehensive Mock Tests
                   </h3>
                   <p className="mt-2 text-[var(--color-text-secondary)]">
                     Generate full mock exams that combine concepts from all
                     chapters to test overall mastery.
-                  </p>
-                </div>
+        </p>
+      </div>
               </motion.div>
             </div>
           </section>
@@ -299,8 +299,8 @@ export default function Home() {
                     </li>
                   </ul>
                 </motion.div>
-              </div>
-            </div>
+        </div>
+      </div>
           </section>
 
           <section
@@ -317,7 +317,7 @@ export default function Home() {
               >
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[var(--color-text)]">
                   How SmartStudy+ Works
-                </h2>
+        </h2>
                 <p className="mt-4 text-[var(--color-text-secondary)] md:text-xl">
                   A complete learning system designed for student success
                 </p>
@@ -439,11 +439,11 @@ export default function Home() {
                 className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
               >
                 Contact
-              </Link>
-            </div>
-          </div>
-        </motion.footer>
+          </Link>
+        </div>
       </div>
+        </motion.footer>
+    </div>
     </RouteGuard>
   );
 }

@@ -12,31 +12,13 @@ import { Loading } from '@/components/ui/loading';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { createClient } from '@/utils/supabase/client';
-
-interface Question {
-  question: string;
-  choices: string[];
-  correct: string;
-  explanation: string;
-}
-
-interface Quiz {
-  section_title: string;
-  questions: Question[];
-}
-
-interface StudyGuideResponse {
-  study_guide_id?: string;
-  _id?: string;
-}
-
-interface SelectedAnswers {
-  [key: string]: string;
-}
-
-interface SubmissionResult {
-  submission_id: string;
-}
+import {
+  Question,
+  Quiz,
+  SelectedAnswers,
+  SubmissionResult,
+} from '@/interfaces/test';
+import { StudyGuideResponse } from '@/interfaces/topic';
 
 // Fetcher for authenticated requests
 const fetcher = async (url: string) => {
@@ -143,11 +125,6 @@ const QuizPage: React.FC = () => {
     totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const isQuizComplete =
     totalQuestions > 0 && answeredQuestions === totalQuestions;
-
-  const handleReturn = (): void => {
-    if (!title) return;
-    router.push(`/practice/guide/${encodeURIComponent(title)}`);
-  };
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">

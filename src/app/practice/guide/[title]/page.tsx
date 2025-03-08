@@ -18,47 +18,15 @@ import { ENDPOINTS } from '@/config/urls';
 import { ChevronLeft, CheckCircle, PlayCircle, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-
-interface Concept {
-  concept: string;
-}
-
-interface Section {
-  title: string;
-  concepts: Concept[];
-  completed?: boolean;
-  locked?: boolean;
-}
-
-interface Chapter {
-  title: string;
-  sections: Section[];
-}
-
-interface StudyGuideData {
-  chapters: Chapter[];
-}
-
-interface PracticeTest {
-  section_title: string;
-  practice_test_id: string;
-}
-
-interface PracticeTestsData {
-  practice_tests: PracticeTest[];
-}
-
-interface CompletedTest {
-  test_id: string;
-}
-
-interface TestResultsResponse {
-  test_results: CompletedTest[];
-}
-
-interface TestMap {
-  [key: string]: string;
-}
+import {
+  Chapter,
+  Section,
+  Concept,
+  PracticeTest,
+  PracticeTestsData,
+  TestMap,
+} from '@/interfaces/topic';
+import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
 
 const container = {
   hidden: { opacity: 0 },
@@ -125,6 +93,19 @@ const StudyGuidePage: React.FC = () => {
 
   const loading = !studyGuide || !testsData || !completedTestsData;
   const error = studyGuideError || testsError || completedError;
+
+  const getErrorMessage = () => {
+    if (studyGuideError) {
+      return "We couldn't find this study guide. It may have been deleted or you may not have access to it.";
+    }
+    if (testsError) {
+      return 'Failed to load practice tests for this study guide.';
+    }
+    if (completedError) {
+      return 'Failed to load your progress data.';
+    }
+    return 'An unexpected error occurred.';
+  };
 
   // Process the data
   const practiceTests = (testsData?.practice_tests.reduce(
@@ -210,16 +191,29 @@ const StudyGuidePage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center p-6 bg-red-50 rounded-xl border border-red-200"
+            className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-xl border border-red-200 max-w-2xl mx-auto"
           >
-            <p className="text-base text-red-500">Error loading study guide</p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="mt-4"
-              variant="default"
-            >
-              Try Again
-            </Button>
+            <div className="text-center space-y-4">
+              <p className="text-xl font-semibold text-red-600">
+                {getErrorMessage()}
+              </p>
+              <p className="text-gray-600">
+                You can try refreshing the page or going back to the practice
+                section.
+              </p>
+              <div className="flex gap-4 mt-6">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="default"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Try Again
+                </Button>
+                <Link href="/practice">
+                  <Button variant="outline">Return to Practice</Button>
+                </Link>
+              </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
