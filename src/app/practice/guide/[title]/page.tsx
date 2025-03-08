@@ -23,6 +23,7 @@ import {
   BarChart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 interface Concept {
   concept: string;
@@ -64,6 +65,29 @@ interface TestResultsResponse {
 interface TestMap {
   [key: string]: string;
 }
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
 
 const StudyGuidePage: React.FC = () => {
   const params = useParams();
@@ -174,7 +198,12 @@ const StudyGuidePage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
           <Link
             href="/practice"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
@@ -191,12 +220,16 @@ const StudyGuidePage: React.FC = () => {
               <p className="mt-2 text-gray-600">Study Guide Content</p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {loading ? (
           <Loading size="lg" text="Loading study guide..." />
         ) : error ? (
-          <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center p-6 bg-red-50 rounded-xl border border-red-200"
+          >
             <p className="text-base text-red-500">Error: {error}</p>
             <Button
               onClick={() => window.location.reload()}
@@ -205,68 +238,82 @@ const StudyGuidePage: React.FC = () => {
             >
               Try Again
             </Button>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-3 bg-white rounded-xl shadow-lg p-6">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid md:grid-cols-4 gap-8"
+          >
+            <motion.div
+              variants={item}
+              className="md:col-span-3 bg-white rounded-xl shadow-lg p-6"
+            >
               <Accordion type="single" collapsible className="w-full">
                 {studyGuide?.chapters.map((chapter) =>
                   chapter.sections.map((section, index) => (
-                    <AccordionItem
+                    <motion.div
                       key={`${chapter.title}-${index}`}
-                      value={`${chapter.title}-${index}`}
-                      className="border border-gray-100 rounded-lg mb-4 overflow-hidden hover:border-[var(--color-primary)]/50 transition-colors"
+                      variants={item}
                     >
-                      <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:bg-gray-50">
-                        <div className="flex items-center gap-3">
-                          {section.completed ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <PlayCircle className="h-5 w-5 text-[var(--color-primary)]" />
-                          )}
-                          <span className="text-left font-medium">
-                            {section.title}
-                          </span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4">
-                        <div className="mt-4 space-y-3">
-                          {section.concepts.map((concept, conceptIndex) => (
-                            <div
-                              key={conceptIndex}
-                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                              <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
-                              <span className="text-gray-700">
-                                {concept.concept}
-                              </span>
-                            </div>
-                          ))}
-                          {practiceTests[section.title] && (
-                            <div className="pt-4">
-                              <Button
-                                onClick={() =>
-                                  handleQuizClick(practiceTests[section.title])
-                                }
-                                className="w-full bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
+                      <AccordionItem
+                        value={`${chapter.title}-${index}`}
+                        className="border border-gray-100 rounded-lg mb-4 overflow-hidden hover:border-[var(--color-primary)]/50 transition-colors"
+                      >
+                        <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            {section.completed ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <PlayCircle className="h-5 w-5 text-[var(--color-primary)]" />
+                            )}
+                            <span className="text-left font-medium">
+                              {section.title}
+                            </span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="mt-4 space-y-3">
+                            {section.concepts.map((concept, conceptIndex) => (
+                              <div
+                                key={conceptIndex}
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                               >
-                                {completedTests.has(
-                                  practiceTests[section.title]
-                                )
-                                  ? 'View Results'
-                                  : 'Start Quiz'}
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                                <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                                <span className="text-gray-700">
+                                  {concept.concept}
+                                </span>
+                              </div>
+                            ))}
+                            {practiceTests[section.title] && (
+                              <div className="pt-4">
+                                <Button
+                                  onClick={() =>
+                                    handleQuizClick(
+                                      practiceTests[section.title]
+                                    )
+                                  }
+                                  className="w-full bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
+                                >
+                                  {completedTests.has(
+                                    practiceTests[section.title]
+                                  )
+                                    ? 'View Results'
+                                    : 'Start Quiz'}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </motion.div>
                   ))
                 )}
               </Accordion>
-            </div>
+            </motion.div>
 
-            <div className="space-y-6">
+            <motion.div variants={item} className="space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <BarChart className="h-5 w-5 text-[var(--color-primary)]" />
@@ -284,8 +331,8 @@ const StudyGuidePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
       </div>
     </div>

@@ -1,15 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Clock,
-  Target,
-  Award,
-  X,
-  Check,
-  Zap,
-  Loader2,
-} from 'lucide-react';
+import { Clock, Target, Award, X, Check, Zap, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
@@ -37,10 +29,30 @@ const staggerContainer = {
   },
 };
 
+interface WrongQuestion {
+  question: string;
+  user_choice: string;
+  correct_answer: string;
+}
+
+interface WeeklyProgress {
+  week_start: string;
+  average_accuracy: number;
+}
+
+interface TestAnalytics {
+  average_score: number;
+  total_tests: number;
+  recent_wrong_questions: WrongQuestion[];
+  weekly_progress: WeeklyProgress[];
+}
+
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>('Student');
   const [studyHours, setStudyHours] = useState<string>('N/A');
-  const [testAnalytics, setTestAnalytics] = useState<any>(null);
+  const [testAnalytics, setTestAnalytics] = useState<TestAnalytics | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
@@ -128,7 +140,7 @@ export default function DashboardPage() {
               Welcome back, {userName}!
             </h1>
             <p className="text-xl text-gray-600">
-              Let's boost your learning today.
+              Let&apos;s boost your learning today.
             </p>
           </motion.div>
 
@@ -225,7 +237,7 @@ export default function DashboardPage() {
                       testAnalytics.recent_wrong_questions?.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full">
                           {testAnalytics.recent_wrong_questions.map(
-                            (q: any, index: number) => (
+                            (q: WrongQuestion, index: number) => (
                               <motion.div
                                 key={index}
                                 initial={{ opacity: 0, y: 20 }}
@@ -289,7 +301,7 @@ export default function DashboardPage() {
                       testAnalytics.weekly_progress?.length > 0 ? (
                         <div className="space-y-6">
                           {testAnalytics.weekly_progress.map(
-                            (week: any, index: number) => (
+                            (week: WeeklyProgress, index: number) => (
                               <motion.div
                                 key={index}
                                 initial={{ opacity: 0, x: -20 }}
