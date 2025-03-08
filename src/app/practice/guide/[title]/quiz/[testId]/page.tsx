@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
@@ -39,6 +39,7 @@ const QuizPage: React.FC = () => {
   const title = typeof params.title === 'string' ? params.title : '';
   const router = useRouter();
   const supabase = createClient();
+  const [notes, setNotes] = useState<{ [key: string]: string }>({});
 
   // Fetch user data
   const { data: userData } = useSWR('user', async () => {
@@ -87,6 +88,7 @@ const QuizPage: React.FC = () => {
         ([questionId, answer]) => ({
           question_id: questionId,
           user_answer: answer,
+          notes: notes[questionId] || '',
         })
       );
 
@@ -94,7 +96,7 @@ const QuizPage: React.FC = () => {
         user_id: userData.id,
         test_id: testId,
         study_guide_id: studyGuideId,
-        answers: formattedAnswers,
+        answers: formattedAnswers
       };
 
       const response = await fetch(ENDPOINTS.submitTest, {
@@ -148,7 +150,7 @@ const QuizPage: React.FC = () => {
             {quiz && (
               <>
                 <p className="text-xl text-[var(--color-text-secondary)] mt-3">
-                  {quiz.section_title}
+                  Topic: {quiz.section_title}
                 </p>
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-2">
@@ -197,6 +199,13 @@ const QuizPage: React.FC = () => {
                     }}
                     onSelectAnswer={handleSelectAnswer}
                     selectedAnswer={selectedAnswers[index.toString()]}
+                    note={notes[index.toString()] || ''}
+                    onUpdateNote={(questionId, newNote) =>
+                      setNotes((prevNotes) => ({
+                        ...prevNotes,
+                        [questionId]: newNote,
+                      }))
+                    }
                     userId={userData?.id || ''}
                     testId={testId}
                   />

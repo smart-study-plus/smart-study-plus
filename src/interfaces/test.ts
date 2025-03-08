@@ -46,6 +46,7 @@ export interface QuizQuestion {
   correct_answer?: string;
   explanation: string;
   question: string;
+  notes: string;
 }
 
 export interface QuizResults {
