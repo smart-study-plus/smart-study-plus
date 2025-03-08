@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import { MathJaxContext } from 'better-react-mathjax';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 interface HintSectionProps {
   userId: string;
@@ -24,11 +28,11 @@ export const HintSection = ({
   const [loadingHint, setLoadingHint] = useState(false);
 
   const handleGetHint = async () => {
-    if (hint) return; // If hint is already loaded, don't fetch again
+    if (hint) return;
 
     setLoadingHint(true);
     try {
-      // First, try fetching existing hint
+      // try fetching existing hint
       const fetchResponse = await fetchWithAuth(
         'http://localhost:8000/api/rag/fetch-hint',
         {
@@ -84,24 +88,12 @@ export const HintSection = ({
 
   if (!isVisible) return null;
 
-  const parseMarkdown = (text: string) => {
+  const formatMathNotation = (text: string): string => {
     if (!text) return '';
 
-    text = text.replace(/(\d+\.)?\s*\*\*(.*?)\*\*/g, (_, num, content) => {
-      return `${num ? `<br><strong>${num} ${content}</strong>` : `<br><strong>${content}</strong>`}`;
-    });
+    text = text.replace(/\\\((.*?)\\\)/g, (_, equation) => `$${equation}$`);
 
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-    text = text.replace(
-      /\$(.*?)\$/g,
-      (_, equation) => `\$begin:math:text$${equation}\\$end:math:text$`
-    );
-
-    text = text.replace(
-      /\$\$(.*?)\$\$/gm,
-      (_, equation) => `\$begin:math:display$${equation}\\$end:math:display$`
-    );
+    text = text.replace(/\\\[(.*?)\\\]/gm, (_, equation) => `$$${equation}$$`);
 
     return text;
   };
@@ -126,11 +118,14 @@ export const HintSection = ({
               Loading hint...
             </p>
           ) : (
-            <MathJax>
-              <p className="text-lg text-[var(--color-text-secondary)]">
-                {parseMarkdown(hint ?? '')}
-              </p>
-            </MathJax>
+            <div className="text-lg text-[var(--color-text-secondary)]">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {formatMathNotation(hint ?? '')}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
       </div>
