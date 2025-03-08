@@ -1,70 +1,32 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { Header } from '@/components/layout/header';
 import Link from 'next/link';
+import useSWR from 'swr';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { getUserId } from '@/app/auth/getUserId';
+import { createClient } from '@/utils/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
 import { ENDPOINTS } from '@/config/urls';
-import {
-  ChevronLeft,
-  CheckCircle,
-  Lock,
-  PlayCircle,
-  BarChart,
-} from 'lucide-react';
+import { ChevronLeft, CheckCircle, PlayCircle, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-
-interface Concept {
-  concept: string;
-}
-
-interface Section {
-  title: string;
-  concepts: Concept[];
-  completed?: boolean;
-  locked?: boolean;
-}
-
-interface Chapter {
-  title: string;
-  sections: Section[];
-}
-
-interface StudyGuideData {
-  chapters: Chapter[];
-}
-
-interface PracticeTest {
-  section_title: string;
-  practice_test_id: string;
-}
-
-interface PracticeTestsData {
-  practice_tests: PracticeTest[];
-}
-
-interface CompletedTest {
-  test_id: string;
-}
-
-interface TestResultsResponse {
-  test_results: CompletedTest[];
-}
-
-interface TestMap {
-  [key: string]: string;
-}
+import {
+  Chapter,
+  Section,
+  Concept,
+  PracticeTest,
+  PracticeTestsData,
+  TestMap,
+} from '@/interfaces/topic';
+import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
 
 const container = {
   hidden: { opacity: 0 },
@@ -89,96 +51,102 @@ const item = {
   },
 };
 
+const fetcher = async (url: string) => {
+  const supabase = createClient();
+  const token = await supabase.auth
+    .getSession()
+    .then((res) => res.data.session?.access_token);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch data');
+  return res.json();
+};
+
 const StudyGuidePage: React.FC = () => {
   const params = useParams();
   const title = typeof params.title === 'string' ? params.title : '';
   const router = useRouter();
+  const supabase = createClient();
 
-  const [studyGuide, setStudyGuide] = useState<StudyGuideData | null>(null);
-  const [practiceTests, setPracticeTests] = useState<TestMap>({});
-  const [completedTests, setCompletedTests] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number>(0);
+  const { data: userData } = useSWR('user', async () => {
+    const { data } = await supabase.auth.getUser();
+    return data?.user;
+  });
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      if (!title) return;
+  const userId = userData?.id;
 
-      try {
-        const authUserId = await getUserId();
-        if (!authUserId) throw new Error('User authentication required');
+  const { data: studyGuide, error: studyGuideError } = useSWR(
+    title ? ENDPOINTS.studyGuide(title) : null,
+    fetcher
+  );
 
-        const [guideResponse, testsResponse, completedTestsResponse] =
-          await Promise.all([
-            fetchWithAuth(ENDPOINTS.studyGuide(title)),
-            fetchWithAuth(ENDPOINTS.practiceTests(title)),
-            fetchWithAuth(ENDPOINTS.testResults(authUserId)),
-          ]);
+  const { data: testsData, error: testsError } = useSWR(
+    title ? ENDPOINTS.practiceTests(title) : null,
+    fetcher
+  );
 
-        if (
-          !guideResponse.ok ||
-          !testsResponse.ok ||
-          !completedTestsResponse.ok
-        ) {
-          throw new Error('Failed to fetch data');
-        }
+  const { data: completedTestsData, error: completedError } = useSWR(
+    userId && studyGuide ? ENDPOINTS.testResults(userId) : null,
+    fetcher
+  );
 
-        const [guideData, testsData, completedTestsData]: [
-          StudyGuideData,
-          PracticeTestsData,
-          TestResultsResponse,
-        ] = await Promise.all([
-          guideResponse.json(),
-          testsResponse.json(),
-          completedTestsResponse.json(),
-        ]);
+  const loading = !studyGuide || !testsData || !completedTestsData;
+  const error = studyGuideError || testsError || completedError;
 
-        const testMap = testsData.practice_tests.reduce<TestMap>(
-          (acc, test) => {
-            acc[test.section_title] = test.practice_test_id;
-            return acc;
-          },
-          {}
-        );
+  const getErrorMessage = () => {
+    if (studyGuideError) {
+      return "We couldn't find this study guide. It may have been deleted or you may not have access to it.";
+    }
+    if (testsError) {
+      return 'Failed to load practice tests for this study guide.';
+    }
+    if (completedError) {
+      return 'Failed to load your progress data.';
+    }
+    return 'An unexpected error occurred.';
+  };
 
-        const completedTestIds = new Set(
-          completedTestsData.test_results.map(
-            (test: CompletedTest) => test.test_id
-          )
-        );
+  // Process the data
+  const practiceTests = (testsData?.practice_tests.reduce(
+    (acc: TestMap, test: PracticeTest) => {
+      acc[test.section_title] = test.practice_test_id;
+      return acc;
+    },
+    {} as TestMap
+  ) || {}) as TestMap;
 
-        const processedGuideData = {
-          ...guideData,
-          chapters: guideData.chapters.map((chapter) => ({
-            ...chapter,
-            sections: chapter.sections.map((section) => ({
-              ...section,
-              completed: completedTestIds.has(testMap[section.title] || ''),
-            })),
+  const completedTests = new Set(
+    completedTestsData?.test_results
+      ?.filter(
+        (test: CompletedTest) =>
+          test.study_guide_id === studyGuide?.study_guide_id
+      )
+      .map((test: CompletedTest) => test.test_id) || []
+  );
+
+  const progress = (() => {
+    if (!testsData?.practice_tests || !completedTestsData?.test_results)
+      return 0;
+
+    const totalTests = testsData.practice_tests.length;
+    const completedCount = completedTests.size; 
+
+    return totalTests > 0 ? (completedCount / totalTests) * 100 : 0;
+  })();
+
+  const processedGuide = studyGuide
+    ? {
+        ...studyGuide,
+        chapters: studyGuide.chapters.map((chapter: Chapter) => ({
+          ...chapter,
+          sections: chapter.sections.map((section: Section) => ({
+            ...section,
+            completed: completedTests.has(practiceTests[section.title] || ''),
           })),
-        };
-
-        setStudyGuide(processedGuideData);
-        setPracticeTests(testMap);
-        setCompletedTests(completedTestIds);
-
-        const totalTests = testsData.practice_tests.length;
-        const completedCount = completedTestIds.size;
-        const progressPercentage =
-          totalTests > 0 ? (completedCount / totalTests) * 100 : 0;
-        setProgress(progressPercentage);
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'An error occurred';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+        })),
       }
-    };
-
-    void fetchData();
-  }, [title]);
+    : null;
 
   const handleQuizClick = (testId: string): void => {
     if (!title) return;
@@ -228,16 +196,29 @@ const StudyGuidePage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center p-6 bg-red-50 rounded-xl border border-red-200"
+            className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-xl border border-red-200 max-w-2xl mx-auto"
           >
-            <p className="text-base text-red-500">Error: {error}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="mt-4"
-              variant="default"
-            >
-              Try Again
-            </Button>
+            <div className="text-center space-y-4">
+              <p className="text-xl font-semibold text-red-600">
+                {getErrorMessage()}
+              </p>
+              <p className="text-gray-600">
+                You can try refreshing the page or going back to the practice
+                section.
+              </p>
+              <div className="flex gap-4 mt-6">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="default"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Try Again
+                </Button>
+                <Link href="/practice">
+                  <Button variant="outline">Return to Practice</Button>
+                </Link>
+              </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -251,8 +232,8 @@ const StudyGuidePage: React.FC = () => {
               className="md:col-span-3 bg-white rounded-xl shadow-lg p-6"
             >
               <Accordion type="single" collapsible className="w-full">
-                {studyGuide?.chapters.map((chapter) =>
-                  chapter.sections.map((section, index) => (
+                {processedGuide?.chapters.map((chapter: Chapter) =>
+                  chapter.sections.map((section: Section, index: number) => (
                     <motion.div
                       key={`${chapter.title}-${index}`}
                       variants={item}
@@ -275,17 +256,19 @@ const StudyGuidePage: React.FC = () => {
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
                           <div className="mt-4 space-y-3">
-                            {section.concepts.map((concept, conceptIndex) => (
-                              <div
-                                key={conceptIndex}
-                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                              >
-                                <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
-                                <span className="text-gray-700">
-                                  {concept.concept}
-                                </span>
-                              </div>
-                            ))}
+                            {section.concepts.map(
+                              (concept: Concept, conceptIndex: number) => (
+                                <div
+                                  key={conceptIndex}
+                                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                  <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                                  <span className="text-gray-700">
+                                    {concept.concept}
+                                  </span>
+                                </div>
+                              )
+                            )}
                             {practiceTests[section.title] && (
                               <div className="pt-4">
                                 <Button

@@ -15,6 +15,8 @@ interface QuestionCardProps {
   };
   onSelectAnswer: (questionId: string, answer: string) => void;
   selectedAnswer?: string;
+  note: string;
+  onUpdateNote: (questionId: string, newNote: string) => void;
   userId: string;
   testId: string;
 }
@@ -26,10 +28,11 @@ const QuestionCard = ({
   selectedAnswer,
   userId,
   testId,
+  note,
+  onUpdateNote,
 }: QuestionCardProps) => {
   const [showHint, setShowHint] = useState(false);
   const [showNoteInput, setShowNoteInput] = useState(false);
-  const [note, setNote] = useState('');
 
   return (
     <div className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
@@ -85,7 +88,9 @@ const QuestionCard = ({
             </h4>
             <textarea
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(e) =>
+                onUpdateNote(question.question_id, e.target.value)
+              }
               placeholder="Write your notes here..."
               className="w-full p-4 text-lg rounded-lg border border-[var(--color-gray-200)] focus:border-[var(--color-primary)] focus:outline-none resize-y min-h-[120px]"
             />

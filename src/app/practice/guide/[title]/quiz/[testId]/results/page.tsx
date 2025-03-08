@@ -18,27 +18,9 @@ import {
   Trophy,
   Target,
   CheckCircle2,
-  Brain,
 } from 'lucide-react';
 import { AIChat } from '@/components/practice/AIChat';
-
-interface QuizQuestion {
-  question_id: string;
-  is_correct: boolean;
-  user_answer: string;
-  correct_answer?: string;
-  explanation: string;
-  question: string;
-}
-
-interface QuizResults {
-  user_id: string;
-  test_id: string;
-  score: number;
-  accuracy: number;
-  status: string;
-  questions: QuizQuestion[];
-}
+import { QuizQuestion, QuizResults } from '@/interfaces/test';
 
 const QuizResultsPage: React.FC = () => {
   const params = useParams();
@@ -233,6 +215,15 @@ const QuizResultsPage: React.FC = () => {
                               {question.explanation}
                             </p>
                           </div>
+
+                          {question.notes && question.notes.trim() !== '' && (
+                            <div className="bg-yellow-50 rounded-lg p-4 mb-6 border border-yellow-300">
+                              <h4 className="font-medium text-yellow-900 mb-2">
+                                Your Notes:
+                              </h4>
+                              <p className="text-yellow-700">{question.notes}</p>
+                            </div>
+                          )}
 
                           <AIChat
                             userId={results.user_id}
