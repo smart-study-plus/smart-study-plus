@@ -1,21 +1,30 @@
 'use client';
 
-import { FormEvent, useState, ChangeEvent } from 'react';
+import { FormEvent, useState, ChangeEvent, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ENDPOINTS } from '@/config/urls';
+import { useSearchParams } from 'next/navigation';
 
 interface AuthFormProps {
-  method: string | null;
-  err?: string | null;
+  method: 'signin' | 'signup' | null;
   onSuccess?: () => void;
+  err?: string | null;
 }
 
-export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
+export function AuthForm({ method, onSuccess }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(err || null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message) {
+      setError(message);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,7 +34,7 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
     try {
       const supabase = createClient();
       const { error: authError } =
-        method === 'sign-up'
+        method === 'signup'
           ? await supabase.auth.signUp({
               email,
               password,
@@ -40,23 +49,23 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
 
       if (authError) throw authError;
 
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = (await supabase.auth.getSession()).data.session
+        ?.access_token;
       if (token) {
-        const response = await fetch(ENDPOINTS.startSession , {
+        const response = await fetch(ENDPOINTS.startSession, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ device: 'browser' }), // Detect mobile if needed
+          body: JSON.stringify({ device: 'browser' }),
         });
 
         if (response.ok) {
           const { session_id } = await response.json();
-          localStorage.setItem('session_id', session_id); // Store session ID for logout
+          localStorage.setItem('session_id', session_id);
         }
       }
-
 
       if (onSuccess) {
         onSuccess();
@@ -69,9 +78,9 @@ export function AuthForm({ method, err, onSuccess }: AuthFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 transform transition-all">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
-        {method === 'sign-up' ? 'Create your account' : 'Welcome back'}
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl p-8 transform transition-all">
+      <h2 className="text-5xl font-bold mb-6 text-gray-900">
+        {method === 'signup' ? 'Create your account' : 'Welcome back'}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-4">

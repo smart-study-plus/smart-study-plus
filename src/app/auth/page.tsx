@@ -40,22 +40,17 @@ const AuthContent = () => {
     handleSignOutAndRedirect().catch(console.error);
   }, [method, verification, router]);
 
-  if (!method || (method !== 'signin' && method !== 'sign-up')) {
+  if (!method || (method !== 'signin' && method !== 'signup')) {
     redirect('/auth?m=signin');
   }
 
   return (
     <div className="bg-gray-100 h-screen flex justify-center items-center">
-      <div className="bg-[var(--color-background)] p-8 rounded-lg shadow-lg w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-6 text-[var(--color-text)]">
-          {method === 'signin' ? 'Welcome back' : "Let's get started"}
-        </h2>
-        <AuthForm
-          method={method}
-          err={err}
-          onSuccess={() => router.push('/dashboard')}
-        />
-      </div>
+      <AuthForm
+        method={method}
+        err={err}
+        onSuccess={() => router.push('/dashboard')}
+      />
     </div>
   );
 };
