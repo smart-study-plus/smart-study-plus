@@ -227,14 +227,14 @@ export default function DashboardPage() {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                       <div className="pl-9 pt-2 space-y-3">
-                                        <div className="flex items-center text-sm bg-red-50 p-2 rounded">
+                                        <div className="flex items-center text-sm bg-red-200 p-2 rounded">
                                           <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
                                           <span className="text-gray-900 ml-1">
                                             {q.user_choice}.{' '}
                                             {q.user_answer_text}
                                           </span>
                                         </div>
-                                        <div className="flex items-center text-sm bg-green-50 p-2 rounded">
+                                        <div className="flex items-center text-sm bg-green-200 p-2 rounded">
                                           <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                                           <span className="text-gray-900 ml-1">
                                             {q.correct_answer}.{' '}
@@ -302,88 +302,125 @@ export default function DashboardPage() {
                       </CardContent>
                     </Card>
 
-                    {testAnalytics?.latest_test && (
-                      <Card className="col-span-3 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardHeader className="border-b border-gray-100">
-                          <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
-                            <GraduationCap className="h-6 w-6 text-[var(--color-primary)] mr-2" />
-                            Latest Test Results
-                          </CardTitle>
-                          <p className="text-sm text-gray-500">
-                            Completed on{' '}
-                            {new Date(
-                              testAnalytics.latest_test.submitted_at
-                            ).toLocaleDateString('en-US', {
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              hour12: true,
-                            })}
-                          </p>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                          <div className="mb-6">
-                            <p className="text-lg font-semibold text-gray-900 mb-2">
-                              Attempt #
-                              {testAnalytics.latest_test.attempt_number}
+                    <Card className="col-span-3 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                      <CardHeader className="border-b border-gray-100">
+                        <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                          <GraduationCap className="h-6 w-6 text-[var(--color-primary)] mr-2" />
+                          Latest Test Results
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        {isLoading ? (
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+                            <p className="mt-4 text-gray-600">
+                              Loading latest results...
                             </p>
                           </div>
-
-                          <div className="grid gap-6 md:grid-cols-3 mb-8">
-                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
-                              <Percent className="h-8 w-8 text-[var(--color-primary)] mb-4" />
-                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                                Accuracy
-                              </h4>
-                              <div className="flex items-baseline">
-                                <span className="text-4xl font-bold text-gray-900">
-                                  {testAnalytics.latest_test.accuracy.toFixed(
-                                    0
-                                  )}
-                                  %
-                                </span>
-                              </div>
-                              <p className="mt-2 text-sm text-gray-600">
-                                ({testAnalytics.latest_test.score}/
-                                {testAnalytics.latest_test.total_questions}{' '}
-                                correct)
+                        ) : testAnalytics?.latest_test ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="mb-6">
+                              <p className="text-lg font-semibold text-gray-900 mb-2">
+                                Attempt #
+                                {testAnalytics.latest_test.attempt_number}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Completed on{' '}
+                                {new Date(
+                                  testAnalytics.latest_test.submitted_at
+                                ).toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: 'numeric',
+                                  minute: 'numeric',
+                                  hour12: true,
+                                })}
                               </p>
                             </div>
 
-                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
-                              <Timer className="h-8 w-8 text-yellow-500 mb-4" />
-                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                                Time Spent
-                              </h4>
-                              <div className="flex items-baseline">
-                                <span className="text-4xl font-bold text-gray-900">
-                                  {Math.round(
-                                    testAnalytics.latest_test.time_taken
-                                  )}
-                                </span>
-                                <span className="ml-2 text-gray-600">
-                                  seconds
-                                </span>
-                              </div>
-                            </div>
+                            <motion.div
+                              variants={staggerContainer}
+                              initial="initial"
+                              animate="animate"
+                              className="grid gap-6 md:grid-cols-3 mb-8"
+                            >
+                              <motion.div
+                                variants={fadeInUp}
+                                className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative"
+                              >
+                                <Percent className="h-8 w-8 text-[var(--color-primary)] mb-4" />
+                                <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                  Accuracy
+                                </h4>
+                                <div className="flex items-baseline">
+                                  <span className="text-4xl font-bold text-gray-900">
+                                    {testAnalytics.latest_test.accuracy.toFixed(
+                                      0
+                                    )}
+                                    %
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-sm text-gray-600">
+                                  ({testAnalytics.latest_test.score}/
+                                  {testAnalytics.latest_test.total_questions}{' '}
+                                  correct)
+                                </p>
+                              </motion.div>
 
-                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
-                              <CheckCircle2 className="h-8 w-8 text-green-500 mb-4" />
-                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                                Status
-                              </h4>
-                              <div className="flex items-baseline">
-                                <span className="text-4xl font-bold text-gray-900 capitalize">
-                                  {testAnalytics.latest_test.status}
-                                </span>
-                              </div>
-                            </div>
+                              <motion.div
+                                variants={fadeInUp}
+                                className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative"
+                              >
+                                <Timer className="h-8 w-8 text-yellow-500 mb-4" />
+                                <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                  Time Spent
+                                </h4>
+                                <div className="flex items-baseline">
+                                  <span className="text-4xl font-bold text-gray-900">
+                                    {Math.round(
+                                      testAnalytics.latest_test.time_taken
+                                    )}
+                                  </span>
+                                  <span className="ml-2 text-gray-600">
+                                    seconds
+                                  </span>
+                                </div>
+                              </motion.div>
+
+                              <motion.div
+                                variants={fadeInUp}
+                                className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative"
+                              >
+                                <CheckCircle2 className="h-8 w-8 text-green-500 mb-4" />
+                                <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                  Status
+                                </h4>
+                                <div className="flex items-baseline">
+                                  <span className="text-4xl font-bold text-gray-900 capitalize">
+                                    {testAnalytics.latest_test.status}
+                                  </span>
+                                </div>
+                              </motion.div>
+                            </motion.div>
+                          </motion.div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-8 text-gray-600">
+                            <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
+                            <p className="text-lg">
+                              No test results available yet
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Complete a test to see your results here
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    )}
+                        )}
+                      </CardContent>
+                    </Card>
                   </motion.div>
                 </motion.div>
               </AnimatePresence>
