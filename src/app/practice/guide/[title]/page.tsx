@@ -27,6 +27,7 @@ import {
   TestMap,
 } from '@/interfaces/topic';
 import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
+import { cn } from '@/lib/utils';
 
 const container = {
   hidden: { opacity: 0 },
@@ -130,7 +131,7 @@ const StudyGuidePage: React.FC = () => {
       return 0;
 
     const totalTests = testsData.practice_tests.length;
-    const completedCount = completedTests.size; 
+    const completedCount = completedTests.size;
 
     return totalTests > 0 ? (completedCount / totalTests) * 100 : 0;
   })();
@@ -138,13 +139,31 @@ const StudyGuidePage: React.FC = () => {
   const processedGuide = studyGuide
     ? {
         ...studyGuide,
-        chapters: studyGuide.chapters.map((chapter: Chapter) => ({
-          ...chapter,
-          sections: chapter.sections.map((section: Section) => ({
-            ...section,
-            completed: completedTests.has(practiceTests[section.title] || ''),
-          })),
-        })),
+        chapters: studyGuide.chapters?.length
+          ? studyGuide.chapters.map((chapter: Chapter) => ({
+              title: chapter.title,
+              sections: chapter.sections.map((section: Section) => ({
+                title: section.title,
+                completed: completedTests.has(
+                  practiceTests[section.title] || ''
+                ),
+                concepts:
+                  section.concepts?.map((concept: Concept) => concept) || [],
+              })),
+            }))
+          : [
+              {
+                title: 'Sections',
+                sections: studyGuide.sections.map((section: Section) => ({
+                  title: section.title,
+                  completed: completedTests.has(
+                    practiceTests[section.title] || ''
+                  ),
+                  concepts:
+                    section.concepts?.map((concept: Concept) => concept) || [],
+                })),
+              },
+            ],
       }
     : null;
 
@@ -231,67 +250,104 @@ const StudyGuidePage: React.FC = () => {
               variants={item}
               className="md:col-span-3 bg-white rounded-xl shadow-lg p-6"
             >
-              <Accordion type="single" collapsible className="w-full">
-                {processedGuide?.chapters.map((chapter: Chapter) =>
-                  chapter.sections.map((section: Section, index: number) => (
-                    <motion.div
-                      key={`${chapter.title}-${index}`}
-                      variants={item}
-                    >
+              <Accordion type="multiple" className="w-full space-y-4">
+                {processedGuide?.chapters.map(
+                  (chapter: Chapter, chapterIndex: number) => (
+                    <motion.div key={chapterIndex} variants={item}>
                       <AccordionItem
-                        value={`${chapter.title}-${index}`}
-                        className="border border-gray-100 rounded-lg mb-4 overflow-hidden hover:border-[var(--color-primary)]/50 transition-colors"
+                        value={`chapter-${chapterIndex}`}
+                        className="border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden data-[state=open]:shadow-md"
                       >
-                        <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:bg-gray-50">
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline transition-colors">
                           <div className="flex items-center gap-3">
-                            {section.completed ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <PlayCircle className="h-5 w-5 text-[var(--color-primary)]" />
-                            )}
-                            <span className="text-left font-medium">
-                              {section.title}
+                            <div className="p-2 rounded-lg bg-[var(--color-primary)]/10">
+                              <BarChart className="h-5 w-5 text-[var(--color-primary)]" />
+                            </div>
+                            <span className="text-left font-semibold text-gray-900">
+                              {chapter.title}
                             </span>
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                          <div className="mt-4 space-y-3">
-                            {section.concepts.map(
-                              (concept: Concept, conceptIndex: number) => (
-                                <div
-                                  key={conceptIndex}
-                                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                  <div className="h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
-                                  <span className="text-gray-700">
-                                    {concept.concept}
-                                  </span>
-                                </div>
+
+                        <AccordionContent className="px-6 pb-6 pt-2">
+                          <div className="space-y-3">
+                            {chapter.sections.map(
+                              (section: Section, sectionIndex: number) => (
+                                <motion.div key={sectionIndex} variants={item}>
+                                  <AccordionItem
+                                    value={`section-${chapterIndex}-${sectionIndex}`}
+                                    className="border border-gray-100 rounded-lg overflow-hidden hover:border-[var(--color-primary)]/30 transition-all duration-300 data-[state=open]:shadow-sm"
+                                  >
+                                    <AccordionTrigger className="px-4 py-3 hover:no-underline transition-colors">
+                                      <div className="flex items-center gap-3">
+                                        <div
+                                          className={cn(
+                                            'p-1.5 rounded-lg transition-colors',
+                                            section.completed
+                                              ? 'bg-green-100'
+                                              : 'bg-[var(--color-primary)]/10'
+                                          )}
+                                        >
+                                          {section.completed ? (
+                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                          ) : (
+                                            <PlayCircle className="h-4 w-4 text-[var(--color-primary)]" />
+                                          )}
+                                        </div>
+                                        <span className="text-left font-medium text-gray-800">
+                                          {section.title}
+                                        </span>
+                                      </div>
+                                    </AccordionTrigger>
+
+                                    <AccordionContent className="px-4 pb-4 pt-1">
+                                      <div className="space-y-2.5">
+                                        {section.concepts.map(
+                                          (
+                                            concept: Concept,
+                                            conceptIndex: number
+                                          ) => (
+                                            <div
+                                              key={conceptIndex}
+                                              className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50/80 transition-colors"
+                                            >
+                                              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"></div>
+                                              <span className="text-gray-700 text-sm">
+                                                {concept.concept}
+                                              </span>
+                                            </div>
+                                          )
+                                        )}
+
+                                        {practiceTests[section.title] && (
+                                          <div className="pt-4">
+                                            <Button
+                                              onClick={() =>
+                                                handleQuizClick(
+                                                  practiceTests[section.title]
+                                                )
+                                              }
+                                              className="w-full bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-500/90 transition-all duration-300"
+                                            >
+                                              {completedTests.has(
+                                                practiceTests[section.title]
+                                              )
+                                                ? 'View Results'
+                                                : 'Start Quiz'}
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </motion.div>
                               )
-                            )}
-                            {practiceTests[section.title] && (
-                              <div className="pt-4">
-                                <Button
-                                  onClick={() =>
-                                    handleQuizClick(
-                                      practiceTests[section.title]
-                                    )
-                                  }
-                                  className="w-full bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
-                                >
-                                  {completedTests.has(
-                                    practiceTests[section.title]
-                                  )
-                                    ? 'View Results'
-                                    : 'Start Quiz'}
-                                </Button>
-                              </div>
                             )}
                           </div>
                         </AccordionContent>
                       </AccordionItem>
                     </motion.div>
-                  ))
+                  )
                 )}
               </Accordion>
             </motion.div>
