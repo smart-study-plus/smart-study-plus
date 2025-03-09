@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
@@ -40,6 +40,11 @@ const QuizPage: React.FC = () => {
   const router = useRouter();
   const supabase = createClient();
   const [notes, setNotes] = useState<{ [key: string]: string }>({});
+  const [startTime, setStartTime] = useState<number>(0);
+
+  useEffect(() => {
+    setStartTime(Math.floor(Date.now() / 1000));
+  }, []);
 
   // Fetch user data
   const { data: userData } = useSWR('user', async () => {
@@ -77,7 +82,8 @@ const QuizPage: React.FC = () => {
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!userData?.id || !testId || !studyGuideData || !title) return;
+    if (!userData?.id || !testId || !studyGuideData || !title || !startTime)
+      return;
 
     try {
       setSubmitting(true);
@@ -96,7 +102,8 @@ const QuizPage: React.FC = () => {
         user_id: userData.id,
         test_id: testId,
         study_guide_id: studyGuideId,
-        answers: formattedAnswers
+        started_at: new Date(startTime * 1000).toISOString(),
+        answers: formattedAnswers,
       };
 
       const response = await fetch(ENDPOINTS.submitTest, {
