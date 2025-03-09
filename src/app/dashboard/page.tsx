@@ -15,6 +15,10 @@ import {
 } from '@/components/ui/accordion';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RouteGuard } from '@/components/auth/route-guard';
+import {
+  WrongQuestion,
+  WeeklyProgress,
+} from '@/interfaces/test';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -29,24 +33,6 @@ const staggerContainer = {
     },
   },
 };
-
-interface WrongQuestion {
-  question: string;
-  user_choice: string;
-  correct_answer: string;
-}
-
-interface WeeklyProgress {
-  week_start: string;
-  average_accuracy: number;
-}
-
-interface TestAnalytics {
-  average_score: number;
-  total_tests: number;
-  recent_wrong_questions: WrongQuestion[];
-  weekly_progress: WeeklyProgress[];
-}
 
 const fetcher = async (url: string) => {
   const supabase = createClient();
@@ -229,20 +215,16 @@ export default function DashboardPage() {
                                       <div className="pl-9 pt-2 space-y-3">
                                         <div className="flex items-center text-sm bg-red-50 p-2 rounded">
                                           <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                                          <span className="text-gray-700">
-                                            Your answer:{' '}
-                                          </span>
-                                          <span className="font-semibold text-gray-900 ml-1">
-                                            {q.user_choice}
+                                          <span className="text-gray-900 ml-1">
+                                            {q.user_choice}.{' '}
+                                            {q.user_answer_text}
                                           </span>
                                         </div>
                                         <div className="flex items-center text-sm bg-green-50 p-2 rounded">
                                           <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                                          <span className="text-gray-700">
-                                            Correct answer:{' '}
-                                          </span>
-                                          <span className="font-semibold text-gray-900 ml-1">
-                                            {q.correct_answer}
+                                          <span className="text-gray-900 ml-1">
+                                            {q.correct_answer}.{' '}
+                                            {q.correct_answer_text}
                                           </span>
                                         </div>
                                       </div>

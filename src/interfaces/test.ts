@@ -43,10 +43,12 @@ export interface QuizQuestion {
   question_id: string;
   is_correct: boolean;
   user_answer: string;
+  user_answer_text: string;
   correct_answer?: string;
+  correct_answer_text?: string;
   explanation: string;
   question: string;
-  notes: string;
+  notes?: string;
 }
 
 export interface QuizResults {
@@ -56,4 +58,25 @@ export interface QuizResults {
   accuracy: number;
   status: string;
   questions: QuizQuestion[];
+}
+
+export interface WrongQuestion {
+  question_id: string;
+  question: string;
+  user_choice: string;
+  user_answer_text: string;
+  correct_answer: string;
+  correct_answer_text: string;
+}
+
+export interface WeeklyProgress {
+  week_start: string;
+  average_accuracy: number;
+}
+
+export interface TestAnalytics {
+  average_score: number;
+  total_tests: number;
+  recent_wrong_questions: WrongQuestion[];
+  weekly_progress: WeeklyProgress[];
 }

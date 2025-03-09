@@ -191,7 +191,8 @@ const QuizResultsPage: React.FC = () => {
                                     : 'text-red-600'
                                 )}
                               >
-                                {question.user_answer}
+                                {question.user_answer}.{' '}
+                                {question.user_answer_text}
                               </span>
                             </div>
 
@@ -201,7 +202,8 @@ const QuizResultsPage: React.FC = () => {
                                   Correct Answer:
                                 </span>
                                 <span className="font-medium text-green-600">
-                                  {question.correct_answer}
+                                  {question.correct_answer}.{' '}
+                                  {question.correct_answer_text}
                                 </span>
                               </div>
                             )}
