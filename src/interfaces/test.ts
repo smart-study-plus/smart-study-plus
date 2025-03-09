@@ -74,9 +74,34 @@ export interface WeeklyProgress {
   average_accuracy: number;
 }
 
+export interface LatestTestQuestion {
+  question_id: string;
+  question: string;
+  user_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+  explanation: string;
+  notes: string;
+}
+
+export interface LatestTest {
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  questions: LatestTestQuestion[];
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  attempt_number: number;
+  time_taken: number;
+  submitted_at: string;
+  status: string;
+}
+
 export interface TestAnalytics {
   average_score: number;
   total_tests: number;
   recent_wrong_questions: WrongQuestion[];
   weekly_progress: WeeklyProgress[];
+  latest_test: LatestTest;
 }

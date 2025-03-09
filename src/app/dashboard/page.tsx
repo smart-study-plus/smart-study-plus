@@ -1,7 +1,20 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Target, Award, X, Check, Zap, Loader2 } from 'lucide-react';
+import {
+  Clock,
+  Target,
+  Award,
+  X,
+  Check,
+  Zap,
+  Loader2,
+  LockIcon,
+  GraduationCap,
+  Timer,
+  Percent,
+  CheckCircle2,
+} from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { Header } from '@/components/layout/header';
 import { ENDPOINTS } from '@/config/urls';
@@ -18,6 +31,7 @@ import { RouteGuard } from '@/components/auth/route-guard';
 import {
   WrongQuestion,
   WeeklyProgress,
+  TestAnalytics,
 } from '@/interfaces/test';
 
 const fadeInUp = {
@@ -287,6 +301,89 @@ export default function DashboardPage() {
                         )}
                       </CardContent>
                     </Card>
+
+                    {testAnalytics?.latest_test && (
+                      <Card className="col-span-3 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader className="border-b border-gray-100">
+                          <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                            <GraduationCap className="h-6 w-6 text-[var(--color-primary)] mr-2" />
+                            Latest Test Results
+                          </CardTitle>
+                          <p className="text-sm text-gray-500">
+                            Completed on{' '}
+                            {new Date(
+                              testAnalytics.latest_test.submitted_at
+                            ).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: 'numeric',
+                              hour12: true,
+                            })}
+                          </p>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          <div className="mb-6">
+                            <p className="text-lg font-semibold text-gray-900 mb-2">
+                              Attempt #
+                              {testAnalytics.latest_test.attempt_number}
+                            </p>
+                          </div>
+
+                          <div className="grid gap-6 md:grid-cols-3 mb-8">
+                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
+                              <Percent className="h-8 w-8 text-[var(--color-primary)] mb-4" />
+                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                Accuracy
+                              </h4>
+                              <div className="flex items-baseline">
+                                <span className="text-4xl font-bold text-gray-900">
+                                  {testAnalytics.latest_test.accuracy.toFixed(
+                                    0
+                                  )}
+                                  %
+                                </span>
+                              </div>
+                              <p className="mt-2 text-sm text-gray-600">
+                                ({testAnalytics.latest_test.score}/
+                                {testAnalytics.latest_test.total_questions}{' '}
+                                correct)
+                              </p>
+                            </div>
+
+                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
+                              <Timer className="h-8 w-8 text-yellow-500 mb-4" />
+                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                Time Spent
+                              </h4>
+                              <div className="flex items-baseline">
+                                <span className="text-4xl font-bold text-gray-900">
+                                  {Math.round(
+                                    testAnalytics.latest_test.time_taken
+                                  )}
+                                </span>
+                                <span className="ml-2 text-gray-600">
+                                  seconds
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="bg-white border-2 hover:shadow-xl transition-all duration-300 rounded-lg p-6 relative">
+                              <CheckCircle2 className="h-8 w-8 text-green-500 mb-4" />
+                              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                Status
+                              </h4>
+                              <div className="flex items-baseline">
+                                <span className="text-4xl font-bold text-gray-900 capitalize">
+                                  {testAnalytics.latest_test.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </motion.div>
                 </motion.div>
               </AnimatePresence>
