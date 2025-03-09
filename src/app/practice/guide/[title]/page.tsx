@@ -248,7 +248,7 @@ const StudyGuidePage: React.FC = () => {
           >
             <motion.div
               variants={item}
-              className="md:col-span-3 bg-white rounded-xl shadow-lg p-6"
+              className="md:col-span-3 bg-white rounded-xl shadow-lg p-6 border-2 border-gray-300"
             >
               <Accordion type="multiple" className="w-full space-y-4">
                 {processedGuide?.chapters.map(
@@ -256,7 +256,7 @@ const StudyGuidePage: React.FC = () => {
                     <motion.div key={chapterIndex} variants={item}>
                       <AccordionItem
                         value={`chapter-${chapterIndex}`}
-                        className="border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden data-[state=open]:shadow-md"
+                        className="border-2 border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden data-[state=open]:shadow-md"
                       >
                         <AccordionTrigger className="px-6 py-4 hover:no-underline transition-colors">
                           <div className="flex items-center gap-3">
@@ -276,7 +276,7 @@ const StudyGuidePage: React.FC = () => {
                                 <motion.div key={sectionIndex} variants={item}>
                                   <AccordionItem
                                     value={`section-${chapterIndex}-${sectionIndex}`}
-                                    className="border border-gray-100 rounded-lg overflow-hidden hover:border-[var(--color-primary)]/30 transition-all duration-300 data-[state=open]:shadow-sm"
+                                    className="border-2 border-gray-300 rounded-lg overflow-hidden hover:border-[var(--color-primary)]/50 transition-all duration-300 data-[state=open]:shadow-md data-[state=open]:border-[var(--color-primary)]/40"
                                   >
                                     <AccordionTrigger className="px-4 py-3 hover:no-underline transition-colors">
                                       <div className="flex items-center gap-3">
