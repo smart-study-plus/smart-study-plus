@@ -18,6 +18,7 @@ import {
   Trophy,
   Target,
   CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { AIChat } from '@/components/practice/AIChat';
 import { QuizQuestion, QuizResults } from '@/interfaces/test';
@@ -97,14 +98,20 @@ const QuizResultsPage: React.FC = () => {
         ) : (
           results && (
             <>
-              <div className="grid gap-6 md:grid-cols-3 mb-8">
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <CardContent className="p-6 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[var(--color-primary)]/20 to-purple-300/20 rounded-bl-full"></div>
-                    <Trophy className="h-8 w-8 text-[var(--color-primary)] mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Score
-                    </h3>
+              <div className="grid gap-6 md:grid-cols-4 mb-8">
+                <Card
+                  className={cn(
+                    'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
+                    'border-l-4 border-l-[var(--color-primary)]'
+                  )}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-700">
+                        Score
+                      </h3>
+                      <Trophy className="h-6 w-6 text-[var(--color-primary)]" />
+                    </div>
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold text-gray-900">
                         {results.score}
@@ -114,28 +121,67 @@ const QuizResultsPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <CardContent className="p-6 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-200/30 to-orange-300/30 rounded-bl-full"></div>
-                    <Target className="h-8 w-8 text-yellow-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Accuracy
-                    </h3>
+                <Card
+                  className={cn(
+                    'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
+                    'border-l-4',
+                    results.accuracy >= 70
+                      ? 'border-l-green-500'
+                      : 'border-l-yellow-500'
+                  )}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-700">
+                        Accuracy
+                      </h3>
+                      <Target className="h-6 w-6 text-yellow-500" />
+                    </div>
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold text-gray-900">
-                        {results.accuracy.toFixed(2)}%
+                        {results.accuracy.toFixed(0)}%
                       </span>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <CardContent className="p-6 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-200/30 to-emerald-300/30 rounded-bl-full"></div>
-                    <CheckCircle2 className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Status
-                    </h3>
+                <Card
+                  className={cn(
+                    'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
+                    'border-l-4',
+                    'border-l-blue-500'
+                  )}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-700">
+                        Time Taken
+                      </h3>
+                      <Clock className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {Math.round(results.time_taken)}
+                      </span>
+                      <span className="ml-2 text-gray-600">seconds</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  className={cn(
+                    'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
+                    'border-l-4',
+                    'border-l-green-500'
+                  )}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-700">
+                        Status
+                      </h3>
+                      <CheckCircle2 className="h-6 w-6 text-green-500" />
+                    </div>
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold text-gray-900 capitalize">
                         {results.status}

@@ -324,10 +324,10 @@ export default function DashboardPage() {
                             transition={{ duration: 0.3 }}
                           >
                             <div className="mb-6">
-                              <p className="text-lg font-semibold text-gray-900 mb-2">
+                              {/* <p className="text-lg font-semibold text-gray-900 mb-2">
                                 Attempt #
                                 {testAnalytics.latest_test.attempt_number}
-                              </p>
+                              </p> */}
                               <p className="text-sm text-gray-500">
                                 Completed on{' '}
                                 {new Date(

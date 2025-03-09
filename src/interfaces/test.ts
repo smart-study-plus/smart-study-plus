@@ -58,6 +58,7 @@ export interface QuizResults {
   accuracy: number;
   status: string;
   questions: QuizQuestion[];
+  time_taken: number;
 }
 
 export interface WrongQuestion {
