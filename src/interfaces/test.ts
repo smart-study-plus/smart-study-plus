@@ -106,3 +106,40 @@ export interface TestAnalytics {
   weekly_progress: WeeklyProgress[];
   latest_test: LatestTest;
 }
+
+export interface GuideAnalytics {
+  user_id: string;
+  study_guide_id: string;
+  total_tests: number;
+  average_score: number;
+  average_accuracy: number;
+  recent_wrong_questions: WrongQuestion[];
+  latest_test?: {
+    score: number;
+    accuracy: number;
+    total_questions: number;
+    time_taken: number;
+    submitted_at: string;
+    status: string;
+  };
+  practice_tests?: Array<{ practice_test_id: string }>;
+}
+
+export interface PerformanceDataPoint {
+  submission_id: string;
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  attempt_number: number;
+  time_taken: number;
+  submitted_at: string;
+  status: string;
+}
+
+export interface GuidePerformanceHistory {
+  study_guide_id: string;
+  test_results: PerformanceDataPoint[];
+}
