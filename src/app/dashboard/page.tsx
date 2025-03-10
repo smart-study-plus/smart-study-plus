@@ -40,6 +40,13 @@ const fadeInUp = {
   exit: { opacity: 0, y: -20 },
 };
 
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) return `${Math.round(seconds)} seconds`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
 const staggerContainer = {
   animate: {
     transition: {
@@ -382,13 +389,16 @@ export default function DashboardPage() {
                                 </h4>
                                 <div className="flex items-baseline">
                                   <span className="text-4xl font-bold text-gray-900">
-                                    {Math.round(
+                                    {formatTime(
                                       testAnalytics.latest_test.time_taken
                                     )}
                                   </span>
-                                  <span className="ml-2 text-gray-600">
-                                    seconds
-                                  </span>
+                                  {testAnalytics.latest_test.time_taken <
+                                    60 && (
+                                    <span className="ml-2 text-gray-600">
+                                      seconds
+                                    </span>
+                                  )}
                                 </div>
                               </motion.div>
 
