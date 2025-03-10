@@ -9,7 +9,6 @@ import {
   Target,
   Award,
   BarChart3,
-  BookOpen,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
@@ -162,7 +161,7 @@ export function GuideStats({
               <Button
                 variant="outline"
                 onClick={onPreviousGuide}
-                className="rounded-full p-2 h-8 w-8 flex items-center justify-center"
+                className="rounded-full border shadow-md hover:-translate-y-1 transition-transform duration-300 p-2 h-8 w-8 flex items-center justify-center"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -177,7 +176,7 @@ export function GuideStats({
               <Button
                 variant="outline"
                 onClick={onNextGuide}
-                className="rounded-full p-2 h-8 w-8 flex items-center justify-center"
+                className="rounded-full border shadow-md hover:-translate-y-1 transition-transform duration-300 p-2 h-8 w-8 flex items-center justify-center"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

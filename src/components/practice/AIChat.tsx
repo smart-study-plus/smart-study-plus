@@ -140,7 +140,6 @@ export const AIChat: React.FC<AIChatProps> = ({
     return text;
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -176,7 +175,7 @@ export const AIChat: React.FC<AIChatProps> = ({
                     className={`inline-block max-w-[80%] p-3 rounded-lg ${
                       msg.role === 'user'
                         ? 'bg-[var(--color-primary)] text-white'
-                        : 'bg-white'
+                        : 'bg-gray-200'
                     }`}
                   >
                     <div className="text-md whitespace-pre-wrap break-words">
@@ -208,8 +207,16 @@ export const AIChat: React.FC<AIChatProps> = ({
             <Button
               onClick={() => void handleSendMessage()}
               disabled={loading || loadingHistory || !userMessage.trim()}
+              className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-[var(--color-primary)] shadow-md hover:shadow-lg"
             >
-              {loading ? '...' : 'Send'}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Sending...</span>
+                </div>
+              ) : (
+                'Send'
+              )}
             </Button>
           </div>
         </div>

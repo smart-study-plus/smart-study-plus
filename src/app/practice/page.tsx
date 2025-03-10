@@ -62,12 +62,13 @@ const PracticePage: React.FC = () => {
 
         const data = await response.json();
         const guides: StudyGuide[] =
-          data.study_guides.map((title: string) => ({
-            title,
-            practice_tests: [],
-            // chapters: Math.floor(Math.random() * 10) + 5, // Temporary mock data
-            // estimatedTime: `${Math.floor(Math.random() * 8) + 4} hours`,
-          })) || [];
+          data.study_guides.map(
+            (guide: { study_guide_id: string; title: string }) => ({
+              title: guide.title,
+              id: guide.study_guide_id,
+              practice_tests: [],
+            })
+          ) || [];
         setStudyGuides(guides);
 
         const completedTestsResponse = await fetchWithAuth(

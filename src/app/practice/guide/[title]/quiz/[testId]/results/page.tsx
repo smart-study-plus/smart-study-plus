@@ -68,7 +68,7 @@ const QuizResultsPage: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          href={`/practice/guide/${encodeURIComponent(title)}`}
+          href={`/practice/guide/${decodeURIComponent(title)}`}
           className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />

@@ -284,7 +284,7 @@ const StudyGuidePage: React.FC = () => {
                                           className={cn(
                                             'p-1.5 rounded-lg transition-colors',
                                             section.completed
-                                              ? 'bg-green-300'
+                                              ? 'bg-green-200'
                                               : 'bg-[var(--color-primary)]/10'
                                           )}
                                         >
