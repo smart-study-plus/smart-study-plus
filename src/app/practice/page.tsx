@@ -8,7 +8,7 @@ import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { getUserId } from '@/app/auth/getUserId';
 import { Progress } from '@/components/ui/progress';
 import { Loading } from '@/components/ui/loading';
-import { BookOpen, Clock, Sparkles } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
