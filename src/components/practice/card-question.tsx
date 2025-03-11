@@ -35,14 +35,14 @@ const QuestionCard = ({
   const [showNoteInput, setShowNoteInput] = useState(false);
 
   return (
-    <div className="bg-[var(--color-background)] rounded-xl p-8 shadow-sm">
+    <div className="bg-[var(--color-background)] rounded-xl p-8 shadow-lg border-2 border-gray-300">
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start flex-1">
             <span className="text-2xl font-medium text-[var(--color-text-secondary)] mr-6">
               {questionNumber}.
             </span>
-            <p className="text-xl text-[var(--color-text)]">
+            <p className="text-xl text-[var(--color-text)] font-medium">
               {question.question_text}
             </p>
           </div>
@@ -103,10 +103,10 @@ const QuestionCard = ({
               <button
                 key={key}
                 onClick={() => onSelectAnswer(question.question_id, key)}
-                className={`w-full text-left p-5 rounded-lg border text-lg transition-colors ${
+                className={`w-full text-left p-5 rounded-lg text-lg transition-colors border-2 ${
                   selectedAnswer === key
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                    : 'border-[var(--color-gray-200)] hover:border-[var(--color-primary)] hover:bg-[var(--color-background-alt)]'
+                    ? 'border-2 border-gray-400 bg-gray-200 text-gray-900'
+                    : 'border-[var(--color-gray-200)] hover:border-gray-400 hover:bg-[var(--color-background-alt)]'
                 }`}
               >
                 <span className="text-xl font-medium mr-3">{key}.</span>

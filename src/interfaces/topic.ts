@@ -28,13 +28,8 @@ export interface Chapter {
 
 export interface StudyGuide {
   title: string;
-  chapters: Chapter[];
-  practice_tests: Array<{
-    practice_test_id: string;
-  }>;
-  chapters_count?: number;
-  estimatedTime?: string;
-  difficulty?: string;
+  id: string;
+  practice_tests: PracticeTest[];
 }
 
 export interface StudyGuideResponse {

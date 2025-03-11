@@ -7,7 +7,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain } from 'lucide-react';
+import { Brain, Loader2 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
@@ -17,29 +17,37 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    const session_id = localStorage.getItem('session_id');
+    try {
+      setIsLoggingOut(true);
+      const supabase = createClient();
+      const session_id = localStorage.getItem('session_id');
 
-    if (session_id) {
-      const token = (await supabase.auth.getSession()).data.session
-        ?.access_token;
+      if (session_id) {
+        const token = (await supabase.auth.getSession()).data.session
+          ?.access_token;
 
-      await fetch(ENDPOINTS.endSession, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ session_id }),
-      });
+        await fetch(ENDPOINTS.endSession, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ session_id }),
+        });
 
-      localStorage.removeItem('session_id');
+        localStorage.removeItem('session_id');
+      }
+
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
-
-    await supabase.auth.signOut();
-    router.push('/');
   };
 
   const handleLogoClick = async () => {
@@ -60,11 +68,11 @@ export function Header() {
       label: 'Practice',
       pattern: '/practice',
     },
-    {
-      href: '/tests',
-      label: 'Tests',
-      pattern: '/tests',
-    },
+    // {
+    //   href: '/tests',
+    //   label: 'Tests',
+    //   pattern: '/tests',
+    // },
   ];
 
   const isActiveRoute = (pattern: string) => {
@@ -104,9 +112,17 @@ export function Header() {
             variant="outline"
             size="lg"
             onClick={handleLogout}
-            className="hover:bg-gray-100 transition-colors"
+            disabled={isLoggingOut}
+            className="hover:bg-gray-100 transition-colors min-w-[100px]"
           >
-            Log out
+            {isLoggingOut ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Logging out...</span>
+              </div>
+            ) : (
+              'Log out'
+            )}
           </Button>
         </div>
       </div>

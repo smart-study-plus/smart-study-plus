@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
@@ -40,6 +40,11 @@ const QuizPage: React.FC = () => {
   const router = useRouter();
   const supabase = createClient();
   const [notes, setNotes] = useState<{ [key: string]: string }>({});
+  const [startTime, setStartTime] = useState<number>(0);
+
+  useEffect(() => {
+    setStartTime(Math.floor(Date.now() / 1000));
+  }, []);
 
   // Fetch user data
   const { data: userData } = useSWR('user', async () => {
@@ -77,7 +82,8 @@ const QuizPage: React.FC = () => {
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!userData?.id || !testId || !studyGuideData || !title) return;
+    if (!userData?.id || !testId || !studyGuideData || !title || !startTime)
+      return;
 
     try {
       setSubmitting(true);
@@ -96,7 +102,8 @@ const QuizPage: React.FC = () => {
         user_id: userData.id,
         test_id: testId,
         study_guide_id: studyGuideId,
-        answers: formattedAnswers
+        started_at: new Date(startTime * 1000).toISOString(),
+        answers: formattedAnswers,
       };
 
       const response = await fetch(ENDPOINTS.submitTest, {
@@ -132,44 +139,58 @@ const QuizPage: React.FC = () => {
     <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
       <Header />
       <main className="flex-1">
+        <div className="sticky top-[64px] left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Link
+                  href="/practice"
+                  className="inline-flex items-center text-gray-600 hover:text-gray-900 mr-4"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Back
+                </Link>
+              </div>
+              <h2 className="text-2xl font-medium text-gray-900">
+                Practice Quiz - {quiz?.section_title}
+              </h2>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-transparent">
+                <span className="text-sm font-medium text-gray-700">
+                  {answeredQuestions}/{totalQuestions}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-1 mb-2">
+              {quiz?.questions?.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                    Object.keys(selectedAnswers).includes(index.toString())
+                      ? 'bg-[var(--color-primary)]'
+                      : 'bg-gray-200'
+                  }`}
+                ></div>
+              ))}
+            </div>
+
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+
+            <div className="flex justify-between text-md text-gray-500 mt-1">
+              <span>Progress: {progressPercentage.toFixed(0)}%</span>
+              <span>
+                {answeredQuestions} of {totalQuestions} questions answered
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-center mb-6">
-            <Link
-              href="/practice"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Practice
-            </Link>
-          </div>
-
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-[var(--color-text)]">
-              Practice Quiz
-            </h1>
-            {quiz && (
-              <>
-                <p className="text-xl text-[var(--color-text-secondary)] mt-3">
-                  Topic: {quiz.section_title}
-                </p>
-                <div className="mt-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-lg text-[var(--color-text-secondary)]">
-                      Progress: {progressPercentage.toFixed(0)}%
-                    </p>
-                    <p className="text-lg text-[var(--color-text-secondary)]">
-                      {answeredQuestions} of {totalQuestions} questions answered
-                    </p>
-                  </div>
-                  <Progress
-                    value={progressPercentage}
-                    className="h-4 bg-gray-200"
-                  />
-                </div>
-              </>
-            )}
-          </div>
-
           {loading ? (
             <Loading size="lg" text="Loading quiz..." />
           ) : anyError ? (
