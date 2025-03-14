@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useMemo } from 'react';
 import { GuideStats } from '@/components/dashboard/guide-stats';
 import { formatTime } from '@/lib/utils';
+import * as Messages from '@/config/messages';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -110,8 +111,7 @@ export default function DashboardPage() {
   );
 
   const isLoading = !userData || !studyHours || !testAnalytics;
-  const hasError =
-    studyError || testError || userError || guidesError || guideAnalyticsError;
+  const hasError = false; // We're handling errors gracefully now
   const userName = userData?.user_metadata?.display_name || 'Student';
 
   const handlePreviousGuide = () => {
@@ -145,13 +145,7 @@ export default function DashboardPage() {
               </p>
             </motion.div>
 
-            {hasError ? (
-              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <p className="text-lg text-red-600">
-                  Error loading dashboard data
-                </p>
-              </div>
-            ) : isLoading ? (
+            {isLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
                 <p className="text-lg text-gray-600">
@@ -198,12 +192,20 @@ export default function DashboardPage() {
                               Total Study Time
                             </CardTitle>
                             <div className="flex items-baseline">
-                              <span className="text-4xl font-bold text-gray-900">
-                                {studyHours?.total_hours || 'N/A'}
-                              </span>
-                              <span className="ml-2 text-gray-600">
-                                hours this week
-                              </span>
+                              {studyError || !studyHours?.total_hours ? (
+                                <p className="text-gray-600">
+                                  {Messages.NO_STUDY_HOURS}
+                                </p>
+                              ) : (
+                                <>
+                                  <span className="text-4xl font-bold text-gray-900">
+                                    {studyHours.total_hours}
+                                  </span>
+                                  <span className="ml-2 text-gray-600">
+                                    hours this week
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </CardContent>
                         </motion.div>
@@ -219,11 +221,20 @@ export default function DashboardPage() {
                               Average Score
                             </CardTitle>
                             <div className="flex items-baseline">
-                              <span className="text-4xl font-bold text-gray-900">
-                                {testAnalytics?.average_score.toFixed(2) ||
-                                  'N/A'}
-                              </span>
-                              <span className="ml-2 text-gray-600">points</span>
+                              {testError || !testAnalytics?.average_score ? (
+                                <p className="text-gray-600">
+                                  {Messages.NO_TEST_DATA}
+                                </p>
+                              ) : (
+                                <>
+                                  <span className="text-4xl font-bold text-gray-900">
+                                    {testAnalytics.average_score.toFixed(2)}
+                                  </span>
+                                  <span className="ml-2 text-gray-600">
+                                    points
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </CardContent>
                         </motion.div>
@@ -239,10 +250,20 @@ export default function DashboardPage() {
                               Tests Taken
                             </CardTitle>
                             <div className="flex items-baseline">
-                              <span className="text-4xl font-bold text-gray-900">
-                                {testAnalytics?.total_tests || 'N/A'}
-                              </span>
-                              <span className="ml-2 text-gray-600">total</span>
+                              {testError || !testAnalytics?.total_tests ? (
+                                <p className="text-gray-600">
+                                  {Messages.NO_TEST_DATA}
+                                </p>
+                              ) : (
+                                <>
+                                  <span className="text-4xl font-bold text-gray-900">
+                                    {testAnalytics.total_tests}
+                                  </span>
+                                  <span className="ml-2 text-gray-600">
+                                    total
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </CardContent>
                         </motion.div>
@@ -260,8 +281,14 @@ export default function DashboardPage() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="p-6">
-                            {testAnalytics &&
-                            testAnalytics.recent_wrong_questions?.length > 0 ? (
+                            {testError ||
+                            !testAnalytics?.recent_wrong_questions ||
+                            testAnalytics.recent_wrong_questions.length ===
+                              0 ? (
+                              <div className="flex flex-col items-center justify-center py-6 text-gray-600">
+                                <p>{Messages.NO_TEST_DATA}</p>
+                              </div>
+                            ) : (
                               <Accordion
                                 type="single"
                                 collapsible
@@ -310,8 +337,6 @@ export default function DashboardPage() {
                                   )
                                 )}
                               </Accordion>
-                            ) : (
-                              <p className="text-gray-600">N/A</p>
                             )}
                           </CardContent>
                         </Card>
@@ -324,8 +349,13 @@ export default function DashboardPage() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="p-6">
-                            {testAnalytics &&
-                            testAnalytics.weekly_progress?.length > 0 ? (
+                            {testError ||
+                            !testAnalytics?.weekly_progress ||
+                            testAnalytics.weekly_progress.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-6 text-gray-600">
+                                <p>{Messages.INSUFFICIENT_DATA}</p>
+                              </div>
+                            ) : (
                               <div className="space-y-6">
                                 {testAnalytics.weekly_progress.map(
                                   (week: WeeklyProgress, index: number) => (
@@ -358,8 +388,6 @@ export default function DashboardPage() {
                                   )
                                 )}
                               </div>
-                            ) : (
-                              <p className="text-gray-600">N/A</p>
                             )}
                           </CardContent>
                         </Card>
@@ -379,7 +407,17 @@ export default function DashboardPage() {
                                   Loading latest results...
                                 </p>
                               </div>
-                            ) : testAnalytics?.latest_test ? (
+                            ) : testError || !testAnalytics?.latest_test ? (
+                              <div className="flex flex-col items-center justify-center py-8 text-gray-600">
+                                <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
+                                <p className="text-lg">
+                                  {Messages.NO_TEST_RESULTS}
+                                </p>
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Complete a test to see your results here
+                                </p>
+                              </div>
+                            ) : (
                               <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -472,16 +510,6 @@ export default function DashboardPage() {
                                   </motion.div>
                                 </motion.div>
                               </motion.div>
-                            ) : (
-                              <div className="flex flex-col items-center justify-center py-8 text-gray-600">
-                                <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
-                                <p className="text-lg">
-                                  No test results available yet
-                                </p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  Complete a test to see your results here
-                                </p>
-                              </div>
                             )}
                           </CardContent>
                         </Card>

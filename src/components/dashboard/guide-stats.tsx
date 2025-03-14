@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 import {
   GuideAnalytics,
@@ -35,6 +36,7 @@ import {
   TooltipProps,
 } from 'recharts';
 import { format } from 'date-fns';
+import * as Messages from '@/config/messages';
 
 interface GuideStatsProps {
   selectedGuide: {
@@ -118,15 +120,28 @@ export function GuideStats({
     fetcher
   );
 
+  // If no guide is selected or no analytics are available
   if (!selectedGuide) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-        <p className="text-lg text-gray-600">No study guides available yet.</p>
-        <Link href="/practice">
-          <Button className="bg-[var(--color-primary)] text-white">
-            Browse Practice Materials
-          </Button>
-        </Link>
+      <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+        <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-lg">{Messages.NO_DATA_AVAILABLE}</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Select a study guide to view detailed analytics
+        </p>
+      </div>
+    );
+  }
+
+  // If no analytics data is available for the selected guide
+  if (!guideAnalytics) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+        <Target className="h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Practice with this guide to see your performance analytics
+        </p>
       </div>
     );
   }
