@@ -134,7 +134,7 @@ export function GuideStats({
   }
 
   // If no analytics data is available for the selected guide
-  if (!guideAnalytics) {
+  if (!guideAnalytics || guideAnalytics.total_tests === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-600">
         <Target className="h-12 w-12 text-gray-400 mb-4" />
