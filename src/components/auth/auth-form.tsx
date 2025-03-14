@@ -52,13 +52,19 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
       const token = (await supabase.auth.getSession()).data.session
         ?.access_token;
       if (token) {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData?.user?.id;
+
         const response = await fetch(ENDPOINTS.startSession, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ device: 'browser' }),
+          body: JSON.stringify({
+            device: 'browser',
+            user_id: userId,
+          }),
         });
 
         if (response.ok) {
