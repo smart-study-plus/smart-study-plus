@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
   return (
     <RouteGuard requireAuth>
-      <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
         <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
