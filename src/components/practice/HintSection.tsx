@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { ENDPOINTS } from '@/config/urls';
 
 interface HintSectionProps {
   userId: string;
@@ -33,18 +34,15 @@ export const HintSection = ({
     setLoadingHint(true);
     try {
       // try fetching existing hint
-      const fetchResponse = await fetchWithAuth(
-        'http://localhost:8000/api/rag/fetch-hint',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            test_id: testId,
-            question_id: questionId,
-          }),
-        }
-      );
+      const fetchResponse = await fetchWithAuth(ENDPOINTS.ragFetchHint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          test_id: testId,
+          question_id: questionId,
+        }),
+      });
 
       if (fetchResponse.ok) {
         const data = await fetchResponse.json();
@@ -53,19 +51,16 @@ export const HintSection = ({
       }
 
       // If not found, generate new hint
-      const generateResponse = await fetchWithAuth(
-        'http://localhost:8000/api/rag/generate-hint',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            test_id: testId,
-            question_id: questionId,
-            question_text: questionText,
-          }),
-        }
-      );
+      const generateResponse = await fetchWithAuth(ENDPOINTS.ragGenerateHint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          test_id: testId,
+          question_id: questionId,
+          question_text: questionText,
+        }),
+      });
 
       if (!generateResponse.ok) {
         throw new Error('Failed to generate hint');

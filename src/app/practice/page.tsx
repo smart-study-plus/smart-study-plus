@@ -55,9 +55,7 @@ const PracticePage: React.FC = () => {
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
-        const response = await fetchWithAuth(
-          'http://localhost:8000/api/study-guide/all'
-        );
+        const response = await fetchWithAuth(ENDPOINTS.studyGuides);
         if (!response.ok) throw new Error('Failed to fetch study guides');
 
         const data = await response.json();

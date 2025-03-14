@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ENDPOINTS } from '@/config/urls';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -47,18 +48,15 @@ export const AIChat: React.FC<AIChatProps> = ({
     setLoadingHistory(true);
     setError(null);
     try {
-      const response = await fetchWithAuth(
-        'http://localhost:8000/api/rag/chat-history',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            test_id: testId,
-            question_id: questionId,
-          }),
-        }
-      );
+      const response = await fetchWithAuth(ENDPOINTS.ragChatHistory, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          test_id: testId,
+          question_id: questionId,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to load chat history');
@@ -91,19 +89,16 @@ export const AIChat: React.FC<AIChatProps> = ({
     setChatHistory(updatedHistory);
 
     try {
-      const response = await fetchWithAuth(
-        'http://localhost:8000/api/rag/answer-chat',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            test_id: testId,
-            question_id: questionId,
-            user_message: messageToSend,
-          }),
-        }
-      );
+      const response = await fetchWithAuth(ENDPOINTS.ragAnswerChat, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          test_id: testId,
+          question_id: questionId,
+          user_message: messageToSend,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to fetch response');

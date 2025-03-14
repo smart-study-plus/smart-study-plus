@@ -1,3 +1,4 @@
+// Use environment variable for API URL
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const ENDPOINTS = {
@@ -23,4 +24,10 @@ export const ENDPOINTS = {
   submitTest: `${API_URL}/api/study-guide/practice/submit`,
   startSession: `${API_URL}/api/user/session/start`,
   endSession: `${API_URL}/api/user/session/end`,
+
+  // Add new RAG endpoints
+  ragChatHistory: `${API_URL}/api/rag/chat-history`,
+  ragAnswerChat: `${API_URL}/api/rag/answer-chat`,
+  ragFetchHint: `${API_URL}/api/rag/fetch-hint`,
+  ragGenerateHint: `${API_URL}/api/rag/generate-hint`,
 };
