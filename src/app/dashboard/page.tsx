@@ -159,7 +159,7 @@ export default function DashboardPage() {
       return null;
 
     return allGuideAnalytics.study_guides.find(
-      (guide: any) => guide.study_guide_id === selectedGuide.id
+      (guide: GuideAnalytics) => guide.study_guide_id === selectedGuide.id
     );
   }, [allGuideAnalytics, selectedGuide]);
 
