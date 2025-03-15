@@ -33,7 +33,7 @@ import {
   GuideAnalytics,
 } from '@/interfaces/test';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { GuideStats } from '@/components/dashboard/guide-stats';
 import { formatTime } from '@/lib/utils';
 import * as Messages from '@/config/messages';
@@ -57,11 +57,14 @@ const fetcher = async (url: string) => {
   const token = await supabase.auth
     .getSession()
     .then((res) => res.data.session?.access_token);
+  console.log(`Fetching data from: ${url}`);
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Failed to fetch data');
-  return res.json();
+  const data = await res.json();
+  console.log(`Received data from ${url}:`, data);
+  return data;
 };
 
 export default function DashboardPage() {
@@ -83,6 +86,28 @@ export default function DashboardPage() {
     fetcher
   );
 
+  // Fetch all guide analytics in one request with proper logging
+  const allGuideAnalyticsUrl = userId
+    ? ENDPOINTS.allGuideAnalytics(userId)
+    : null;
+  const { data: allGuideAnalytics, error: allGuideAnalyticsError } = useSWR(
+    allGuideAnalyticsUrl,
+    fetcher
+  );
+
+  // Log the analytics data when it changes
+  useEffect(() => {
+    if (allGuideAnalytics) {
+      console.log('All guide analytics loaded:', allGuideAnalytics);
+    }
+    if (allGuideAnalyticsError) {
+      console.error(
+        'Error loading all guide analytics:',
+        allGuideAnalyticsError
+      );
+    }
+  }, [allGuideAnalytics, allGuideAnalyticsError]);
+
   const { data: studyGuidesResponse, error: guidesError } = useSWR(
     ENDPOINTS.studyGuides,
     fetcher
@@ -103,12 +128,30 @@ export default function DashboardPage() {
 
   const selectedGuide = studyGuides?.[selectedGuideIndex];
 
-  const { data: guideAnalytics, error: guideAnalyticsError } = useSWR(
-    userId && selectedGuide?.id
+  // Find the selected guide's analytics from the all guide analytics data
+  const selectedGuideAnalytics = useMemo(() => {
+    if (
+      !allGuideAnalytics?.study_guides ||
+      !selectedGuide ||
+      allGuideAnalytics.study_guides.length === 0
+    )
+      return null;
+
+    return allGuideAnalytics.study_guides.find(
+      (guide: any) => guide.study_guide_id === selectedGuide.id
+    );
+  }, [allGuideAnalytics, selectedGuide]);
+
+  // Individual guide fetch - keep as fallback if the all analytics endpoint fails
+  const { data: individualGuideAnalytics, error: guideAnalyticsError } = useSWR(
+    userId && selectedGuide?.id && !selectedGuideAnalytics
       ? ENDPOINTS.guideAnalytics(userId, selectedGuide.id)
       : null,
     fetcher
   );
+
+  // Use either the analytics from all guides or individual fetch
+  const guideAnalytics = selectedGuideAnalytics || individualGuideAnalytics;
 
   const isLoading = !userData || !studyHours || !testAnalytics;
   const hasError = false; // We're handling errors gracefully now
@@ -125,6 +168,46 @@ export default function DashboardPage() {
       prev === (studyGuides?.length || 1) - 1 ? 0 : prev + 1
     );
   };
+
+  // Add function to select a guide by ID
+  const selectGuideById = useCallback(
+    (guideId: string) => {
+      console.log(`Trying to select guide with ID: ${guideId}`);
+      const guideIndex = studyGuides.findIndex(
+        (guide: {
+          id: string;
+          title: string;
+          description: string;
+          progress: number;
+        }) => guide.id === guideId
+      );
+      console.log(`Found guide at index: ${guideIndex}`);
+      if (guideIndex >= 0) {
+        setSelectedGuideIndex(guideIndex);
+        return true;
+      }
+      return false;
+    },
+    [studyGuides]
+  );
+
+  // Try to match guides when allGuideAnalytics changes
+  useEffect(() => {
+    if (allGuideAnalytics?.study_guides?.length > 0 && studyGuides.length > 0) {
+      console.log('Matching study guides with analytics...');
+      // Find a guide that has analytics data
+      const guideWithData = allGuideAnalytics.study_guides.find(
+        (guide: GuideAnalytics) => guide.total_tests > 0
+      );
+
+      if (guideWithData && !guideAnalytics) {
+        console.log(
+          `Found guide with data: ${guideWithData.study_guide_id}, trying to select it`
+        );
+        selectGuideById(guideWithData.study_guide_id);
+      }
+    }
+  }, [allGuideAnalytics, studyGuides, guideAnalytics, selectGuideById]);
 
   return (
     <RouteGuard requireAuth>
@@ -520,11 +603,11 @@ export default function DashboardPage() {
                   <TabsContent value="guide-specific">
                     <GuideStats
                       selectedGuide={selectedGuide || null}
-                      guideAnalytics={
-                        (guideAnalytics as GuideAnalytics) || null
-                      }
+                      guideAnalytics={guideAnalytics || null}
+                      allGuideAnalytics={allGuideAnalytics?.study_guides || []}
                       onPreviousGuide={handlePreviousGuide}
                       onNextGuide={handleNextGuide}
+                      onSelectGuide={selectGuideById}
                     />
                   </TabsContent>
                 </Tabs>

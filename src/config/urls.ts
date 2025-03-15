@@ -15,6 +15,8 @@ export const ENDPOINTS = {
     `${API_URL}/api/user/test-analytics/${encodeURIComponent(userId)}`,
   guideAnalytics: (userId: string, guideId: string) =>
     `${API_URL}/api/user/test-analytics/${encodeURIComponent(userId)}/${encodeURIComponent(guideId)}`,
+  allGuideAnalytics: (userId: string) =>
+    `${API_URL}/api/user/test-analytics/all/${encodeURIComponent(userId)}`,
   testResults: (userId: string, testId?: string) =>
     testId
       ? `${API_URL}/api/study-guide/practice/results/${userId}/${testId}`

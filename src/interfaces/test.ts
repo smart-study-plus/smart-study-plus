@@ -110,19 +110,16 @@ export interface TestAnalytics {
 export interface GuideAnalytics {
   user_id: string;
   study_guide_id: string;
+  study_guide_title?: string;
+  study_guide_description?: string;
   total_tests: number;
   average_score: number;
   average_accuracy: number;
   recent_wrong_questions: WrongQuestion[];
-  latest_test?: {
-    score: number;
-    accuracy: number;
-    total_questions: number;
-    time_taken: number;
-    submitted_at: string;
-    status: string;
-  };
-  practice_tests?: Array<{ practice_test_id: string }>;
+  weekly_progress: WeeklyProgress[];
+  latest_test: TestSubmission | null;
+  last_updated?: string;
+  message?: string;
 }
 
 export interface PerformanceDataPoint {

@@ -37,6 +37,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import * as Messages from '@/config/messages';
+import { useEffect } from 'react';
 
 interface GuideStatsProps {
   selectedGuide: {
@@ -45,8 +46,10 @@ interface GuideStatsProps {
     description: string;
   } | null;
   guideAnalytics: GuideAnalytics | null;
+  allGuideAnalytics?: GuideAnalytics[];
   onPreviousGuide: () => void;
   onNextGuide: () => void;
+  onSelectGuide?: (guideId: string) => boolean;
 }
 
 const fadeInUp = {
@@ -112,15 +115,23 @@ const CustomTooltip = ({
 export function GuideStats({
   selectedGuide,
   guideAnalytics,
+  allGuideAnalytics = [],
   onPreviousGuide,
   onNextGuide,
+  onSelectGuide,
 }: GuideStatsProps) {
+  // Add console logs to help debug
+  useEffect(() => {
+    console.log('GuideStats - selectedGuide:', selectedGuide);
+    console.log('GuideStats - guideAnalytics:', guideAnalytics);
+    console.log('GuideStats - allGuideAnalytics:', allGuideAnalytics);
+  }, [selectedGuide, guideAnalytics, allGuideAnalytics]);
+
   const { data: performanceHistory, error: performanceError } = useSWR(
     selectedGuide?.id ? ENDPOINTS.guidePerformance(selectedGuide.id) : null,
     fetcher
   );
 
-  // If no guide is selected or no analytics are available
   if (!selectedGuide) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-600">
@@ -133,20 +144,89 @@ export function GuideStats({
     );
   }
 
-  // If no analytics data is available for the selected guide
+  const hasAnyGuideData = allGuideAnalytics.length > 0;
+
   if (!guideAnalytics || guideAnalytics.total_tests === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-600">
-        <Target className="h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
-        <p className="text-sm text-gray-500 mt-1">
-          Practice with this guide to see your performance analytics
-        </p>
+        {hasAnyGuideData ? (
+          <>
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {selectedGuide.title}
+              </h2>
+              <p className="text-gray-600">{selectedGuide.description}</p>
+            </div>
+            <div className="flex items-center justify-center gap-8 mb-8">
+              <Button
+                variant="outline"
+                onClick={onPreviousGuide}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous Guide
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onNextGuide}
+                className="flex items-center gap-2"
+              >
+                Next Guide <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <Target className="h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Practice with this guide to see your performance analytics
+            </p>
+            {allGuideAnalytics.length > 0 && (
+              <div className="mt-8">
+                <p className="text-gray-600 mb-4">Available guide analytics:</p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {allGuideAnalytics.map((analytics) => (
+                    <div
+                      key={analytics.study_guide_id}
+                      className="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => {
+                        console.log(
+                          `Clicked on guide with ID: ${analytics.study_guide_id}`
+                        );
+                        if (onSelectGuide) {
+                          onSelectGuide(analytics.study_guide_id);
+                        }
+                      }}
+                    >
+                      <p className="font-medium">
+                        {analytics.study_guide_title ||
+                          (selectedGuide &&
+                          analytics.study_guide_id === selectedGuide.id
+                            ? selectedGuide.title
+                            : `Guide ${analytics.study_guide_id}`)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Target className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">
+                          Tests: {analytics.total_tests}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <Target className="h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Practice with this guide to see your performance analytics
+            </p>
+          </>
+        )}
       </div>
     );
   }
 
-  // Prepare chart data
   const chartData = performanceHistory?.test_results
     ? [...performanceHistory.test_results]
         .sort(
