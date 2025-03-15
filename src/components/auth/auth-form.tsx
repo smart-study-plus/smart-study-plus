@@ -3,7 +3,7 @@
 import { FormEvent, useState, ChangeEvent, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ENDPOINTS } from '@/config/urls';
+import { ENDPOINTS, API_URL } from '@/config/urls';
 import { useSearchParams } from 'next/navigation';
 
 interface AuthFormProps {
@@ -15,6 +15,7 @@ interface AuthFormProps {
 export function AuthForm({ method, onSuccess }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -30,6 +31,13 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate username for signup
+    if (method === 'signup' && !username.trim()) {
+      setError('Username is required');
+      setLoading(false);
+      return;
+    }
 
     try {
       const supabase = createClient();
@@ -55,21 +63,188 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData?.user?.id;
 
-        const response = await fetch(ENDPOINTS.startSession, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            device: 'browser',
-            user_id: userId,
-          }),
-        });
+        if (!userId) {
+          console.error('Failed to get user ID from Supabase');
+          throw new Error('Authentication failed: Unable to get user ID');
+        }
 
-        if (response.ok) {
-          const { session_id } = await response.json();
-          localStorage.setItem('session_id', session_id);
+        // For new sign-ups, create the user in MongoDB
+        if (method === 'signup') {
+          try {
+            console.log('Creating new user in MongoDB:', {
+              supabase_id: userId,
+              email: userData?.user?.email,
+              username: username,
+              created_at: userData?.user?.created_at,
+            });
+
+            // Try to create the user with the chosen username
+            let createUserResponse = await fetch(`${API_URL}/api/user/create`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                supabase_id: userId,
+                email: userData?.user?.email,
+                username: username,
+                created_at: userData?.user?.created_at,
+              }),
+            });
+
+            // If username is already taken, try again with a random suffix
+            if (!createUserResponse.ok) {
+              let errorText = await createUserResponse.text();
+              console.error('Failed to create user in MongoDB:', errorText);
+
+              // Check if it's a username duplicate error
+              if (
+                errorText.includes('duplicate key error') &&
+                errorText.includes('username')
+              ) {
+                setError('Username already taken. Please choose another one.');
+                setLoading(false);
+                return;
+              }
+
+              // If it's a user_id duplicate error, try with a random username
+              if (
+                errorText.includes('duplicate key error') &&
+                (errorText.includes('user_id') || errorText.includes('_id'))
+              ) {
+                console.warn(
+                  'User ID duplicate error. Trying with random username...'
+                );
+
+                // Generate a random username
+                const randomUsername = `${username}_${Math.random().toString(36).substring(2, 6)}`;
+
+                // Try again with the random username
+                createUserResponse = await fetch(`${API_URL}/api/user/create`, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    supabase_id: userId,
+                    email: userData?.user?.email,
+                    username: randomUsername,
+                    created_at: userData?.user?.created_at,
+                  }),
+                });
+
+                if (!createUserResponse.ok) {
+                  errorText = await createUserResponse.text();
+                  console.error(
+                    'Failed to create user with random username:',
+                    errorText
+                  );
+                } else {
+                  console.log(
+                    'User successfully created with random username:',
+                    randomUsername
+                  );
+                }
+              }
+            } else {
+              console.log('User successfully created in MongoDB');
+            }
+          } catch (createError) {
+            console.error('Error creating user in MongoDB:', createError);
+            // Continue with authentication even if MongoDB creation fails
+          }
+        } else {
+          // For sign-ins, verify the user exists in MongoDB
+          try {
+            const authStatusResponse = await fetch(
+              `${API_URL}/api/user/auth-status?user_id=${userId}`,
+              {
+                method: 'GET',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+
+            if (!authStatusResponse.ok) {
+              console.warn(
+                'Failed to verify user in MongoDB. Attempting to create user...'
+              );
+
+              // For sign-ins, we can't create a user without a username
+              // So we'll generate a random username based on their email
+              const emailPrefix = email.split('@')[0];
+              const randomUsername = `${emailPrefix}_${Math.random().toString(36).substring(2, 6)}`;
+
+              // If auth-status fails, explicitly create the user in MongoDB
+              const createUserResponse = await fetch(
+                `${API_URL}/api/user/create`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    supabase_id: userId,
+                    email: userData?.user?.email,
+                    username: randomUsername,
+                    created_at: userData?.user?.created_at,
+                  }),
+                }
+              );
+
+              if (!createUserResponse.ok) {
+                const errorText = await createUserResponse.text();
+                console.error('Failed to create user in MongoDB:', errorText);
+
+                // For sign-ins, we shouldn't block the user from proceeding due to MongoDB issues
+                console.warn(
+                  'Continuing with authentication despite MongoDB issues'
+                );
+              } else {
+                console.log(
+                  'User successfully created in MongoDB with username:',
+                  randomUsername
+                );
+              }
+            }
+          } catch (syncError) {
+            console.error(
+              'Error during MongoDB user synchronization:',
+              syncError
+            );
+            // Continue with authentication even if MongoDB synchronization fails
+          }
+        }
+
+        // Then start the user session
+        try {
+          const response = await fetch(ENDPOINTS.startSession, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              device: 'browser',
+              user_id: userId,
+            }),
+          });
+
+          if (response.ok) {
+            const { session_id } = await response.json();
+            localStorage.setItem('session_id', session_id);
+          } else {
+            console.warn('Failed to start session:', await response.text());
+            // Continue with authentication even if session creation fails
+          }
+        } catch (sessionError) {
+          console.error('Error starting session:', sessionError);
+          // Continue with authentication even if session creation fails
         }
       }
 
@@ -109,6 +284,29 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
               className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
+
+          {method === 'signup' && (
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setUsername(e.target.value)
+                }
+                required
+                className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="password"

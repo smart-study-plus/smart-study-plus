@@ -29,15 +29,26 @@ export function Header() {
         const token = (await supabase.auth.getSession()).data.session
           ?.access_token;
 
-        await fetch(ENDPOINTS.endSession, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ session_id }),
-        });
+        try {
+          const response = await fetch(ENDPOINTS.endSession, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ session_id }),
+          });
 
+          if (!response.ok) {
+            // If the session end fails, just log it but continue with logout
+            console.warn('Failed to end session:', await response.text());
+          }
+        } catch (sessionError) {
+          // If there's an error ending the session, just log it but continue with logout
+          console.error('Error ending session:', sessionError);
+        }
+
+        // Always remove the session ID from localStorage
         localStorage.removeItem('session_id');
       }
 
