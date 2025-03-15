@@ -13,12 +13,15 @@ import {
   Timer,
   Percent,
   CheckCircle2,
+  Activity,
+  Calendar,
+  BarChart3,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { Header } from '@/components/layout/header';
 import { ENDPOINTS } from '@/config/urls';
 import { Progress } from '@/components/ui/progress';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import {
   Accordion,
   AccordionContent,
@@ -31,12 +34,16 @@ import {
   WrongQuestion,
   WeeklyProgress,
   GuideAnalytics,
+  EnhancedStudyHours,
+  TimePeriod,
 } from '@/interfaces/test';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { GuideStats } from '@/components/dashboard/guide-stats';
 import { formatTime } from '@/lib/utils';
 import * as Messages from '@/config/messages';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -70,6 +77,11 @@ const fetcher = async (url: string) => {
 export default function DashboardPage() {
   const supabase = createClient();
   const [selectedGuideIndex, setSelectedGuideIndex] = useState(0);
+  const [studyTimeView, setStudyTimeView] = useState<'day' | 'week' | 'month'>(
+    'week'
+  );
+  const [isClaimingAnonymousSessions, setIsClaimingAnonymousSessions] =
+    useState(false);
 
   const { data: userData, error: userError } = useSWR('user', async () => {
     const { data } = await supabase.auth.getUser();
@@ -77,10 +89,19 @@ export default function DashboardPage() {
   });
 
   const userId = userData?.id;
-  const { data: studyHours, error: studyError } = useSWR(
-    userId ? ENDPOINTS.studyHours(userId) : null,
-    fetcher
-  );
+
+  // Use enhanced study hours endpoint
+  const { data: enhancedStudyHours, error: studyHoursError } =
+    useSWR<EnhancedStudyHours>(
+      userId
+        ? ENDPOINTS.enhancedStudyHours(userId, {
+            includeOngoing: true,
+            aggregateBy: studyTimeView,
+          })
+        : null,
+      fetcher
+    );
+
   const { data: testAnalytics, error: testError } = useSWR(
     userId ? ENDPOINTS.testAnalytics(userId) : null,
     fetcher
@@ -153,7 +174,7 @@ export default function DashboardPage() {
   // Use either the analytics from all guides or individual fetch
   const guideAnalytics = selectedGuideAnalytics || individualGuideAnalytics;
 
-  const isLoading = !userData || !studyHours || !testAnalytics;
+  const isLoading = !userData || !enhancedStudyHours || !testAnalytics;
   const hasError = false; // We're handling errors gracefully now
   const userName = userData?.user_metadata?.display_name || 'Student';
 
@@ -208,6 +229,50 @@ export default function DashboardPage() {
       }
     }
   }, [allGuideAnalytics, studyGuides, guideAnalytics, selectGuideById]);
+
+  // Add the function to claim anonymous sessions
+  const handleClaimAnonymousSessions = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      setIsClaimingAnonymousSessions(true);
+      const token = await supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      const response = await fetch(ENDPOINTS.claimAnonymousSessions, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(
+          `Successfully claimed ${result.claimed_count} anonymous sessions!`
+        );
+        // Refresh the study hours data
+        mutate(
+          ENDPOINTS.enhancedStudyHours(userId, {
+            includeOngoing: true,
+            aggregateBy: studyTimeView,
+            includeAnonymous: true,
+          })
+        );
+      } else {
+        toast.info(result.message || 'No anonymous sessions found to claim');
+      }
+    } catch (error) {
+      console.error('Error claiming anonymous sessions:', error);
+      toast.error('Failed to claim anonymous sessions. Please try again.');
+    } finally {
+      setIsClaimingAnonymousSessions(false);
+    }
+  }, [userId, supabase, studyTimeView]);
 
   return (
     <RouteGuard requireAuth>
@@ -274,19 +339,55 @@ export default function DashboardPage() {
                             <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
                               Total Study Time
                             </CardTitle>
-                            <div className="flex items-baseline">
-                              {studyError || !studyHours?.total_hours ? (
-                                <p className="text-gray-600">
-                                  {Messages.NO_STUDY_HOURS}
-                                </p>
+                            <div className="flex flex-col">
+                              {studyHoursError ||
+                              !enhancedStudyHours?.total_hours ? (
+                                <div className="space-y-2">
+                                  <p className="text-gray-600">
+                                    {Messages.NO_STUDY_HOURS}
+                                  </p>
+                                  {userId && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="mt-2 text-xs"
+                                      onClick={handleClaimAnonymousSessions}
+                                      disabled={isClaimingAnonymousSessions}
+                                    >
+                                      {isClaimingAnonymousSessions ? (
+                                        <>
+                                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                          Claiming...
+                                        </>
+                                      ) : (
+                                        'Find My Sessions'
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
                               ) : (
                                 <>
-                                  <span className="text-4xl font-bold text-gray-900">
-                                    {studyHours.total_hours}
-                                  </span>
-                                  <span className="ml-2 text-gray-600">
-                                    hours this week
-                                  </span>
+                                  <div className="flex items-baseline">
+                                    <span className="text-4xl font-bold text-gray-900">
+                                      {enhancedStudyHours.total_hours}
+                                    </span>
+                                    <span className="ml-2 text-gray-600">
+                                      hours total
+                                    </span>
+                                  </div>
+
+                                  {enhancedStudyHours.has_ongoing_session && (
+                                    <div className="mt-2 text-sm flex items-center text-green-600">
+                                      <Activity className="h-4 w-4 mr-1" />
+                                      <span>
+                                        Ongoing:{' '}
+                                        {enhancedStudyHours.ongoing_hours.toFixed(
+                                          2
+                                        )}{' '}
+                                        hours
+                                      </span>
+                                    </div>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -351,6 +452,80 @@ export default function DashboardPage() {
                           </CardContent>
                         </motion.div>
                       </motion.div>
+
+                      {/* Study Time Periods Section */}
+                      {enhancedStudyHours?.time_periods &&
+                        enhancedStudyHours.time_periods.length > 0 && (
+                          <motion.div variants={fadeInUp} className="mb-12">
+                            <Card className="bg-white shadow-lg">
+                              <CardHeader className="border-b border-gray-100">
+                                <div className="flex justify-between items-center">
+                                  <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                                    <Calendar className="h-6 w-6 text-[var(--color-primary)] mr-2" />
+                                    Study Activity
+                                  </CardTitle>
+                                  <div className="flex items-center space-x-2">
+                                    <TabsList className="bg-gray-100">
+                                      <TabsTrigger
+                                        value="week"
+                                        onClick={() => setStudyTimeView('week')}
+                                        className={
+                                          studyTimeView === 'week'
+                                            ? 'bg-white'
+                                            : ''
+                                        }
+                                      >
+                                        Week
+                                      </TabsTrigger>
+                                    </TabsList>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="p-6">
+                                <div className="space-y-5">
+                                  {enhancedStudyHours.time_periods.map(
+                                    (period: TimePeriod, index: number) => (
+                                      <motion.div
+                                        key={period.period}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="relative"
+                                      >
+                                        <div className="flex justify-between items-center mb-2">
+                                          <div className="flex items-center">
+                                            <BarChart3 className="h-4 w-4 text-gray-500 mr-2" />
+                                            <span className="text-sm font-medium text-gray-700">
+                                              {period.period}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center space-x-3">
+                                            <span className="text-sm text-gray-500">
+                                              {period.session_count}{' '}
+                                              {period.session_count === 1
+                                                ? 'session'
+                                                : 'sessions'}
+                                            </span>
+                                            <span className="text-sm font-bold text-[var(--color-primary)]">
+                                              {period.hours.toFixed(1)} hrs
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <Progress
+                                          value={Math.min(
+                                            period.hours * 10,
+                                            100
+                                          )}
+                                          className="h-2"
+                                        />
+                                      </motion.div>
+                                    )
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        )}
 
                       <motion.div
                         variants={fadeInUp}

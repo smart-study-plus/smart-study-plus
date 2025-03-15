@@ -2,6 +2,22 @@
  * Copyright (c) 2025 SSP Team (Peyton, Alex, Jackson, Yousif)
  */
 
+export interface TimePeriod {
+  period: string;
+  hours: number;
+  session_count: number;
+}
+
+export interface EnhancedStudyHours {
+  user_id: string;
+  total_hours: number;
+  completed_hours: number;
+  ongoing_hours: number;
+  has_ongoing_session: boolean;
+  message: string;
+  time_periods: TimePeriod[];
+}
+
 export interface Test {
   id: string;
   name: string;
