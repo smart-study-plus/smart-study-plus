@@ -27,13 +27,17 @@ export const HintSection = ({
 }: HintSectionProps) => {
   const [hint, setHint] = useState<string | null>(null);
   const [loadingHint, setLoadingHint] = useState(false);
+  const [loadingMessage, setLoadingMessage] =
+    useState<string>('Loading hint...');
+  const [generatingNewHint, setGeneratingNewHint] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const maxRetries = 3;
 
-  const handleGetHint = async () => {
-    if (hint) return;
-
-    setLoadingHint(true);
+  // Function to retry fetching a hint that might have been generated
+  const retryFetchHint = async () => {
     try {
-      // try fetching existing hint
+      // Try to fetch the hint that might have been generated despite the error
       const fetchResponse = await fetchWithAuth(ENDPOINTS.ragFetchHint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,11 +50,59 @@ export const HintSection = ({
 
       if (fetchResponse.ok) {
         const data = await fetchResponse.json();
-        setHint(data.hint);
-        return;
+        if (data.found) {
+          console.log('Successfully retrieved hint on retry!');
+          setHint(data.hint);
+          setError(null);
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error during hint retry:', error);
+      return false;
+    }
+  };
+
+  const handleGetHint = async () => {
+    if (hint) return;
+
+    setLoadingHint(true);
+    setError(null);
+
+    try {
+      // Try fetching existing hint
+      const fetchResponse = await fetchWithAuth(ENDPOINTS.ragFetchHint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          test_id: testId,
+          question_id: questionId,
+        }),
+      });
+
+      if (fetchResponse.ok) {
+        const data = await fetchResponse.json();
+
+        if (data.found) {
+          // Hint exists, set it directly
+          setHint(data.hint);
+          return;
+        } else {
+          // Hint not found, show transition message and generate a new one
+          setGeneratingNewHint(true);
+          setLoadingMessage(
+            data.message || 'Creating a personalized hint for you...'
+          );
+        }
+      } else {
+        // Handle other API errors
+        setGeneratingNewHint(true);
+        setLoadingMessage('Crafting a new hint just for you...');
       }
 
-      // If not found, generate new hint
+      // If we get here, we need to generate a new hint
       const generateResponse = await fetchWithAuth(ENDPOINTS.ragGenerateHint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,16 +115,58 @@ export const HintSection = ({
       });
 
       if (!generateResponse.ok) {
-        throw new Error('Failed to generate hint');
+        throw new Error(
+          'Failed to generate hint, but it might still be processing...'
+        );
       }
 
       const generateData = await generateResponse.json();
       setHint(generateData.hint);
     } catch (error) {
-      setHint('Failed to load hint.');
-    } finally {
-      setLoadingHint(false);
+      console.error('Error generating hint:', error);
+
+      // Set a more informative error message but don't show it yet - try to recover first
+      setError(
+        'Sorry, I had trouble creating your hint. Please wait while I try again...'
+      );
+      setRetryCount((prev) => prev + 1);
+
+      // Wait a moment before retrying (delay increases with each retry)
+      const delay = 1000 * retryCount;
+      setLoadingMessage(
+        `Retrieving your hint... (attempt ${retryCount + 1}/${maxRetries})`
+      );
+
+      setTimeout(async () => {
+        // Try to fetch the hint that might have been generated despite the error
+        const success = await retryFetchHint();
+
+        if (!success && retryCount < maxRetries - 1) {
+          // If still not successful and we have retries left, retry the fetch
+          setRetryCount((prev) => prev + 1);
+        } else if (!success) {
+          // Max retries reached, show final error
+          setError(
+            'Sorry, I had trouble creating your hint. Please try again later or ask your instructor for help.'
+          );
+          setLoadingHint(false);
+          setGeneratingNewHint(false);
+        }
+      }, delay);
+
+      return; // Don't reset loading state yet if we're retrying
     }
+
+    // Only reach here if everything went well
+    setLoadingHint(false);
+    setGeneratingNewHint(false);
+    setRetryCount(0);
+  };
+
+  const handleRetry = () => {
+    setRetryCount(0);
+    setError(null);
+    handleGetHint();
   };
 
   React.useEffect(() => {
@@ -112,9 +206,26 @@ export const HintSection = ({
         </button>
         <div className="p-6">
           {loadingHint ? (
-            <p className="text-lg text-[var(--color-text-secondary)]">
-              Loading hint...
-            </p>
+            <div className="text-lg text-[var(--color-text-secondary)]">
+              <p>{loadingMessage}</p>
+              {generatingNewHint && (
+                <div className="mt-2 flex items-center">
+                  <div className="animate-pulse mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                  <div className="animate-pulse delay-200 mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                  <div className="animate-pulse delay-500 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                </div>
+              )}
+            </div>
+          ) : error ? (
+            <div className="text-lg text-[var(--color-text-secondary)]">
+              <p className="text-red-500">{error}</p>
+              <button
+                onClick={handleRetry}
+                className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-dark)] transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
           ) : (
             <div className="text-lg text-[var(--color-text-secondary)]">
               <ReactMarkdown

@@ -249,6 +249,13 @@ export default function DashboardPage() {
         body: JSON.stringify({ user_id: userId }),
       });
 
+      if (!response.ok) {
+        console.error('Error response:', await response.text());
+        throw new Error(
+          `Server returned ${response.status}: ${response.statusText}`
+        );
+      }
+
       const result = await response.json();
 
       if (result.success) {
