@@ -33,10 +33,12 @@ export const HintSection = ({
   const [retryCount, setRetryCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const maxRetries = 3;
+  const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Function to retry fetching a hint that might have been generated
   const retryFetchHint = async () => {
     try {
+      console.log('Retrying hint fetch...');
       // Try to fetch the hint that might have been generated despite the error
       const fetchResponse = await fetchWithAuth(ENDPOINTS.ragFetchHint, {
         method: 'POST',
@@ -50,10 +52,14 @@ export const HintSection = ({
 
       if (fetchResponse.ok) {
         const data = await fetchResponse.json();
+        console.log('Retry fetch response:', data);
+
         if (data.found) {
           console.log('Successfully retrieved hint on retry!');
           setHint(data.hint);
           setError(null);
+          setLoadingHint(false);
+          setGeneratingNewHint(false);
           return true;
         }
       }
@@ -84,10 +90,13 @@ export const HintSection = ({
 
       if (fetchResponse.ok) {
         const data = await fetchResponse.json();
+        console.log('Fetch hint response:', data);
 
         if (data.found) {
-          // Hint exists, set it directly
+          // Hint exists, set it directly and reset loading state
           setHint(data.hint);
+          setLoadingHint(false);
+          setGeneratingNewHint(false);
           return;
         } else {
           // Hint not found, show transition message and generate a new one
@@ -122,6 +131,15 @@ export const HintSection = ({
 
       const generateData = await generateResponse.json();
       setHint(generateData.hint);
+
+      // Explicitly reset loading states when we get a successful hint
+      if (generateData.hint) {
+        console.log('Successfully generated new hint');
+        setLoadingHint(false);
+        setGeneratingNewHint(false);
+        setRetryCount(0);
+        return; // Exit early after setting the hint
+      }
     } catch (error) {
       console.error('Error generating hint:', error);
 
@@ -170,10 +188,44 @@ export const HintSection = ({
   };
 
   React.useEffect(() => {
+    console.log('HintSection useEffect - Visibility changed:', {
+      isVisible,
+      hasHint: !!hint,
+      isLoading: loadingHint,
+    });
+
     if (isVisible && !hint && !loadingHint) {
+      console.log('Initiating hint fetch from useEffect');
       handleGetHint();
+    } else if (isVisible && hint) {
+      // If we already have a hint but are somehow still in loading state, fix it
+      setLoadingHint(false);
+      setGeneratingNewHint(false);
     }
-  }, [isVisible]);
+  }, [isVisible, hint, loadingHint]);
+
+  // Safeguard against infinite loading states
+  React.useEffect(() => {
+    // If we're in a loading state, set a timeout to exit it after 20 seconds
+    if (loadingHint) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.log('Loading timeout reached, forcing exit from loading state');
+        setLoadingHint(false);
+        setGeneratingNewHint(false);
+        if (!hint) {
+          setError('The hint is taking too long to load. Please try again.');
+        }
+      }, 20000); // 20 seconds timeout
+    }
+
+    // Cleanup function
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
+  }, [loadingHint, hint]);
 
   if (!isVisible) return null;
 
