@@ -97,6 +97,7 @@ export default function DashboardPage() {
         ? ENDPOINTS.enhancedStudyHours(userId, {
             includeOngoing: true,
             aggregateBy: studyTimeView,
+            includeAnonymous: true,
           })
         : null,
       fetcher
