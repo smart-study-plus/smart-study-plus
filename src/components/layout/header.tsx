@@ -26,30 +26,45 @@ export function Header() {
       const session_id = localStorage.getItem('session_id');
 
       if (session_id) {
-        const token = (await supabase.auth.getSession()).data.session
-          ?.access_token;
-
         try {
-          const response = await fetch(ENDPOINTS.endSession, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ session_id }),
-          });
+          const token = (await supabase.auth.getSession()).data.session
+            ?.access_token;
 
-          if (!response.ok) {
-            // If the session end fails, just log it but continue with logout
-            console.warn('Failed to end session:', await response.text());
+          console.log('Ending session:', session_id);
+
+          try {
+            // Get current user data
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData?.user?.id;
+
+            const response = await fetch(ENDPOINTS.endSession, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                session_id,
+                user_id: userId, // Use the retrieved userId
+              }),
+            });
+
+            if (response.ok) {
+              console.log('Session ended successfully');
+            } else {
+              console.error('Failed to end session:', await response.text());
+            }
+          } catch (error) {
+            console.error('Error ending session:', error);
+          } finally {
+            // Always clear the session_id from localStorage
+            localStorage.removeItem('session_id');
           }
-        } catch (sessionError) {
-          // If there's an error ending the session, just log it but continue with logout
-          console.error('Error ending session:', sessionError);
+        } catch (error) {
+          console.error('Error getting auth token:', error);
+          // Still clear session_id if we can't get the token
+          localStorage.removeItem('session_id');
         }
-
-        // Always remove the session ID from localStorage
-        localStorage.removeItem('session_id');
       }
 
       await supabase.auth.signOut();

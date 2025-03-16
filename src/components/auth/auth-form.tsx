@@ -223,6 +223,7 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
 
         // Then start the user session
         try {
+          console.log('Starting user session after authentication');
           const response = await fetch(ENDPOINTS.startSession, {
             method: 'POST',
             headers: {
@@ -231,25 +232,58 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
             },
             body: JSON.stringify({
               device: 'browser',
-              user_id: userId,
+              user_id: userId, // Explicitly include user_id
             }),
           });
 
-          if (response.ok) {
-            const { session_id } = await response.json();
-            localStorage.setItem('session_id', session_id);
-          } else {
-            console.warn('Failed to start session:', await response.text());
-            // Continue with authentication even if session creation fails
-          }
-        } catch (sessionError) {
-          console.error('Error starting session:', sessionError);
-          // Continue with authentication even if session creation fails
-        }
-      }
+          if (!response.ok) {
+            console.error('Failed to start session:', await response.text());
+            // Try one more time with a short delay
+            setTimeout(async () => {
+              try {
+                console.log('Retrying session start...');
+                const retryResponse = await fetch(ENDPOINTS.startSession, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    device: 'browser',
+                    user_id: userId,
+                  }),
+                });
 
-      if (onSuccess) {
-        onSuccess();
+                if (retryResponse.ok) {
+                  const data = await retryResponse.json();
+                  localStorage.setItem('session_id', data.session_id);
+                  console.log(
+                    'Session started successfully on retry:',
+                    data.session_id
+                  );
+                } else {
+                  console.error(
+                    'Failed to start session on retry:',
+                    await retryResponse.text()
+                  );
+                }
+              } catch (error) {
+                console.error('Error in retry session start:', error);
+              }
+            }, 2000);
+          } else {
+            const data = await response.json();
+            localStorage.setItem('session_id', data.session_id);
+            console.log('Session started successfully:', data.session_id);
+          }
+        } catch (error) {
+          console.error('Error starting session:', error);
+          // Don't block the user experience - continue despite the error
+        }
+
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

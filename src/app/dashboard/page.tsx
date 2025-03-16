@@ -91,17 +91,28 @@ export default function DashboardPage() {
   const userId = userData?.id;
 
   // Use enhanced study hours endpoint
-  const { data: enhancedStudyHours, error: studyHoursError } =
-    useSWR<EnhancedStudyHours>(
-      userId
-        ? ENDPOINTS.enhancedStudyHours(userId, {
-            includeOngoing: true,
-            aggregateBy: studyTimeView,
-            includeAnonymous: true,
-          })
-        : null,
-      fetcher
-    );
+  const {
+    data: enhancedStudyHours,
+    error: studyHoursError,
+    mutate: mutateStudyHours,
+  } = useSWR<EnhancedStudyHours>(
+    userId
+      ? ENDPOINTS.enhancedStudyHours(userId, {
+          includeOngoing: true,
+          aggregateBy: studyTimeView,
+          includeAnonymous: true, // Explicitly request anonymous sessions
+        })
+      : null,
+    fetcher,
+    {
+      refreshInterval: 60000, // Refresh every minute to update ongoing session time
+      revalidateOnFocus: true, // Revalidate when tab regains focus
+      onError: (err) => {
+        console.error('Error fetching study hours:', err);
+        // The component will display fallback message automatically
+      },
+    }
+  );
 
   const { data: testAnalytics, error: testError } = useSWR(
     userId ? ENDPOINTS.testAnalytics(userId) : null,
@@ -281,6 +292,65 @@ export default function DashboardPage() {
       setIsClaimingAnonymousSessions(false);
     }
   }, [userId, supabase, studyTimeView]);
+
+  // Manually refresh study hours data when on dashboard tab
+  useEffect(() => {
+    // Check if session_id exists but user is logged in - this means we need to start a new session
+    const hasSessionId = localStorage.getItem('session_id');
+    if (!hasSessionId && userId) {
+      console.log(
+        'No session found but user is logged in, starting new session'
+      );
+      startNewSession(userId);
+    }
+
+    // Set up interval to refresh study hours
+    const interval = setInterval(() => {
+      if (enhancedStudyHours) {
+        console.log('Auto-refreshing study hours data');
+        mutateStudyHours();
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [userId, enhancedStudyHours, mutateStudyHours]);
+
+  // Function to start a new session if needed
+  const startNewSession = async (userId: string) => {
+    try {
+      console.log('Starting new session for dashboard');
+      const token = await supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      const response = await fetch(ENDPOINTS.startSession, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          device: 'browser',
+          user_id: userId,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('session_id', data.session_id);
+        console.log('Dashboard session started:', data.session_id);
+        // Refresh study hours to include this new session
+        mutateStudyHours();
+      } else {
+        console.error(
+          'Failed to start dashboard session:',
+          await response.text()
+        );
+      }
+    } catch (error) {
+      console.error('Error starting dashboard session:', error);
+    }
+  };
 
   return (
     <RouteGuard requireAuth>
