@@ -223,8 +223,8 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
 
         // Then start the user session
         try {
-          console.log('Starting user session after authentication');
-          const response = await fetch(ENDPOINTS.startSession, {
+          console.log('Starting user session for user:', userId);
+          const sessionResponse = await fetch(ENDPOINTS.startSession, {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -232,53 +232,44 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
             },
             body: JSON.stringify({
               device: 'browser',
-              user_id: userId, // Explicitly include user_id
+              user_id: userId,
             }),
           });
 
-          if (!response.ok) {
-            console.error('Failed to start session:', await response.text());
-            // Try one more time with a short delay
-            setTimeout(async () => {
-              try {
-                console.log('Retrying session start...');
-                const retryResponse = await fetch(ENDPOINTS.startSession, {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    device: 'browser',
-                    user_id: userId,
-                  }),
-                });
+          const sessionData = await sessionResponse.json();
+          console.log('Session start response:', sessionData);
 
-                if (retryResponse.ok) {
-                  const data = await retryResponse.json();
-                  localStorage.setItem('session_id', data.session_id);
-                  console.log(
-                    'Session started successfully on retry:',
-                    data.session_id
-                  );
-                } else {
-                  console.error(
-                    'Failed to start session on retry:',
-                    await retryResponse.text()
-                  );
-                }
-              } catch (error) {
-                console.error('Error in retry session start:', error);
-              }
-            }, 2000);
+          if (!sessionResponse.ok) {
+            console.error('Failed to start session:', sessionData);
+            // Try again after a delay
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            console.log('Retrying session start...');
+
+            const retryResponse = await fetch(ENDPOINTS.startSession, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                device: 'browser',
+                user_id: userId,
+              }),
+            });
+
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json();
+              localStorage.setItem('session_id', retryData.session_id);
+              console.log('Session started successfully on retry:', retryData);
+            } else {
+              console.error('Session start failed after retry');
+            }
           } else {
-            const data = await response.json();
-            localStorage.setItem('session_id', data.session_id);
-            console.log('Session started successfully:', data.session_id);
+            localStorage.setItem('session_id', sessionData.session_id);
+            console.log('Session started successfully:', sessionData);
           }
         } catch (error) {
-          console.error('Error starting session:', error);
-          // Don't block the user experience - continue despite the error
+          console.error('Error in session start process:', error);
         }
 
         if (onSuccess) {
