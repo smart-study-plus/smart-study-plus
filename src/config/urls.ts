@@ -48,8 +48,10 @@ export const ENDPOINTS = {
     testId
       ? `${API_URL}/api/study-guide/practice/results/${userId}/${testId}`
       : `${API_URL}/api/study-guide/practice/results/${userId}`,
-  guidePerformance: (guideId: string) =>
-    `${API_URL}/api/study-guide/results/guide/${encodeURIComponent(guideId)}`,
+  guidePerformance: (guideId: string, userId?: string) =>
+    userId
+      ? `${API_URL}/api/study-guide/results/guide/${encodeURIComponent(guideId)}?user_id=${encodeURIComponent(userId)}`
+      : `${API_URL}/api/study-guide/results/guide/${encodeURIComponent(guideId)}`,
   submitTest: `${API_URL}/api/study-guide/practice/submit`,
   startSession: `${API_URL}/api/user/session/start`,
   endSession: `${API_URL}/api/user/session/end`,

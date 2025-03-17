@@ -37,7 +37,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import * as Messages from '@/config/messages';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface GuideStatsProps {
   selectedGuide: {
@@ -127,10 +127,36 @@ export function GuideStats({
     console.log('GuideStats - allGuideAnalytics:', allGuideAnalytics);
   }, [selectedGuide, guideAnalytics, allGuideAnalytics]);
 
+  // Get the current user ID
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch the current user ID
+    const getCurrentUser = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (data?.user?.id) {
+        setUserId(data.user.id);
+        console.log('Current user ID:', data.user.id);
+      }
+    };
+
+    getCurrentUser();
+  }, []);
+
   const { data: performanceHistory, error: performanceError } = useSWR(
-    selectedGuide?.id ? ENDPOINTS.guidePerformance(selectedGuide.id) : null,
+    selectedGuide?.id && userId
+      ? ENDPOINTS.guidePerformance(selectedGuide.id, userId)
+      : null,
     fetcher
   );
+
+  // Log the performance history data to help debug
+  useEffect(() => {
+    if (performanceHistory) {
+      console.log('Performance history data:', performanceHistory);
+    }
+  }, [performanceHistory]);
 
   if (!selectedGuide) {
     return (
