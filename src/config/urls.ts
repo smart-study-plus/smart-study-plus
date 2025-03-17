@@ -62,4 +62,11 @@ export const ENDPOINTS = {
 
   // Add new endpoint for claiming anonymous sessions
   claimAnonymousSessions: `${API_URL}/api/user/claim-sessions`,
+
+  // Add user creation endpoint
+  createUser: `${API_URL}/api/user/create`,
+
+  // Add auth status endpoint
+  authStatus: (userId: string) =>
+    `${API_URL}/api/user/auth-status?user_id=${encodeURIComponent(userId)}`,
 };

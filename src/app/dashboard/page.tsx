@@ -367,7 +367,7 @@ export default function DashboardPage() {
                 Welcome back, {userName}!
               </h1>
               <p className="text-xl text-gray-600">
-                Let&apos;s boost your learning today.
+                Let&apos;s boost your learning today
               </p>
             </motion.div>
 
