@@ -136,6 +136,7 @@ export interface GuideAnalytics {
   latest_test: TestSubmission | null;
   last_updated?: string;
   message?: string;
+  guide_type?: 'slides' | 'regular';
 }
 
 export interface PerformanceDataPoint {

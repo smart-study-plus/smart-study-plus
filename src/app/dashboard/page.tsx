@@ -149,15 +149,49 @@ export default function DashboardPage() {
   const studyGuides = useMemo(() => {
     if (!studyGuidesResponse?.study_guides) return [];
 
-    return studyGuidesResponse.study_guides.map(
+    // First collect regular guides from study_guides endpoint
+    const guides = studyGuidesResponse.study_guides.map(
       (guide: { study_guide_id: string; title: string }) => ({
         id: guide.study_guide_id,
         title: guide.title,
         description: `Study guide for ${guide.title}`,
-        progress: 0, // Will be updated from guide analytics
+        progress: 0,
+        type: 'regular', // Mark as regular guide
       })
     );
-  }, [studyGuidesResponse]);
+
+    // Add slides-based guides from analytics if they're not already included
+    if (
+      allGuideAnalytics?.study_guides &&
+      allGuideAnalytics.study_guides.length > 0
+    ) {
+      console.log('Looking for slide-based guides in analytics');
+
+      allGuideAnalytics.study_guides.forEach((analytic) => {
+        // Check if this guide is a slides guide and not already in the list
+        if (
+          analytic.guide_type === 'slides' &&
+          !guides.some((g) => g.id === analytic.study_guide_id)
+        ) {
+          console.log(
+            `Adding slide-based guide: ${analytic.study_guide_id} - ${analytic.study_guide_title}`
+          );
+
+          guides.push({
+            id: analytic.study_guide_id,
+            title:
+              analytic.study_guide_title ||
+              `Slides Guide ${analytic.study_guide_id}`,
+            description: `Slides-based study guide`,
+            progress: analytic.average_accuracy || 0,
+            type: 'slides', // Mark as slides guide
+          });
+        }
+      });
+    }
+
+    return guides;
+  }, [studyGuidesResponse, allGuideAnalytics]);
 
   const selectedGuide = studyGuides?.[selectedGuideIndex];
 
@@ -211,19 +245,29 @@ export default function DashboardPage() {
   const selectGuideById = useCallback(
     (guideId: string) => {
       console.log(`Trying to select guide with ID: ${guideId}`);
-      const guideIndex = studyGuides.findIndex(
-        (guide: {
-          id: string;
-          title: string;
-          description: string;
-          progress: number;
-        }) => guide.id === guideId
+
+      const guideIndex = studyGuides.findIndex((guide) => guide.id === guideId);
+
+      console.log(
+        `Found guide at index: ${guideIndex}, total guides: ${studyGuides.length}`
       );
-      console.log(`Found guide at index: ${guideIndex}`);
+
       if (guideIndex >= 0) {
+        const guide = studyGuides[guideIndex];
+        console.log(
+          `Selecting guide: ${guide.title}, type: ${guide.type || 'regular'}`
+        );
         setSelectedGuideIndex(guideIndex);
         return true;
       }
+
+      console.log(`Guide not found in studyGuides list`);
+      // For debugging, log all available guide IDs
+      if (studyGuides.length > 0) {
+        console.log('Available guide IDs:');
+        studyGuides.forEach((g) => console.log(`- ${g.id} (${g.title})`));
+      }
+
       return false;
     },
     [studyGuides]

@@ -125,6 +125,17 @@ export function GuideStats({
     console.log('GuideStats - selectedGuide:', selectedGuide);
     console.log('GuideStats - guideAnalytics:', guideAnalytics);
     console.log('GuideStats - allGuideAnalytics:', allGuideAnalytics);
+
+    // Debug logging for guide type detection
+    if (guideAnalytics) {
+      console.log(
+        'Guide type detected:',
+        guideAnalytics.guide_type || 'not specified'
+      );
+      if (guideAnalytics.guide_type === 'slides') {
+        console.log('This is a slides-based guide!');
+      }
+    }
   }, [selectedGuide, guideAnalytics, allGuideAnalytics]);
 
   // Get the current user ID
@@ -197,13 +208,21 @@ export function GuideStats({
                   {allGuideAnalytics.map((analytics) => (
                     <div
                       key={analytics.study_guide_id}
-                      className="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      className={`bg-white p-4 rounded-lg border ${selectedGuide && selectedGuide.id === analytics.study_guide_id ? 'border-blue-500 shadow-md' : 'shadow-sm'} hover:shadow-md transition-shadow cursor-pointer`}
                       onClick={() => {
                         console.log(
-                          `Clicked on guide with ID: ${analytics.study_guide_id}`
+                          `Clicked on guide with ID: ${analytics.study_guide_id}, type: ${analytics.guide_type || 'regular'}`
                         );
                         if (onSelectGuide) {
-                          onSelectGuide(analytics.study_guide_id);
+                          const selected = onSelectGuide(
+                            analytics.study_guide_id
+                          );
+                          console.log(`Guide selection result: ${selected}`);
+                          // If the guide selection failed, this might be a slides-based guide not in studyGuides
+                          if (!selected && analytics.guide_type === 'slides') {
+                            // Manually force the URL navigation to the slides guide
+                            window.location.href = `/practice/guide/slides/${encodeURIComponent(analytics.study_guide_id)}`;
+                          }
                         }
                       }}
                     >
@@ -655,9 +674,30 @@ export function GuideStats({
         className="flex justify-between items-center"
       >
         <Link
-          href={`/practice/guide/${encodeURIComponent(selectedGuide.title)}`}
+          href={
+            guideAnalytics?.guide_type === 'slides'
+              ? `/practice/guide/slides/${encodeURIComponent(selectedGuide.id)}`
+              : `/practice/guide/${encodeURIComponent(selectedGuide.title)}`
+          }
         >
-          <Button className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90">
+          <Button
+            className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
+            onClick={() => {
+              console.log(
+                `Exploring guide: ${selectedGuide.title}, ID: ${selectedGuide.id}`
+              );
+              console.log(
+                `Guide type: ${guideAnalytics?.guide_type || 'regular'}`
+              );
+              console.log(
+                `Navigating to: ${
+                  guideAnalytics?.guide_type === 'slides'
+                    ? `/practice/guide/slides/${selectedGuide.id}`
+                    : `/practice/guide/${selectedGuide.title}`
+                }`
+              );
+            }}
+          >
             Explore Guide
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

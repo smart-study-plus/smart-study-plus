@@ -5,6 +5,12 @@ export const ENDPOINTS = {
   studyGuide: (title: string) =>
     `${API_URL}/api/study-guide/${encodeURIComponent(title)}`,
   studyGuides: `${API_URL}/api/study-guide/all`,
+  slidesGuides: `${API_URL}/api/study-guide/slides`,
+  slidesGuide: (guideId: string) =>
+    `${API_URL}/api/study-guide/slides/${encodeURIComponent(guideId)}`,
+  slidesPracticeTests: (guideId: string) =>
+    `${API_URL}/api/study-guide/practice/guide/slides/${encodeURIComponent(guideId)}`,
+  generateSlidesPracticeTests: `${API_URL}/api/study-guide/slides/generate-practices`,
   studyHours: (userId: string) =>
     `${API_URL}/api/user/study-hours/${encodeURIComponent(userId)}`,
   enhancedStudyHours: (

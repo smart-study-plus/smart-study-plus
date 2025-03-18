@@ -37,6 +37,15 @@ export interface StudyGuideResponse {
   _id?: string;
 }
 
+export interface SlidesGuide {
+  _id: string;
+  title: string;
+  description?: string;
+  slides?: any[];
+  topics?: any[];
+  quizzes?: any[];
+}
+
 export interface PracticeTest {
   section_title: string;
   practice_test_id: string;
