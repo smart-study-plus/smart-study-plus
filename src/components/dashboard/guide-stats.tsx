@@ -183,27 +183,13 @@ export function GuideStats({
               </h2>
               <p className="text-gray-600">{selectedGuide.description}</p>
             </div>
-            <div className="flex items-center justify-center gap-8 mb-8">
-              <Button
-                variant="outline"
-                onClick={onPreviousGuide}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" /> Previous Guide
-              </Button>
-              <Button
-                variant="outline"
-                onClick={onNextGuide}
-                className="flex items-center gap-2"
-              >
-                Next Guide <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+
             <Target className="h-12 w-12 text-gray-400 mb-4" />
             <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
             <p className="text-sm text-gray-500 mt-1">
               Practice with this guide to see your performance analytics
             </p>
+
             {allGuideAnalytics.length > 0 && (
               <div className="mt-8">
                 <p className="text-gray-600 mb-4">Available guide analytics:</p>
@@ -239,6 +225,23 @@ export function GuideStats({
                 </div>
               </div>
             )}
+
+            <div className="flex items-center justify-center gap-8 mt-8">
+              <Button
+                variant="outline"
+                onClick={onPreviousGuide}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous Guide
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onNextGuide}
+                className="flex items-center gap-2"
+              >
+                Next Guide <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </>
         ) : (
           <>

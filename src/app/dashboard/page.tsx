@@ -188,7 +188,12 @@ export default function DashboardPage() {
 
   const isLoading = !userData || !enhancedStudyHours || !testAnalytics;
   const hasError = false; // We're handling errors gracefully now
-  const userName = userData?.user_metadata?.display_name || 'Student';
+  const userName =
+    userData?.user_metadata?.full_name ||
+    userData?.user_metadata?.name ||
+    userData?.user_metadata?.display_name ||
+    userData?.email?.split('@')[0] ||
+    'Student';
 
   const handlePreviousGuide = () => {
     setSelectedGuideIndex((prev) =>
