@@ -65,11 +65,9 @@ const QuizPage: React.FC = () => {
       fetcher
     );
 
-  const [selectedAnswers, setSelectedAnswers] = React.useState<SelectedAnswers>(
-    {}
-  );
-  const [submitting, setSubmitting] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loading = !quiz || !studyGuideData || !userData;
   const anyError = quizError || studyGuideError || error;
@@ -136,77 +134,45 @@ const QuizPage: React.FC = () => {
     totalQuestions > 0 && answeredQuestions === totalQuestions;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="flex-1">
-        <div className="sticky top-[64px] left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Link
-                  href="/practice"
-                  className="inline-flex items-center text-gray-600 hover:text-gray-900 mr-4"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Link>
-              </div>
-              <h2 className="text-2xl font-medium text-gray-900">
-                Practice Quiz - {quiz?.section_title}
-              </h2>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-transparent">
-                <span className="text-sm font-medium text-gray-700">
-                  {answeredQuestions}/{totalQuestions}
-                </span>
-              </div>
+      <main className="flex-1 px-4 sm:px-6 lg:px-8">
+        {/* Sticky Header with Progress */}
+        <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+          <div className="container mx-auto py-4 flex flex-col sm:flex-row items-center justify-between">
+            <Link href="/practice" className="flex items-center text-gray-600 hover:text-gray-900 mb-2 sm:mb-0">
+              <ChevronLeft className="h-5 w-5 mr-1" />
+              Back
+            </Link>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 text-center">
+              {quiz?.section_title || 'Practice Quiz'}
+            </h2>
+            <div className="text-sm text-gray-600">
+              {answeredQuestions}/{totalQuestions} Questions
             </div>
+          </div>
 
-            <div className="flex items-center justify-center gap-1 mb-2">
-              {quiz?.questions?.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                    Object.keys(selectedAnswers).includes(index.toString())
-                      ? 'bg-[var(--color-primary)]'
-                      : 'bg-gray-200'
-                  }`}
-                ></div>
-              ))}
-            </div>
-
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-
-            <div className="flex justify-between text-md text-gray-500 mt-1">
-              <span>Progress: {progressPercentage.toFixed(0)}%</span>
-              <span>
-                {answeredQuestions} of {totalQuestions} questions answered
-              </span>
-            </div>
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+            <div className="h-2 bg-blue-500 transition-all duration-300" style={{ width: `${progressPercentage}%` }} />
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        {/* Main Quiz Content */}
+        <div className="max-w-4xl mx-auto py-8 space-y-6">
           {loading ? (
             <Loading size="lg" text="Loading quiz..." />
           ) : anyError ? (
-            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-xl text-red-500">Error: {error}</p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="mt-6"
-                variant="default"
-              >
+            <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-lg text-red-500">Error: {error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-4" variant="default">
                 Try Again
               </Button>
             </div>
           ) : (
             <>
-              <div className="space-y-8">
+              {/* Questions List */}
+              <div className="space-y-6">
                 {quiz?.questions?.map((question, index) => (
                   <QuestionCard
                     key={index}
@@ -222,10 +188,7 @@ const QuizPage: React.FC = () => {
                     selectedAnswer={selectedAnswers[index.toString()]}
                     note={notes[index.toString()] || ''}
                     onUpdateNote={(questionId, newNote) =>
-                      setNotes((prevNotes) => ({
-                        ...prevNotes,
-                        [questionId]: newNote,
-                      }))
+                      setNotes((prevNotes) => ({ ...prevNotes, [questionId]: newNote }))
                     }
                     userId={userData?.id || ''}
                     testId={testId}
@@ -233,17 +196,10 @@ const QuizPage: React.FC = () => {
                 ))}
               </div>
 
-              <div className="mt-10 flex justify-end">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!isQuizComplete || submitting || !studyGuideData}
-                  variant="default"
-                  size="lg"
-                  className="text-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting
-                    ? 'Submitting...'
-                    : `Submit Quiz (${answeredQuestions}/${totalQuestions})`}
+              {/* Submit Button */}
+              <div className="mt-8 flex justify-center">
+                <Button onClick={handleSubmit} disabled={!isQuizComplete || submitting} className="w-full sm:w-auto text-lg">
+                  {submitting ? 'Submitting...' : 'Submit Quiz'}
                 </Button>
               </div>
             </>
