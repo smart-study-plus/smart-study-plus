@@ -26,15 +26,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { SlidesGuide } from '@/interfaces/topic';
+import { SlidesGuide, SlidePracticeTest, Concept } from '@/interfaces/topic';
+import { CompletedTest } from '@/interfaces/test';
 import { cn } from '@/lib/utils';
 
 // Define types for concepts and questions
-interface Concept {
-  text?: string;
-  concept?: string;
-}
-
 interface Question {
   question: string;
   choices?: Record<string, string>;
@@ -91,7 +87,7 @@ const SlidesGuidePage: React.FC = () => {
   const guideId = typeof params.guideId === 'string' ? params.guideId : '';
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [practiceTests, setPracticeTests] = useState<any[]>([]);
+  const [practiceTests, setPracticeTests] = useState<SlidePracticeTest[]>([]);
   const [completedTests, setCompletedTests] = useState(new Set<string>());
   const [generatingTests, setGeneratingTests] = useState(false);
 
@@ -119,7 +115,7 @@ const SlidesGuidePage: React.FC = () => {
           if (response.ok) {
             const data = await response.json();
             if (data && data.practice_tests && data.practice_tests.length > 0) {
-              setPracticeTests(data.practice_tests);
+              setPracticeTests(data.practice_tests as SlidePracticeTest[]);
             } else {
               // If no tests exist, we'll need to generate them
               await generatePracticeTests();
@@ -145,8 +141,10 @@ const SlidesGuidePage: React.FC = () => {
               const completedTestsData = await completedTestsResponse.json();
               const completed = new Set(
                 completedTestsData.test_results
-                  ?.filter((test: any) => test.study_guide_id === guideId)
-                  .map((test: any) => test.test_id) || []
+                  ?.filter(
+                    (test: CompletedTest) => test.study_guide_id === guideId
+                  )
+                  .map((test: CompletedTest) => test.test_id) || []
               ) as Set<string>;
               setCompletedTests(completed);
             }
@@ -179,7 +177,7 @@ const SlidesGuidePage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.practice_tests) {
-          setPracticeTests(data.practice_tests);
+          setPracticeTests(data.practice_tests as SlidePracticeTest[]);
         }
       }
     } catch (error) {
@@ -216,7 +214,7 @@ const SlidesGuidePage: React.FC = () => {
     }
   };
 
-  const getTestsByTopic = (topicTitle: string) => {
+  const getTestsByTopic = (topicTitle: string): SlidePracticeTest[] => {
     // Filter tests by topic title
     const topicTests = practiceTests.filter(
       (test) => test.section_title === topicTitle
@@ -448,7 +446,10 @@ const SlidesGuidePage: React.FC = () => {
                                           </h4>
                                           <div className="space-y-2">
                                             {getTestsByTopic(topic.title).map(
-                                              (test, testIndex) => (
+                                              (
+                                                test: SlidePracticeTest,
+                                                testIndex: number
+                                              ) => (
                                                 <div
                                                   key={testIndex}
                                                   className="rounded-lg border border-gray-200 p-3 hover:border-blue-300 transition-all cursor-pointer"

@@ -14,7 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ENDPOINTS } from '@/config/urls';
 import { motion } from 'framer-motion';
-import { StudyGuide, ProgressMap } from '@/interfaces/topic';
+import {
+  StudyGuide,
+  ProgressMap,
+  SlidesGuideListItem,
+  SlidesGuideListResponse,
+} from '@/interfaces/topic';
 import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
 
 const container = {
@@ -42,7 +47,7 @@ const item = {
 
 const PracticePage: React.FC = () => {
   const [studyGuides, setStudyGuides] = useState<StudyGuide[]>([]);
-  const [slidesGuides, setSlidesGuides] = useState<any[]>([]);
+  const [slidesGuides, setSlidesGuides] = useState<SlidesGuideListItem[]>([]);
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +79,8 @@ const PracticePage: React.FC = () => {
         try {
           const slidesResponse = await fetchWithAuth(ENDPOINTS.slidesGuides);
           if (slidesResponse.ok) {
-            const slidesData = await slidesResponse.json();
+            const slidesData: SlidesGuideListResponse =
+              await slidesResponse.json();
             if (slidesData.study_guides && slidesData.study_guides.length > 0) {
               setSlidesGuides(slidesData.study_guides);
             }

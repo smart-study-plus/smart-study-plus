@@ -11,7 +11,8 @@ export interface Topic {
 }
 
 export interface Concept {
-  concept: string;
+  concept?: string;
+  text?: string;
 }
 
 export interface Section {
@@ -41,9 +42,45 @@ export interface SlidesGuide {
   _id: string;
   title: string;
   description?: string;
-  slides?: any[];
-  topics?: any[];
-  quizzes?: any[];
+  slides?: SlideContent[];
+  topics?: SlideTopic[];
+  quizzes?: SlideQuiz[];
+}
+
+export interface SlideContent {
+  title: string;
+  content: string;
+  order?: number;
+}
+
+export interface SlideTopic {
+  title: string;
+  description?: string;
+  concepts?: (Concept | string)[];
+  quizzes?: {
+    multiple_choice?: SlideQuestion[];
+  };
+}
+
+export interface SlideQuestion {
+  question: string;
+  choices: Record<string, string>;
+  correct: string;
+  explanation: string;
+}
+
+export interface SlideQuiz {
+  title: string;
+  questions: SlideQuestion[];
+}
+
+export interface SlidePracticeTest {
+  practice_test_id: string;
+  study_guide_id: string;
+  study_guide_title: string;
+  section_title: string;
+  questions: SlideQuestion[];
+  guide_type: 'slides';
 }
 
 export interface PracticeTest {
@@ -61,4 +98,17 @@ export interface ProgressMap {
 
 export interface TestMap {
   [key: string]: string;
+}
+
+export interface SlidesGuideListItem {
+  _id: string;
+  title: string;
+  description?: string;
+  topics?: { title: string }[];
+  slides?: { title: string; content: string }[];
+}
+
+export interface SlidesGuideListResponse {
+  study_guides: SlidesGuideListItem[];
+  message?: string;
 }
