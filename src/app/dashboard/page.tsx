@@ -37,6 +37,7 @@ import {
   EnhancedStudyHours,
   TimePeriod,
 } from '@/interfaces/test';
+import { DashboardGuide } from '@/interfaces/topic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { GuideStats } from '@/components/dashboard/guide-stats';
@@ -146,7 +147,7 @@ export default function DashboardPage() {
     fetcher
   );
 
-  const studyGuides = useMemo(() => {
+  const studyGuides = useMemo<DashboardGuide[]>(() => {
     if (!studyGuidesResponse?.study_guides) return [];
 
     // First collect regular guides from study_guides endpoint
@@ -156,7 +157,7 @@ export default function DashboardPage() {
         title: guide.title,
         description: `Study guide for ${guide.title}`,
         progress: 0,
-        type: 'regular', // Mark as regular guide
+        type: 'regular' as const, // Mark as regular guide
       })
     );
 
@@ -167,11 +168,11 @@ export default function DashboardPage() {
     ) {
       console.log('Looking for slide-based guides in analytics');
 
-      allGuideAnalytics.study_guides.forEach((analytic) => {
+      allGuideAnalytics.study_guides.forEach((analytic: GuideAnalytics) => {
         // Check if this guide is a slides guide and not already in the list
         if (
           analytic.guide_type === 'slides' &&
-          !guides.some((g) => g.id === analytic.study_guide_id)
+          !guides.some((g: DashboardGuide) => g.id === analytic.study_guide_id)
         ) {
           console.log(
             `Adding slide-based guide: ${analytic.study_guide_id} - ${analytic.study_guide_title}`
@@ -184,7 +185,7 @@ export default function DashboardPage() {
               `Slides Guide ${analytic.study_guide_id}`,
             description: `Slides-based study guide`,
             progress: analytic.average_accuracy || 0,
-            type: 'slides', // Mark as slides guide
+            type: 'slides' as const, // Mark as slides guide
           });
         }
       });
@@ -246,7 +247,9 @@ export default function DashboardPage() {
     (guideId: string) => {
       console.log(`Trying to select guide with ID: ${guideId}`);
 
-      const guideIndex = studyGuides.findIndex((guide) => guide.id === guideId);
+      const guideIndex = studyGuides.findIndex(
+        (guide: DashboardGuide) => guide.id === guideId
+      );
 
       console.log(
         `Found guide at index: ${guideIndex}, total guides: ${studyGuides.length}`
@@ -265,7 +268,9 @@ export default function DashboardPage() {
       // For debugging, log all available guide IDs
       if (studyGuides.length > 0) {
         console.log('Available guide IDs:');
-        studyGuides.forEach((g) => console.log(`- ${g.id} (${g.title})`));
+        studyGuides.forEach((g: DashboardGuide) =>
+          console.log(`- ${g.id} (${g.title})`)
+        );
       }
 
       return false;

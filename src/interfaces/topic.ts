@@ -112,3 +112,11 @@ export interface SlidesGuideListResponse {
   study_guides: SlidesGuideListItem[];
   message?: string;
 }
+
+export interface DashboardGuide {
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  type: 'regular' | 'slides';
+}
