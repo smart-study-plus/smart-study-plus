@@ -224,33 +224,54 @@ const QuizResultsPage: React.FC = () => {
                             {question.question}
                           </p>
 
-                          <div className="space-y-2 mb-6">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600">
+                          <div className="space-y-4 mb-6">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-600 mb-1">
                                 Your Answer:
                               </span>
-                              <span
+                              <div
                                 className={cn(
-                                  'font-medium',
+                                  'p-3 rounded-lg',
                                   question.is_correct
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
+                                    ? 'bg-green-50 border border-green-100'
+                                    : 'bg-red-50 border border-red-100'
                                 )}
                               >
-                                {question.user_answer}.{' '}
-                                {question.user_answer_text}
-                              </span>
+                                <span
+                                  className={cn(
+                                    'font-medium',
+                                    question.is_correct
+                                      ? 'text-green-600'
+                                      : 'text-red-600'
+                                  )}
+                                >
+                                  {question.user_answer}.{' '}
+                                  {(question.user_answer &&
+                                    question.choices &&
+                                    question.choices[question.user_answer]) ||
+                                    question.user_answer_text ||
+                                    'No answer text available'}
+                                </span>
+                              </div>
                             </div>
 
                             {!question.is_correct && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-600 mb-1">
                                   Correct Answer:
                                 </span>
-                                <span className="font-medium text-green-600">
-                                  {question.correct_answer}.{' '}
-                                  {question.correct_answer_text}
-                                </span>
+                                <div className="bg-green-50 border border-green-100 p-3 rounded-lg">
+                                  <span className="font-medium text-green-600">
+                                    {question.correct_answer}.{' '}
+                                    {(question.correct_answer &&
+                                      question.choices &&
+                                      question.choices[
+                                        question.correct_answer
+                                      ]) ||
+                                      question.correct_answer_text ||
+                                      'No answer text available'}
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </div>

@@ -65,6 +65,7 @@ export interface QuizQuestion {
   explanation: string;
   question: string;
   notes?: string;
+  choices?: Record<string, string>;
 }
 
 export interface QuizResults {
