@@ -402,7 +402,6 @@ export const AIChat: React.FC<AIChatProps> = ({
     return text;
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -426,7 +425,8 @@ export const AIChat: React.FC<AIChatProps> = ({
               size="sm"
               onClick={handleForcedUpdate}
               className="ml-auto"
-              title="Refresh messages"
+              title="Sometimes messages might need a reload! Click to refresh"
+              aria-label="Refresh chat messages"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>

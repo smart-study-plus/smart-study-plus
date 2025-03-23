@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, RefreshCw } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
 import { MathJaxContext } from 'better-react-mathjax';
 import ReactMarkdown from 'react-markdown';
@@ -32,6 +32,7 @@ export const HintSection = ({
   const [generatingNewHint, setGeneratingNewHint] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const maxRetries = 3;
   const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -60,6 +61,7 @@ export const HintSection = ({
           setError(null);
           setLoadingHint(false);
           setGeneratingNewHint(false);
+          setIsRefreshing(false);
           return true;
         }
       }
@@ -70,8 +72,16 @@ export const HintSection = ({
     }
   };
 
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setLoadingMessage('Refreshing hint...');
+    retryFetchHint().finally(() => {
+      setIsRefreshing(false);
+    });
+  };
+
   const handleGetHint = async () => {
-    if (hint) return;
+    if (hint && !isRefreshing) return;
 
     setLoadingHint(true);
     setError(null);
@@ -97,6 +107,7 @@ export const HintSection = ({
           setHint(data.hint);
           setLoadingHint(false);
           setGeneratingNewHint(false);
+          setIsRefreshing(false);
           return;
         } else {
           // Hint not found, show transition message and generate a new one
@@ -137,6 +148,7 @@ export const HintSection = ({
         console.log('Successfully generated new hint');
         setLoadingHint(false);
         setGeneratingNewHint(false);
+        setIsRefreshing(false);
         setRetryCount(0);
         return; // Exit early after setting the hint
       }
@@ -169,6 +181,7 @@ export const HintSection = ({
           );
           setLoadingHint(false);
           setGeneratingNewHint(false);
+          setIsRefreshing(false);
         }
       }, delay);
 
@@ -178,6 +191,7 @@ export const HintSection = ({
     // Only reach here if everything went well
     setLoadingHint(false);
     setGeneratingNewHint(false);
+    setIsRefreshing(false);
     setRetryCount(0);
   };
 
@@ -212,6 +226,7 @@ export const HintSection = ({
         console.log('Loading timeout reached, forcing exit from loading state');
         setLoadingHint(false);
         setGeneratingNewHint(false);
+        setIsRefreshing(false);
         if (!hint) {
           setError('The hint is taking too long to load. Please try again.');
         }
@@ -245,22 +260,39 @@ export const HintSection = ({
   return (
     <MathJaxContext>
       <div className="ml-10 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-gray-200)]">
-        <button
-          onClick={onToggle}
-          className="w-full flex items-center justify-between p-6 text-left border-b border-[var(--color-gray-200)]"
-        >
-          <h4 className="text-xl font-medium text-[var(--color-text)]">Hint</h4>
-          <ChevronDown
-            className={`w-5 h-5 text-[var(--color-text-secondary)] transform transition-transform ${
-              isVisible ? 'rotate-180' : ''
-            }`}
-          />
-        </button>
+        <div className="w-full flex items-center justify-between p-6 text-left border-b border-[var(--color-gray-200)]">
+          <button
+            onClick={onToggle}
+            className="flex-1 flex items-center justify-between"
+          >
+            <h4 className="text-xl font-medium text-[var(--color-text)]">
+              Hint
+            </h4>
+            <ChevronDown
+              className={`w-5 h-5 text-[var(--color-text-secondary)] transform transition-transform ${
+                isVisible ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {hint && (
+            <button
+              onClick={handleManualRefresh}
+              className="ml-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              title="Sometimes the hint might need a reload! Click to refresh"
+              aria-label="Refresh hint"
+              disabled={loadingHint || isRefreshing}
+            >
+              <RefreshCw
+                className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRefreshing ? 'animate-spin' : ''}`}
+              />
+            </button>
+          )}
+        </div>
         <div className="p-6">
-          {loadingHint ? (
+          {loadingHint || isRefreshing ? (
             <div className="text-lg text-[var(--color-text-secondary)]">
               <p>{loadingMessage}</p>
-              {generatingNewHint && (
+              {(generatingNewHint || isRefreshing) && (
                 <div className="mt-2 flex items-center">
                   <div className="animate-pulse mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
                   <div className="animate-pulse delay-200 mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
