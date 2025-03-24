@@ -49,6 +49,7 @@ const PracticePage: React.FC = () => {
   const [studyGuides, setStudyGuides] = useState<StudyGuide[]>([]);
   const [slidesGuides, setSlidesGuides] = useState<SlidesGuideListItem[]>([]);
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
+  const [slidesProgressMap, setSlidesProgressMap] = useState<ProgressMap>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -94,20 +95,22 @@ const PracticePage: React.FC = () => {
         );
 
         let completedTestsMap = new Set<string>();
+        let completedTests: CompletedTest[] = [];
 
         if (!completedTestsResponse.ok) {
           console.warn('No test results found for user.');
           setProgressMap({});
+          setSlidesProgressMap({});
         } else {
           const completedTestsData: TestResultsResponse =
             await completedTestsResponse.json();
+          completedTests = completedTestsData.test_results || [];
           completedTestsMap = new Set(
-            completedTestsData.test_results.map(
-              (test: CompletedTest) => test.test_id
-            )
+            completedTests.map((test: CompletedTest) => test.test_id)
           );
         }
 
+        // Calculate progress for regular study guides
         const progressData: ProgressMap = {};
         await Promise.all(
           guides.map(async (guide: StudyGuide) => {
@@ -125,8 +128,42 @@ const PracticePage: React.FC = () => {
             }
           })
         );
-
         setProgressMap(progressData);
+
+        // Calculate progress for slides study guides
+        const slidesProgressData: ProgressMap = {};
+        await Promise.all(
+          slidesGuides.map(async (guide) => {
+            try {
+              const slideTestsResponse = await fetchWithAuth(
+                ENDPOINTS.slidesPracticeTests(guide._id)
+              );
+              if (slideTestsResponse.ok) {
+                const slideTestsData = await slideTestsResponse.json();
+                if (
+                  slideTestsData.practice_tests &&
+                  slideTestsData.practice_tests.length > 0
+                ) {
+                  const totalTests = slideTestsData.practice_tests.length;
+                  const guideCompletedTests = completedTests.filter(
+                    (test) => test.study_guide_id === guide._id
+                  ).length;
+                  slidesProgressData[guide._id] =
+                    totalTests > 0
+                      ? (guideCompletedTests / totalTests) * 100
+                      : 0;
+                }
+              }
+            } catch (error) {
+              console.warn(
+                `Failed to fetch practice tests for slides guide ${guide._id}:`,
+                error
+              );
+              slidesProgressData[guide._id] = 0;
+            }
+          })
+        );
+        setSlidesProgressMap(slidesProgressData);
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : 'An error occurred';
@@ -299,26 +336,44 @@ const PracticePage: React.FC = () => {
                                     </h2>
                                   </div>
                                   <p className="text-gray-600">
-                                    Interactive slides with quizzes and key
-                                    concepts
+                                    Comprehensive guide covering key concepts
+                                    and practice exercises
                                   </p>
                                 </div>
-
                                 <div className="space-y-2">
-                                  <p className="text-sm text-gray-600">
-                                    {guide.description ||
-                                      'Explore slides with interactive elements'}
-                                  </p>
+                                  <div className="flex justify-between items-center text-sm text-gray-600">
+                                    <span>
+                                      Progress:{' '}
+                                      {slidesProgressMap[guide._id]?.toFixed(
+                                        0
+                                      ) || 0}
+                                      %
+                                    </span>
+                                    <span className="font-medium text-blue-600">
+                                      {slidesProgressMap[guide._id]?.toFixed(
+                                        0
+                                      ) || 0}
+                                      /100
+                                    </span>
+                                  </div>
+                                  <Progress
+                                    value={slidesProgressMap[guide._id] || 0}
+                                    className="h-2"
+                                  />
                                 </div>
                               </div>
 
                               <div className="md:border-l md:pl-8 flex flex-col justify-center items-center md:items-start gap-4">
                                 <div className="text-center md:text-left">
                                   <p className="text-sm font-medium text-gray-600">
-                                    Format
+                                    Status
                                   </p>
                                   <p className="text-lg font-semibold text-gray-900">
-                                    Slide-based
+                                    {slidesProgressMap[guide._id] === 0
+                                      ? 'Not Started'
+                                      : slidesProgressMap[guide._id] === 100
+                                        ? 'Completed'
+                                        : 'In Progress'}
                                   </p>
                                 </div>
                                 <Button
