@@ -4,7 +4,8 @@ import { FormEvent, useState, ChangeEvent, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ENDPOINTS, API_URL } from '@/config/urls';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface AuthFormProps {
   method: 'signin' | 'signup' | null;
@@ -19,6 +20,7 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     const message = searchParams.get('message');
@@ -41,21 +43,48 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
 
     try {
       const supabase = createClient();
-      const { error: authError } =
-        method === 'signup'
-          ? await supabase.auth.signUp({
-              email,
-              password,
-              options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-              },
-            })
-          : await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
 
-      if (authError) throw authError;
+      if (method === 'signup') {
+        // For signup, attempt to disable email confirmation
+        const { error: authError, data } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `https://ssplus.vercel.app/auth/callback`,
+            data: {
+              username: username,
+            },
+          },
+        });
+
+        if (authError) throw authError;
+
+        // Check if email confirmation is needed
+        if (data?.user && !data.session) {
+          // Email confirmation is required
+          toast.success('Account created successfully!', {
+            description:
+              'Please check your email to confirm your account before signing in.',
+            duration: 6000,
+          });
+
+          // Redirect to sign-in page after a short delay
+          setTimeout(() => {
+            router.push('/auth?m=signin&verification=pending');
+          }, 2000);
+
+          setLoading(false);
+          return;
+        }
+      } else {
+        // For sign in
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+      }
 
       const token = (await supabase.auth.getSession()).data.session
         ?.access_token;
