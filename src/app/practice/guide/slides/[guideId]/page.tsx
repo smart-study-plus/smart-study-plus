@@ -309,69 +309,10 @@ const SlidesGuidePage: React.FC = () => {
           >
             <motion.div variants={item} className="md:col-span-3">
               <div className="grid gap-8">
-                {/* <Card className="bg-white shadow-lg p-8 mb-8">
-                  <CardContent className="p-0">
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="flex items-center gap-2">
-                        <SlidersHorizontal className="h-5 w-5 text-blue-600" />
-                        <h2 className="text-xl font-semibold">
-                          Slide {currentSlide + 1} of{' '}
-                          {slidesGuide?.slides?.length || 0}
-                        </h2>
-                      </div>
-                    </div>
-
-                    <div className="min-h-[400px] flex items-center justify-center bg-gray-50 rounded-lg p-8 mb-8">
-                      {slidesGuide?.slides && slidesGuide.slides.length > 0 ? (
-                        <div className="w-full">
-                          <div className="text-center">
-                            <h3 className="text-2xl font-bold mb-4">
-                              {slidesGuide.slides[currentSlide]?.title ||
-                                'Slide Content'}
-                            </h3>
-                            <p className="text-gray-700">
-                              {slidesGuide.slides[currentSlide]?.content ||
-                                'This is where slide content will be displayed. The actual content will depend on the structure of your slides data.'}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-500">
-                          <p>No slides available for this guide.</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between">
-                      <Button
-                        onClick={handlePrevSlide}
-                        disabled={currentSlide === 0}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-                      <Button
-                        onClick={handleNextSlide}
-                        disabled={
-                          !slidesGuide?.slides ||
-                          currentSlide >= slidesGuide.slides.length - 1
-                        }
-                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                      >
-                        Next
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card> 
-                */}
-                {/* Topics with Accordion Layout */}
                 {slidesGuide?.topics && slidesGuide.topics.length > 0 && (
                   <motion.div
                     variants={item}
-                    className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-300"
+                    className="bg-white rounded-xl shadow-lg p-0 border-2 border-gray-300"
                   >
                     <Accordion
                       type="multiple"
