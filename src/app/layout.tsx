@@ -7,6 +7,7 @@ import './globals.css';
 import React from 'react';
 import { Provider } from 'jotai';
 import { Prompt } from 'next/font/google';
+import Sidebar from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
   title: 'Smart Study+',
@@ -32,9 +33,15 @@ const RootLayout = ({
 }>) => (
   <html lang="en" className={prompt.className}>
     <body>
-      <Provider>{children}</Provider>
+      <Provider>
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <main className="flex-1">{children}</main>
+        </div>
+      </Provider>
     </body>
   </html>
 );
 
 export default RootLayout;
+
