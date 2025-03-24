@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import Link from 'next/link';
@@ -18,16 +18,63 @@ import { ENDPOINTS } from '@/config/urls';
 import { ChevronLeft, CheckCircle, PlayCircle, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import {
-  Chapter,
-  Section,
-  Concept,
-  PracticeTest,
-  PracticeTestsData,
-  TestMap,
-} from '@/interfaces/topic';
 import { CompletedTest, TestResultsResponse } from '@/interfaces/test';
 import { cn } from '@/lib/utils';
+
+// Define types for the new JSON structure
+interface QuizChoice {
+  question: string;
+  choices: Record<string, string>;
+  correct: string;
+  explanation: string;
+}
+
+interface ShortAnswer {
+  question: string;
+  ideal_answer: string;
+}
+
+interface SectionQuiz {
+  concept: string;
+  quizzes: {
+    multiple_choice: QuizChoice[];
+    short_answer: ShortAnswer[];
+  };
+}
+
+interface Section {
+  title: string;
+  key_concepts: string[];
+  quizzes: SectionQuiz[];
+  completed?: boolean;
+}
+
+interface Chapter {
+  title: string;
+  sections: Section[];
+}
+
+interface StudyGuideData {
+  title: string;
+  chapters: Chapter[];
+  study_guide_id?: string;
+}
+
+interface TestMap {
+  [key: string]: string;
+}
+
+// Add interface for practice test
+interface PracticeTest {
+  practice_test_id: string;
+  section_title: string;
+  questions: any[];
+}
+
+// Add interface for practice tests data
+interface PracticeTestsData {
+  practice_tests: PracticeTest[];
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -69,6 +116,7 @@ const StudyGuidePage: React.FC = () => {
   const title = typeof params.title === 'string' ? params.title : '';
   const router = useRouter();
   const supabase = createClient();
+  const [generatingTests, setGeneratingTests] = useState<boolean>(false);
 
   const { data: userData } = useSWR('user', async () => {
     const { data } = await supabase.auth.getUser();
@@ -77,7 +125,7 @@ const StudyGuidePage: React.FC = () => {
 
   const userId = userData?.id;
 
-  const { data: studyGuide, error: studyGuideError } = useSWR(
+  const { data: studyGuide, error: studyGuideError } = useSWR<StudyGuideData>(
     title ? ENDPOINTS.studyGuide(title) : null,
     fetcher
   );
@@ -110,7 +158,7 @@ const StudyGuidePage: React.FC = () => {
 
   // Process the data
   const practiceTests = (testsData?.practice_tests.reduce(
-    (acc: TestMap, test: PracticeTest) => {
+    (acc: TestMap, test: any) => {
       acc[test.section_title] = test.practice_test_id;
       return acc;
     },
@@ -136,34 +184,17 @@ const StudyGuidePage: React.FC = () => {
     return totalTests > 0 ? (completedCount / totalTests) * 100 : 0;
   })();
 
+  // Process the study guide to add completion status to sections
   const processedGuide = studyGuide
     ? {
         ...studyGuide,
-        chapters: studyGuide.chapters?.length
-          ? studyGuide.chapters.map((chapter: Chapter) => ({
-              title: chapter.title,
-              sections: chapter.sections.map((section: Section) => ({
-                title: section.title,
-                completed: completedTests.has(
-                  practiceTests[section.title] || ''
-                ),
-                concepts:
-                  section.concepts?.map((concept: Concept) => concept) || [],
-              })),
-            }))
-          : [
-              {
-                title: 'Sections',
-                sections: studyGuide.sections.map((section: Section) => ({
-                  title: section.title,
-                  completed: completedTests.has(
-                    practiceTests[section.title] || ''
-                  ),
-                  concepts:
-                    section.concepts?.map((concept: Concept) => concept) || [],
-                })),
-              },
-            ],
+        chapters: studyGuide.chapters.map((chapter: Chapter) => ({
+          ...chapter,
+          sections: chapter.sections.map((section: Section) => ({
+            ...section,
+            completed: completedTests.has(practiceTests[section.title] || ''),
+          })),
+        })),
       }
     : null;
 
@@ -178,6 +209,52 @@ const StudyGuidePage: React.FC = () => {
       router.push(
         `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}`
       );
+    }
+  };
+
+  // Generate practice tests from the studyGuide data
+  const generatePracticeTests = async () => {
+    if (!studyGuide) return;
+
+    try {
+      setGeneratingTests(true);
+      const token = await supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      // Call the API to generate practice tests
+      const response = await fetch('/api/practice-tests/generate', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ guide_id: studyGuide.study_guide_id }),
+      });
+
+      if (response.ok) {
+        // Refresh the tests data after generating
+        const newTestsData = await fetcher(ENDPOINTS.practiceTests(title));
+
+        // Update the UI with the new tests
+        if (newTestsData && newTestsData.practice_tests) {
+          // Update practice tests mapping
+          const newPracticeTests = newTestsData.practice_tests.reduce(
+            (acc: TestMap, test: any) => {
+              acc[test.section_title] = test.practice_test_id;
+              return acc;
+            },
+            {} as TestMap
+          );
+
+          // Force re-render
+          window.location.reload();
+        }
+      }
+    } catch (error) {
+      console.error('Error generating practice tests:', error);
+    } finally {
+      setGeneratingTests(false);
     }
   };
 
@@ -202,7 +279,8 @@ const StudyGuidePage: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {decodeURIComponent(title).replace(/_/g, ' ')}
+                {studyGuide?.title ||
+                  decodeURIComponent(title).replace(/_/g, ' ')}
               </h1>
               <p className="mt-2 text-gray-600">Study Guide Content</p>
             </div>
@@ -250,7 +328,11 @@ const StudyGuidePage: React.FC = () => {
               variants={item}
               className="md:col-span-3 bg-white rounded-xl shadow-lg p-6 border-2 border-gray-300"
             >
-              <Accordion type="multiple" className="w-full space-y-4">
+              <Accordion
+                type="multiple"
+                defaultValue={['chapter-0']}
+                className="w-full space-y-4"
+              >
                 {processedGuide?.chapters.map(
                   (chapter: Chapter, chapterIndex: number) => (
                     <motion.div key={chapterIndex} variants={item}>
@@ -302,24 +384,27 @@ const StudyGuidePage: React.FC = () => {
 
                                     <AccordionContent className="px-4 pb-4 pt-1">
                                       <div className="space-y-2.5">
-                                        {section.concepts.map(
-                                          (
-                                            concept: Concept,
-                                            conceptIndex: number
-                                          ) => (
-                                            <div
-                                              key={conceptIndex}
-                                              className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50/80 transition-colors"
-                                            >
-                                              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"></div>
-                                              <span className="text-gray-700 text-sm">
-                                                {concept.concept}
-                                              </span>
-                                            </div>
-                                          )
-                                        )}
+                                        {/* Key Concepts */}
+                                        {section.key_concepts &&
+                                          section.key_concepts.map(
+                                            (
+                                              concept: string,
+                                              conceptIndex: number
+                                            ) => (
+                                              <div
+                                                key={conceptIndex}
+                                                className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50/80 transition-colors"
+                                              >
+                                                <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"></div>
+                                                <span className="text-gray-700 text-sm">
+                                                  {concept}
+                                                </span>
+                                              </div>
+                                            )
+                                          )}
 
-                                        {practiceTests[section.title] && (
+                                        {/* Quiz Button or Generate Tests Button */}
+                                        {practiceTests[section.title] ? (
                                           <div className="pt-4">
                                             <Button
                                               onClick={() =>
@@ -336,6 +421,25 @@ const StudyGuidePage: React.FC = () => {
                                                 : 'Start Quiz'}
                                             </Button>
                                           </div>
+                                        ) : (
+                                          <div className="pt-4">
+                                            <Button
+                                              onClick={generatePracticeTests}
+                                              disabled={generatingTests}
+                                              className="w-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)]"
+                                            >
+                                              {generatingTests ? (
+                                                <div className="flex items-center gap-2">
+                                                  <span className="animate-spin h-4 w-4 border-2 border-white border-opacity-50 border-t-white rounded-full"></span>
+                                                  <span>
+                                                    Generating Tests...
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                'Generate Practice Tests'
+                                              )}
+                                            </Button>
+                                          </div>
                                         )}
                                       </div>
                                     </AccordionContent>
@@ -350,6 +454,13 @@ const StudyGuidePage: React.FC = () => {
                   )
                 )}
               </Accordion>
+
+              {/* Global generating tests indicator */}
+              {generatingTests && (
+                <div className="mt-6 p-4 bg-[var(--color-primary)]/5 rounded-lg text-center">
+                  <Loading size="sm" text="Generating practice tests..." />
+                </div>
+              )}
             </motion.div>
 
             <motion.div variants={item} className="space-y-6">

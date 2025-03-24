@@ -56,7 +56,7 @@ export interface SlideContent {
 export interface SlideTopic {
   title: string;
   description?: string;
-  concepts?: (Concept | string)[];
+  key_points?: (Concept | string)[];
   quizzes?: {
     multiple_choice?: SlideQuestion[];
   };
@@ -74,6 +74,11 @@ export interface SlideQuiz {
   questions: SlideQuestion[];
 }
 
+export interface ShortAnswerSlideQuestion {
+  question: string;
+  ideal_answer: string;
+}
+
 export interface SlidePracticeTest {
   practice_test_id: string;
   study_guide_id: string;
@@ -81,6 +86,7 @@ export interface SlidePracticeTest {
   section_title: string;
   questions: SlideQuestion[];
   guide_type: 'slides';
+  short_answer?: ShortAnswerSlideQuestion[];
 }
 
 export interface PracticeTest {

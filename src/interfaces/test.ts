@@ -28,14 +28,23 @@ export interface Test {
 
 export interface Question {
   question: string;
-  choices: string[];
+  choices: Record<string, string>;
   correct: string;
   explanation: string;
 }
 
+export interface ShortAnswerQuestion {
+  question_id: string;
+  question: string;
+  ideal_answer: string;
+}
+
+export type QuestionType = 'multiple_choice' | 'short_answer';
+
 export interface Quiz {
   section_title: string;
   questions: Question[];
+  short_answer?: ShortAnswerQuestion[];
 }
 
 export interface CompletedTest {
@@ -57,15 +66,17 @@ export interface SubmissionResult {
 
 export interface QuizQuestion {
   question_id: string;
-  is_correct: boolean;
-  user_answer: string;
-  user_answer_text: string;
+  question: string;
+  user_answer?: string;
   correct_answer?: string;
   correct_answer_text?: string;
-  explanation: string;
-  question: string;
+  user_answer_text?: string;
+  is_correct?: boolean;
+  explanation?: string;
   notes?: string;
   choices?: Record<string, string>;
+  question_type?: QuestionType;
+  ideal_answer?: string;
 }
 
 export interface QuizResults {

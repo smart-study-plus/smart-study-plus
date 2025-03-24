@@ -245,31 +245,55 @@ const QuizResultsPage: React.FC = () => {
                                       : 'text-red-600'
                                   )}
                                 >
-                                  {question.user_answer}.{' '}
-                                  {(question.user_answer &&
-                                    question.choices &&
-                                    question.choices[question.user_answer]) ||
-                                    question.user_answer_text ||
-                                    'No answer text available'}
+                                  {question.question_type === 'short_answer' ? (
+                                    <span>
+                                      {question.user_answer_text ||
+                                        'No answer provided'}
+                                    </span>
+                                  ) : (
+                                    <>
+                                      {question.user_answer}.{' '}
+                                      {(question.user_answer &&
+                                        question.choices &&
+                                        question.choices[
+                                          question.user_answer
+                                        ]) ||
+                                        question.user_answer_text ||
+                                        'No answer provided'}
+                                    </>
+                                  )}
                                 </span>
                               </div>
                             </div>
 
-                            {!question.is_correct && (
-                              <div className="flex flex-col">
+                            {(!question.is_correct ||
+                              question.question_type === 'short_answer') && (
+                              <div className="flex flex-col mt-2">
                                 <span className="text-sm font-medium text-gray-600 mb-1">
-                                  Correct Answer:
+                                  {question.question_type === 'short_answer'
+                                    ? 'Ideal Answer:'
+                                    : 'Correct Answer:'}
                                 </span>
-                                <div className="bg-green-50 border border-green-100 p-3 rounded-lg">
+                                <div className="p-3 rounded-lg bg-green-50 border border-green-100">
                                   <span className="font-medium text-green-600">
-                                    {question.correct_answer}.{' '}
-                                    {(question.correct_answer &&
-                                      question.choices &&
-                                      question.choices[
-                                        question.correct_answer
-                                      ]) ||
-                                      question.correct_answer_text ||
-                                      'No answer text available'}
+                                    {question.question_type ===
+                                    'short_answer' ? (
+                                      <span>
+                                        {question.ideal_answer ||
+                                          'No ideal answer provided'}
+                                      </span>
+                                    ) : (
+                                      <>
+                                        {question.correct_answer}.{' '}
+                                        {(question.correct_answer &&
+                                          question.choices &&
+                                          question.choices[
+                                            question.correct_answer
+                                          ]) ||
+                                          question.correct_answer_text ||
+                                          'No correct answer provided'}
+                                      </>
+                                    )}
                                   </span>
                                 </div>
                               </div>

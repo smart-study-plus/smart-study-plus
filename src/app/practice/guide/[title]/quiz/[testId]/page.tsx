@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
+import ShortAnswerQuestionCard from '@/components/practice/card-short-answer-question';
 import { ChevronLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { ENDPOINTS } from '@/config/urls';
@@ -17,6 +18,8 @@ import {
   Quiz,
   SelectedAnswers,
   SubmissionResult,
+  ShortAnswerQuestion,
+  QuestionType,
 } from '@/interfaces/test';
 import { StudyGuideResponse } from '@/interfaces/topic';
 
@@ -41,6 +44,9 @@ const QuizPage: React.FC = () => {
   const supabase = createClient();
   const [notes, setNotes] = useState<{ [key: string]: string }>({});
   const [startTime, setStartTime] = useState<number>(0);
+  const [shortAnswers, setShortAnswers] = useState<{ [key: string]: string }>(
+    {}
+  );
 
   useEffect(() => {
     setStartTime(Math.floor(Date.now() / 1000));
@@ -74,8 +80,38 @@ const QuizPage: React.FC = () => {
   const loading = !quiz || !studyGuideData || !userData;
   const anyError = quizError || studyGuideError || error;
 
+  // Process quiz questions to separate multiple choice and short answer
+  const processedQuestions = React.useMemo(() => {
+    if (!quiz?.questions) return { multipleChoice: [], shortAnswer: [] };
+
+    // Extract multiple choice and short answer questions
+    const multipleChoice = quiz.questions.filter(
+      (q) => q.choices !== undefined
+    );
+
+    // Parse short answer questions if they exist
+    let shortAnswer: ShortAnswerQuestion[] = [];
+
+    if (quiz.short_answer) {
+      shortAnswer = quiz.short_answer.map((q, i) => ({
+        question_id: `sa_${i}`,
+        question: q.question,
+        ideal_answer: q.ideal_answer,
+      }));
+    }
+
+    return { multipleChoice, shortAnswer };
+  }, [quiz]);
+
   const handleSelectAnswer = (questionId: string, answer: string): void => {
     setSelectedAnswers((prev) => ({
+      ...prev,
+      [questionId]: answer,
+    }));
+  };
+
+  const handleShortAnswer = (questionId: string, answer: string): void => {
+    setShortAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
     }));
@@ -90,13 +126,31 @@ const QuizPage: React.FC = () => {
       const studyGuideId = studyGuideData.study_guide_id || studyGuideData._id;
       if (!studyGuideId) throw new Error('Study guide ID not found');
 
-      const formattedAnswers = Object.entries(selectedAnswers).map(
+      // Format multiple choice answers
+      const multipleChoiceAnswers = Object.entries(selectedAnswers).map(
         ([questionId, answer]) => ({
           question_id: questionId,
           user_answer: answer,
           notes: notes[questionId] || '',
+          question_type: 'multiple_choice' as QuestionType,
         })
       );
+
+      // Format short answer responses
+      const shortAnswerResponses = Object.entries(shortAnswers).map(
+        ([questionId, answer]) => ({
+          question_id: questionId,
+          user_answer_text: answer,
+          notes: notes[questionId] || '',
+          question_type: 'short_answer' as QuestionType,
+        })
+      );
+
+      // Combine all answers
+      const formattedAnswers = [
+        ...multipleChoiceAnswers,
+        ...shortAnswerResponses,
+      ];
 
       const submissionData = {
         user_id: userData.id,
@@ -128,8 +182,15 @@ const QuizPage: React.FC = () => {
     }
   };
 
-  const totalQuestions = quiz?.questions?.length || 0;
-  const answeredQuestions = Object.keys(selectedAnswers).length;
+  // Calculate progress including both question types
+  const totalMultipleChoice = processedQuestions.multipleChoice.length;
+  const totalShortAnswer = processedQuestions.shortAnswer.length;
+  const totalQuestions = totalMultipleChoice + totalShortAnswer;
+
+  const answeredMultipleChoice = Object.keys(selectedAnswers).length;
+  const answeredShortAnswer = Object.keys(shortAnswers).length;
+  const answeredQuestions = answeredMultipleChoice + answeredShortAnswer;
+
   const progressPercentage =
     totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const isQuizComplete =
@@ -162,16 +223,26 @@ const QuizPage: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-center gap-1 mb-2">
-              {quiz?.questions?.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                    Object.keys(selectedAnswers).includes(index.toString())
-                      ? 'bg-[var(--color-primary)]'
-                      : 'bg-gray-200'
-                  }`}
-                ></div>
-              ))}
+              {[...Array(totalQuestions)].map((_, index) => {
+                // Determine if this indicator dot corresponds to a multiple choice or short answer
+                const isMultipleChoice = index < totalMultipleChoice;
+                const questionId = isMultipleChoice
+                  ? index.toString()
+                  : `sa_${index - totalMultipleChoice}`;
+
+                const isAnswered = isMultipleChoice
+                  ? Object.keys(selectedAnswers).includes(questionId)
+                  : Object.keys(shortAnswers).includes(questionId);
+
+                return (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                      isAnswered ? 'bg-[var(--color-primary)]' : 'bg-gray-200'
+                    }`}
+                  ></div>
+                );
+              })}
             </div>
 
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -207,9 +278,10 @@ const QuizPage: React.FC = () => {
           ) : (
             <>
               <div className="space-y-8">
-                {quiz?.questions?.map((question, index) => (
+                {/* Multiple Choice Questions */}
+                {processedQuestions.multipleChoice.map((question, index) => (
                   <QuestionCard
-                    key={index}
+                    key={`mc_${index}`}
                     questionNumber={index + 1}
                     question={{
                       question_id: `${index}`,
@@ -221,7 +293,31 @@ const QuizPage: React.FC = () => {
                     onSelectAnswer={handleSelectAnswer}
                     selectedAnswer={selectedAnswers[index.toString()]}
                     note={notes[index.toString()] || ''}
-                    onUpdateNote={(questionId, newNote) =>
+                    onUpdateNote={(questionId: string, newNote: string) =>
+                      setNotes((prevNotes) => ({
+                        ...prevNotes,
+                        [questionId]: newNote,
+                      }))
+                    }
+                    userId={userData?.id || ''}
+                    testId={testId}
+                  />
+                ))}
+
+                {/* Short Answer Questions */}
+                {processedQuestions.shortAnswer.map((question, index) => (
+                  <ShortAnswerQuestionCard
+                    key={`sa_${index}`}
+                    questionNumber={totalMultipleChoice + index + 1}
+                    question={{
+                      question_id: `sa_${index}`,
+                      question_text: question.question,
+                      ideal_answer: question.ideal_answer,
+                    }}
+                    onAnswerChange={handleShortAnswer}
+                    answerText={shortAnswers[`sa_${index}`] || ''}
+                    note={notes[`sa_${index}`] || ''}
+                    onUpdateNote={(questionId: string, newNote: string) =>
                       setNotes((prevNotes) => ({
                         ...prevNotes,
                         [questionId]: newNote,

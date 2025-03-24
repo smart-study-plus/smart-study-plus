@@ -171,13 +171,29 @@ const SlidesGuidePage: React.FC = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ guide_id: guideId }),
+        body: JSON.stringify({
+          guide_id: guideId,
+          include_short_answer: true, // Request backend to include short answer questions
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data && data.practice_tests) {
           setPracticeTests(data.practice_tests as SlidePracticeTest[]);
+
+          // Log when short answer questions are found
+          const shortAnswerCount = data.practice_tests.reduce(
+            (count: number, test: SlidePracticeTest) =>
+              count + (test.short_answer?.length || 0),
+            0
+          );
+
+          if (shortAnswerCount > 0) {
+            console.log(
+              `Found ${shortAnswerCount} short answer questions across all tests`
+            );
+          }
         }
       }
     } catch (error) {
@@ -357,7 +373,11 @@ const SlidesGuidePage: React.FC = () => {
                     variants={item}
                     className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-300"
                   >
-                    <Accordion type="multiple" className="w-full space-y-4">
+                    <Accordion
+                      type="multiple"
+                      defaultValue={['topics']}
+                      className="w-full space-y-4"
+                    >
                       <AccordionItem
                         value="topics"
                         className="border-2 border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden data-[state=open]:shadow-md"
@@ -415,8 +435,8 @@ const SlidesGuidePage: React.FC = () => {
 
                                   <AccordionContent className="px-4 pb-4 pt-1">
                                     <div className="space-y-2.5">
-                                      {topic.concepts &&
-                                        topic.concepts.map(
+                                      {topic.key_points &&
+                                        topic.key_points.map(
                                           (
                                             concept: Concept | string,
                                             conceptIndex: number
