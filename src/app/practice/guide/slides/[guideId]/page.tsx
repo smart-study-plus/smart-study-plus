@@ -497,7 +497,10 @@ const SlidesGuidePage: React.FC = () => {
                                                       </span>
                                                     </div>
                                                     <span className="text-xs text-gray-500">
-                                                      {test.questions.length}{' '}
+                                                      {(test.questions.length ||
+                                                        0) +
+                                                        (test.short_answer
+                                                          ?.length || 0)}{' '}
                                                       questions
                                                     </span>
                                                   </div>
