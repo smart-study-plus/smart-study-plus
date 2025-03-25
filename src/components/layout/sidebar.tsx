@@ -21,7 +21,8 @@ import { createClient } from '@/utils/supabase/client';
 interface NavItem {
   icon: LucideIcon;
   label: string;
-  path: string;
+  path?: string;
+  action?: () => void;
 }
 
 const Sidebar = () => {
@@ -30,24 +31,25 @@ const Sidebar = () => {
   const supabase = createClient();
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const handleLogout = async () => {
+    setIsOpen(false);
+    await supabase.auth.signOut();
+    localStorage.removeItem('session_id');
+    router.push('/');
+  };
+
   const navItems: NavItem[] = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: BookOpen, label: 'Practice Mode', path: '/practice' },
     { icon: PenTool, label: 'Test Mode', path: '/test' },
     { icon: HelpCircle, label: 'Help', path: '/help' },
     { icon: Settings, label: 'Settings', path: '/settings' },
+    { icon: LogOut, label: 'Log out', action: handleLogout },
   ];
 
-  const isActiveRoute = (path: string): boolean => {
-    return path === '/'
-      ? pathname === path
-      : pathname.startsWith(path);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('session_id');
-    router.push('/');
+  const isActiveRoute = (path?: string): boolean => {
+    if (!path) return false;
+    return path === '/' ? pathname === path : pathname.startsWith(path);
   };
 
   React.useEffect(() => {
@@ -87,34 +89,40 @@ const Sidebar = () => {
               const Icon = item.icon;
               const isActive = isActiveRoute(item.path);
 
+              const baseClasses = `
+                flex items-center space-x-3 py-3 rounded-lg transition-colors duration-200
+                px-4
+              `;
+
+              const activeClasses = isActive
+                ? 'bg-[var(--color-primary)] text-white ml-2 mr-2'
+                : 'text-[var(--color-text)] hover:bg-[var(--color-background-alt)]';
+
+              if (item.action) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className={`${baseClasses} ${activeClasses} w-full text-left`}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={1.5} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.path}
-                  href={item.path}
+                  href={item.path!}
                   onClick={() => setIsOpen(false)}
-                  className={`
-                    flex items-center space-x-3 py-3 rounded-lg transition-colors duration-200
-                    ${isActive
-                      ? 'bg-[var(--color-primary)] text-white px-4 ml-2 mr-2'
-                      : 'text-[var(--color-text)] hover:bg-[var(--color-background-alt)] px-4'}
-                  `}
+                  className={`${baseClasses} ${activeClasses}`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span>{item.label}</span>
                 </Link>
               );
             })}
-          </div>
-
-          {/* Log out button (mobile only) */}
-          <div className="mt-2 md:hidden">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-[var(--color-text)] hover:bg-[var(--color-background-alt)]"
-            >
-              <LogOut className="w-5 h-5" strokeWidth={1.5} />
-              <span>Log out</span>
-            </button>
           </div>
         </nav>
       </div>
