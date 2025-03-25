@@ -283,9 +283,11 @@ const SlidesQuizPage: React.FC = () => {
                     question={{
                       question_id: `${index}`,
                       question_text: question.question,
-                      options: question.choices,
-                      correct_answer: question.correct,
-                      explanation: question.explanation,
+                      options: question.choices || {},
+                      correct_answer: question.correct || '',
+                      explanation: question.explanation || '',
+                      source_page: question.source_page,
+                      source_text: question.source_text,
                     }}
                     onSelectAnswer={handleSelectAnswer}
                     selectedAnswer={selectedAnswers[index.toString()]}
@@ -310,6 +312,8 @@ const SlidesQuizPage: React.FC = () => {
                       question_id: `sa_${index}`,
                       question_text: question.question,
                       ideal_answer: question.ideal_answer,
+                      source_page: question.source_page,
+                      source_text: question.source_text,
                     }}
                     onAnswerChange={handleShortAnswer}
                     answerText={shortAnswers[`sa_${index}`] || ''}

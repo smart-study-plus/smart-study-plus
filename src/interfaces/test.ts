@@ -28,15 +28,19 @@ export interface Test {
 
 export interface Question {
   question: string;
-  choices: Record<string, string>;
-  correct: string;
-  explanation: string;
+  choices?: Record<string, string>;
+  correct?: string;
+  explanation?: string;
+  source_page?: number;
+  source_text?: string;
 }
 
 export interface ShortAnswerQuestion {
   question_id: string;
   question: string;
   ideal_answer: string;
+  source_page?: number;
+  source_text?: string;
 }
 
 export type QuestionType = 'multiple_choice' | 'short_answer';

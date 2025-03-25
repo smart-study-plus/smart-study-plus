@@ -57,16 +57,25 @@ export interface SlideTopic {
   title: string;
   description?: string;
   key_points?: (Concept | string)[];
+  explanation?: string;
+  source_pages?: number[];
+  source_texts?: string[];
   quizzes?: {
-    multiple_choice?: SlideQuestion[];
-  };
+    topic: string;
+    quizzes: {
+      multiple_choice?: SlideQuestion[];
+      short_answer?: ShortAnswerSlideQuestion[];
+    };
+  }[];
 }
 
 export interface SlideQuestion {
   question: string;
-  choices: Record<string, string>;
+  choices?: Record<string, string>;
   correct: string;
   explanation: string;
+  source_page?: number;
+  source_text?: string;
 }
 
 export interface SlideQuiz {
@@ -77,6 +86,8 @@ export interface SlideQuiz {
 export interface ShortAnswerSlideQuestion {
   question: string;
   ideal_answer: string;
+  source_page?: number;
+  source_text?: string;
 }
 
 export interface SlidePracticeTest {

@@ -26,7 +26,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { SlidesGuide, SlidePracticeTest, Concept } from '@/interfaces/topic';
+import {
+  SlidesGuide,
+  SlidePracticeTest,
+  Concept,
+  SlideQuestion,
+  ShortAnswerSlideQuestion,
+} from '@/interfaces/topic';
 import { CompletedTest } from '@/interfaces/test';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +51,9 @@ interface Topic {
   title: string;
   description?: string;
   concepts?: (Concept | string)[];
+  explanation?: string;
+  source_pages?: number[];
+  source_texts?: string[];
 }
 
 const container = {
@@ -240,6 +249,140 @@ const SlidesGuidePage: React.FC = () => {
     return topicTests.length > 0 ? [topicTests[0]] : [];
   };
 
+  const renderTopic = (topic: Topic) => {
+    return (
+      <motion.div key={topic.title} variants={item} className="space-y-4">
+        <div className="flex items-start justify-between">
+          <h3 className="text-xl font-semibold text-[var(--color-text)]">
+            {topic.title}
+          </h3>
+        </div>
+        {topic.description && (
+          <p className="text-[var(--color-text-secondary)]">
+            {topic.description}
+          </p>
+        )}
+        {topic.explanation && (
+          <p className="text-[var(--color-text-secondary)]">
+            {topic.explanation}
+          </p>
+        )}
+        {topic.source_pages && topic.source_pages.length > 0 && (
+          <div className="text-sm text-[var(--color-text-muted)]">
+            Source Page: {topic.source_pages.join(', ')}
+          </div>
+        )}
+        {topic.source_texts && topic.source_texts.length > 0 && (
+          <div className="space-y-2">
+            {topic.source_texts.map((text, index) => (
+              <div
+                key={index}
+                className="p-3 bg-[var(--color-background-alt)] rounded-lg"
+              >
+                <p className="text-sm text-[var(--color-text-muted)] italic">
+                  "{text}"
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+        {topic.concepts && (
+          <ul className="list-disc list-inside space-y-2 text-[var(--color-text-secondary)]">
+            {topic.concepts.map((concept, index) => (
+              <li key={index}>
+                {typeof concept === 'string'
+                  ? concept
+                  : concept.text || concept.concept || ''}
+              </li>
+            ))}
+          </ul>
+        )}
+      </motion.div>
+    );
+  };
+
+  const renderQuiz = (quiz: SlideQuestion) => {
+    return (
+      <motion.div
+        key={quiz.question}
+        variants={item}
+        className="space-y-4 p-4 bg-[var(--color-background-alt)] rounded-lg"
+      >
+        <div className="flex items-start justify-between">
+          <h4 className="font-medium text-[var(--color-text)]">
+            {quiz.question}
+          </h4>
+          {quiz.source_page && (
+            <span className="text-sm text-[var(--color-text-muted)]">
+              Source: Page {quiz.source_page}
+            </span>
+          )}
+        </div>
+        {quiz.source_text && (
+          <div className="mt-2 p-2 bg-white/50 rounded">
+            <p className="text-sm text-[var(--color-text-muted)] italic">
+              "{quiz.source_text}"
+            </p>
+          </div>
+        )}
+        {quiz.choices && (
+          <div className="space-y-2">
+            {Object.entries(quiz.choices).map(([key, value]) => (
+              <div
+                key={key}
+                className="flex items-center space-x-2 text-[var(--color-text-secondary)]"
+              >
+                <span className="font-medium">{key}.</span>
+                <span>{value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-2">
+          <p className="text-sm font-medium text-[var(--color-primary)]">
+            Correct Answer: {quiz.correct}
+          </p>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+            {quiz.explanation}
+          </p>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderShortAnswer = (question: ShortAnswerSlideQuestion) => {
+    return (
+      <motion.div
+        key={question.question}
+        variants={item}
+        className="space-y-4 p-4 bg-[var(--color-background-alt)] rounded-lg"
+      >
+        <div className="flex items-start justify-between">
+          <h4 className="font-medium text-[var(--color-text)]">
+            {question.question}
+          </h4>
+          {question.source_page && (
+            <span className="text-sm text-[var(--color-text-muted)]">
+              Source: Page {question.source_page}
+            </span>
+          )}
+        </div>
+        {question.source_text && (
+          <div className="mt-2 p-2 bg-white/50 rounded">
+            <p className="text-sm text-[var(--color-text-muted)] italic">
+              "{question.source_text}"
+            </p>
+          </div>
+        )}
+        <div className="mt-2">
+          <p className="text-sm font-medium text-[var(--color-primary)]">
+            Ideal Answer: {question.ideal_answer}
+          </p>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
@@ -376,27 +519,7 @@ const SlidesGuidePage: React.FC = () => {
 
                                   <AccordionContent className="px-4 pb-4 pt-1">
                                     <div className="space-y-2.5">
-                                      {topic.key_points &&
-                                        topic.key_points.map(
-                                          (
-                                            concept: Concept | string,
-                                            conceptIndex: number
-                                          ) => (
-                                            <div
-                                              key={conceptIndex}
-                                              className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50/80 transition-colors"
-                                            >
-                                              <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                                              <span className="text-gray-700 text-sm">
-                                                {typeof concept === 'string'
-                                                  ? concept
-                                                  : concept.text ||
-                                                    concept.concept ||
-                                                    ''}
-                                              </span>
-                                            </div>
-                                          )
-                                        )}
+                                      {renderTopic(topic)}
 
                                       {/* Display practice tests for this topic */}
                                       {getTestsByTopic(topic.title).length >

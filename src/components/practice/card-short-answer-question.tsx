@@ -9,6 +9,8 @@ interface ShortAnswerQuestionProps {
     question_id: string;
     question_text: string;
     ideal_answer: string;
+    source_page?: number;
+    source_text?: string;
   };
   onAnswerChange: (questionId: string, text: string) => void;
   answerText: string;
@@ -43,9 +45,16 @@ const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
             <span className="text-2xl font-medium text-[var(--color-text-secondary)] mr-6">
               {questionNumber}.
             </span>
-            <p className="text-xl text-[var(--color-text)] font-medium">
-              {question.question_text}
-            </p>
+            <div className="flex-1">
+              <p className="text-xl text-[var(--color-text)] font-medium">
+                {question.question_text}
+              </p>
+              {question.source_page && (
+                <span className="text-sm text-[var(--color-text-muted)] mt-1 block">
+                  Source: Page {question.source_page}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex space-x-3 ml-6">
             <button
@@ -72,6 +81,14 @@ const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
             </button>
           </div>
         </div>
+
+        {question.source_text && (
+          <div className="ml-10 p-4 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-gray-200)]">
+            <p className="text-sm text-[var(--color-text-muted)] italic">
+              "{question.source_text}"
+            </p>
+          </div>
+        )}
 
         <HintSection
           userId={userId}
