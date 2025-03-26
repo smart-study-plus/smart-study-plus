@@ -71,16 +71,27 @@ export interface SubmissionResult {
 export interface QuizQuestion {
   question_id: string;
   question: string;
+  question_text?: string;
+  options?: { [key: string]: string };
+  choices?: { [key: string]: string };
   user_answer?: string;
+  user_answer_text?: string;
   correct_answer?: string;
   correct_answer_text?: string;
-  user_answer_text?: string;
-  is_correct?: boolean;
   explanation?: string;
+  is_correct?: boolean;
   notes?: string;
-  choices?: Record<string, string>;
+  source_page?: number;
+  source_text?: string;
   question_type?: QuestionType;
+  topic_id?: string;
+  topic_name?: string;
+  confidence_level?: number;
   ideal_answer?: string;
+  feedback?: string;
+  reference_part?: string;
+  student_part?: string;
+  judgment?: number;
 }
 
 export interface QuizResults {

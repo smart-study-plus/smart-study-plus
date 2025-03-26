@@ -298,16 +298,104 @@ const QuizResultsPage: React.FC = () => {
                                 </div>
                               </div>
                             )}
+
+                            {/* Replace the existing short answer feedback with a more comprehensive layout */}
+                            {question.question_type === 'short_answer' && (
+                              <div className="mt-4 rounded-lg border overflow-hidden">
+                                <div className="bg-gray-100 p-3 border-b">
+                                  <h4 className="font-medium text-gray-800">
+                                    Answer Review
+                                  </h4>
+                                </div>
+
+                                {/* Student's answer */}
+                                <div className="p-4 border-b">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-semibold text-gray-700">
+                                      Your Answer:
+                                    </span>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-xs ${question.is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                                    >
+                                      {question.is_correct
+                                        ? 'Correct'
+                                        : 'Needs Improvement'}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className={`p-3 rounded-lg ${question.is_correct ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}
+                                  >
+                                    <p className="text-gray-800">
+                                      {question.user_answer_text ||
+                                        'No answer provided'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Ideal answer */}
+                                <div className="p-4 border-b bg-green-50">
+                                  <div className="mb-2">
+                                    <span className="text-sm font-semibold text-green-800">
+                                      Ideal Answer:
+                                    </span>
+                                  </div>
+                                  <div className="p-3 rounded-lg bg-white border border-green-100">
+                                    <p className="text-gray-800">
+                                      {question.ideal_answer ||
+                                        'No ideal answer provided'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Feedback */}
+                                {question.feedback && (
+                                  <div className="p-4 bg-amber-50">
+                                    <div className="mb-2">
+                                      <span className="text-sm font-semibold text-amber-800">
+                                        Feedback:
+                                      </span>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-white border border-amber-100">
+                                      <p className="text-gray-800">
+                                        {question.feedback}
+                                      </p>
+
+                                      {/* Key points missed */}
+                                      {question.reference_part && (
+                                        <div className="mt-3 pt-3 border-t border-amber-100">
+                                          <p className="text-sm font-semibold text-amber-800 mb-1">
+                                            Key point
+                                            {question.reference_part &&
+                                            question.reference_part.includes(
+                                              ','
+                                            )
+                                              ? 's'
+                                              : ''}{' '}
+                                            to include:
+                                          </p>
+                                          <p className="text-gray-700 italic">
+                                            "{question.reference_part}"
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
 
-                          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                            <h4 className="font-medium text-gray-900 mb-2">
-                              Explanation:
-                            </h4>
-                            <p className="text-gray-700">
-                              {question.explanation}
-                            </p>
-                          </div>
+                          {/* Only show explanation for multiple choice questions */}
+                          {question.question_type !== 'short_answer' && (
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                              <h4 className="font-medium text-gray-900 mb-2">
+                                Explanation:
+                              </h4>
+                              <p className="text-gray-700">
+                                {question.explanation}
+                              </p>
+                            </div>
+                          )}
 
                           {question.notes &&
                             question.notes.trim() !== '' &&

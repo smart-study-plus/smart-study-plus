@@ -8,6 +8,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes progressPulse {
+  0% {
+    width: 15%;
+    opacity: 1;
+  }
+  50% {
+    width: 85%;
+    opacity: 0.8;
+  }
+  100% {
+    width: 15%;
+    opacity: 1;
+  }
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

@@ -138,6 +138,7 @@ const SlidesQuizPage: React.FC = () => {
         ([questionId, answer]) => ({
           question_id: questionId,
           user_answer_text: answer,
+          user_answer: answer,
           notes: notes[questionId] || '',
           question_type: 'short_answer' as QuestionType,
         })
@@ -157,6 +158,8 @@ const SlidesQuizPage: React.FC = () => {
         answers: formattedAnswers,
       };
 
+      console.log('Submitting quiz:', JSON.stringify(submissionData));
+
       const response = await fetch(ENDPOINTS.submitTest, {
         method: 'POST',
         headers: {
@@ -166,7 +169,10 @@ const SlidesQuizPage: React.FC = () => {
         body: JSON.stringify(submissionData),
       });
 
-      if (!response.ok) throw new Error('Failed to submit quiz');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit quiz: ${errorText}`);
+      }
 
       const result: SubmissionResult = await response.json();
       router.push(

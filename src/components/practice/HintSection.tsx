@@ -85,6 +85,7 @@ export const HintSection = ({
 
     setLoadingHint(true);
     setError(null);
+    setLoadingMessage('Loading hint...');
 
     try {
       // Try fetching existing hint
@@ -113,13 +114,16 @@ export const HintSection = ({
           // Hint not found, show transition message and generate a new one
           setGeneratingNewHint(true);
           setLoadingMessage(
-            data.message || 'Creating a personalized hint for you...'
+            data.message ||
+              'Creating a personalized hint for you... (this may take up to 30 seconds)'
           );
         }
       } else {
         // Handle other API errors
         setGeneratingNewHint(true);
-        setLoadingMessage('Crafting a new hint just for you...');
+        setLoadingMessage(
+          'Crafting a new hint for you... (this may take up to 30 seconds)'
+        );
       }
 
       // If we get here, we need to generate a new hint
@@ -220,7 +224,7 @@ export const HintSection = ({
 
   // Safeguard against infinite loading states
   React.useEffect(() => {
-    // If we're in a loading state, set a timeout to exit it after 20 seconds
+    // If we're in a loading state, set a timeout to exit it after 45 seconds (increased from 20)
     if (loadingHint) {
       loadingTimeoutRef.current = setTimeout(() => {
         console.log('Loading timeout reached, forcing exit from loading state');
@@ -228,9 +232,11 @@ export const HintSection = ({
         setGeneratingNewHint(false);
         setIsRefreshing(false);
         if (!hint) {
-          setError('The hint is taking too long to load. Please try again.');
+          setError(
+            'The hint is taking longer than expected. Please click "Try Again" or refresh the page.'
+          );
         }
-      }, 20000); // 20 seconds timeout
+      }, 45000); // 45 seconds timeout (increased from 20 seconds)
     }
 
     // Cleanup function
@@ -255,6 +261,18 @@ export const HintSection = ({
     );
 
     return text;
+  };
+
+  const formatHintWithPageCircles = (text: string): string => {
+    if (!text) return '';
+
+    // Replace "Based on page X" or similar patterns with styled version
+    return text.replace(
+      /([Bb]ased on page\s+)(\d+)/g,
+      (match, prefix, pageNum) => {
+        return `${prefix}<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] font-medium text-xs">${pageNum}</span>`;
+      }
+    );
   };
 
   return (
@@ -293,10 +311,24 @@ export const HintSection = ({
             <div className="text-lg text-[var(--color-text-secondary)]">
               <p>{loadingMessage}</p>
               {(generatingNewHint || isRefreshing) && (
-                <div className="mt-2 flex items-center">
-                  <div className="animate-pulse mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
-                  <div className="animate-pulse delay-200 mr-2 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
-                  <div className="animate-pulse delay-500 h-2 w-2 rounded-full bg-[var(--color-primary)]"></div>
+                <div className="mt-4">
+                  <div className="flex items-center justify-center space-x-2 mb-3">
+                    <div
+                      className="w-2 h-2 bg-[var(--color-primary)] rounded-full animate-pulse"
+                      style={{ animationDelay: '0ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-[var(--color-primary)] rounded-full animate-pulse"
+                      style={{ animationDelay: '300ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-[var(--color-primary)] rounded-full animate-pulse"
+                      style={{ animationDelay: '600ms' }}
+                    ></div>
+                  </div>
+                  <div className="w-full bg-[var(--color-background)] rounded-full h-1.5">
+                    <div className="bg-[var(--color-primary)] h-1.5 rounded-full animate-[progressPulse_3s_ease-in-out_infinite]"></div>
+                  </div>
                 </div>
               )}
             </div>
@@ -315,6 +347,19 @@ export const HintSection = ({
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
+                components={{
+                  p: ({ node, ...props }) => {
+                    return (
+                      <p
+                        dangerouslySetInnerHTML={{
+                          __html: formatHintWithPageCircles(
+                            props.children?.toString() || ''
+                          ),
+                        }}
+                      />
+                    );
+                  },
+                }}
               >
                 {formatMathNotation(hint ?? '')}
               </ReactMarkdown>
