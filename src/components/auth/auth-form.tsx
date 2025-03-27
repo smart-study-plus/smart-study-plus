@@ -50,7 +50,7 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `https://ssplus.vercel.app/auth/callback`,
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
             data: {
               username: username,
             },
