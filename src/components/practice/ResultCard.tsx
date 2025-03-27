@@ -300,7 +300,7 @@ export const ResultCard = ({
                           include:
                         </p>
                         <p className="text-md text-amber-700 italic">
-                          "{renderTextWithLatex(reference_part)}"
+                          &quot;{renderTextWithLatex(reference_part)}&quot;
                         </p>
                       </div>
                     )}
