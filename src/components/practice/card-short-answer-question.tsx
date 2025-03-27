@@ -85,7 +85,7 @@ const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
         {question.source_text && (
           <div className="ml-10 p-4 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-gray-200)]">
             <p className="text-sm text-[var(--color-text-muted)] italic">
-              "{question.source_text}"
+              &ldquo;{question.source_text}&rdquo;
             </p>
           </div>
         )}

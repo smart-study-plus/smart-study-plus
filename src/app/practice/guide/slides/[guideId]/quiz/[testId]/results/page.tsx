@@ -357,7 +357,7 @@ const SlidesQuizResultsPage: React.FC = () => {
                                             to include:
                                           </p>
                                           <p className="text-gray-700 italic">
-                                            "{question.reference_part}"
+                                            &ldquo;{question.reference_part}&rdquo;
                                           </p>
                                         </div>
                                       )}

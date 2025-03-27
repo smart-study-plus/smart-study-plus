@@ -331,7 +331,7 @@ const SlidesGuidePage: React.FC = () => {
                 className="p-3 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-gray-200)]"
               >
                 <p className="text-sm text-[var(--color-text-muted)] italic">
-                  "{text}"
+                  &ldquo;{text}&rdquo;
                 </p>
               </div>
             ))}
@@ -372,7 +372,7 @@ const SlidesGuidePage: React.FC = () => {
         {quiz.source_text && (
           <div className="mt-2 p-2 bg-white/50 rounded">
             <p className="text-sm text-[var(--color-text-muted)] italic">
-              "{quiz.source_text}"
+              &ldquo;{quiz.source_text}&rdquo;
             </p>
           </div>
         )}
@@ -421,7 +421,7 @@ const SlidesGuidePage: React.FC = () => {
         {question.source_text && (
           <div className="mt-2 p-2 bg-white/50 rounded">
             <p className="text-sm text-[var(--color-text-muted)] italic">
-              "{question.source_text}"
+              &ldquo;{question.source_text}&rdquo;
             </p>
           </div>
         )}

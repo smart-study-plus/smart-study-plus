@@ -68,7 +68,8 @@ interface TestMap {
 interface PracticeTest {
   practice_test_id: string;
   section_title: string;
-  questions: any[];
+  questions: QuizChoice[];
+  short_answer?: ShortAnswer[];
 }
 
 // Add interface for practice tests data
@@ -158,7 +159,7 @@ const StudyGuidePage: React.FC = () => {
 
   // Process the data
   const practiceTests = (testsData?.practice_tests.reduce(
-    (acc: TestMap, test: any) => {
+    (acc: TestMap, test: PracticeTest) => {
       acc[test.section_title] = test.practice_test_id;
       return acc;
     },
@@ -240,7 +241,7 @@ const StudyGuidePage: React.FC = () => {
         if (newTestsData && newTestsData.practice_tests) {
           // Update practice tests mapping
           const newPracticeTests = newTestsData.practice_tests.reduce(
-            (acc: TestMap, test: any) => {
+            (acc: TestMap, test: PracticeTest) => {
               acc[test.section_title] = test.practice_test_id;
               return acc;
             },
