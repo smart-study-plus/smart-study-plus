@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown, RefreshCw } from 'lucide-react';
 import { fetchWithAuth } from '@/app/auth/fetchWithAuth';
-import { MathJaxContext } from 'better-react-mathjax';
+import { MathJaxContext, MathJax } from 'better-react-mathjax';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { ENDPOINTS } from '@/config/urls';
 
@@ -16,6 +17,143 @@ interface HintSectionProps {
   isVisible: boolean;
   onToggle: () => void;
 }
+
+// Helper function to render with KaTeX
+const renderWithKatex = (
+  text: string,
+  displayMode: boolean = false
+): string => {
+  try {
+    return katex.renderToString(text, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
+      trust: true,
+    });
+  } catch (error) {
+    console.error('KaTeX rendering error:', error);
+    return text;
+  }
+};
+
+// Helper function to determine if text is simple LaTeX
+const isSimpleLatex = (text: string): boolean => {
+  // Check if text contains only basic LaTeX commands and symbols
+  const simpleLatexPattern = /^[a-zA-Z0-9\s\+\-\*\/\^\{\}\(\)\[\]\_\$\\]+$/;
+  return simpleLatexPattern.test(text);
+};
+
+// Helper function to process text for LaTeX rendering
+const renderTextWithLatex = (text: string) => {
+  if (!text) return null;
+
+  // First, unescape all double backslashes
+  let processedText = text.replace(/\\\\/g, '\\');
+
+  // Handle special LaTeX commands and symbols
+  processedText = processedText
+    // Handle \mathbb{R} notation
+    .replace(/\\mathbb\{([^}]+)\}/g, (_, p1) => `\\mathbb{${p1}}`)
+    // Handle subscripts and superscripts with multiple characters
+    .replace(/_{([^}]+)}/g, '_{$1}')
+    .replace(/\^{([^}]+)}/g, '^{$1}')
+    // Handle special spacing around operators
+    .replace(/\\sum(?![a-zA-Z])/g, '\\sum\\limits')
+    .replace(/\\int(?![a-zA-Z])/g, '\\int\\limits')
+    .replace(/\\prod(?![a-zA-Z])/g, '\\prod\\limits')
+    // Handle spacing around vertical bars and other delimiters
+    .replace(/\|/g, '\\,|\\,')
+    .replace(/\\mid/g, '\\,|\\,')
+    // Handle matrix transpose
+    .replace(/\\T(?![a-zA-Z])/g, '^{\\intercal}')
+    // Handle common statistical notation
+    .replace(/\\Var/g, '\\operatorname{Var}')
+    .replace(/\\Bias/g, '\\operatorname{Bias}')
+    .replace(/\\MSE/g, '\\operatorname{MSE}')
+    .replace(/\\EPE/g, '\\operatorname{EPE}')
+    // Handle escaped curly braces
+    .replace(/\\\{/g, '{')
+    .replace(/\\\}/g, '}');
+
+  // Split text by existing LaTeX delimiters while preserving the delimiters
+  const parts = processedText.split(
+    /(\$\$[\s\S]*?\$\$|\$[^$\n]*?\$|\\\([^)]*?\\\)|\\\[[\s\S]*?\\\])/g
+  );
+
+  // Generate a unique key for each part
+  const hashString = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(36); // Convert to base-36 for shorter strings
+  };
+
+  return parts.map((part, index) => {
+    // Generate a more unique key using content hash
+    const key = `${index}-${hashString(part)}`;
+
+    if (
+      part.startsWith('$') ||
+      part.startsWith('\\(') ||
+      part.startsWith('\\[')
+    ) {
+      // Remove the delimiters
+      let latex = part
+        .replace(/^\$\$|\$\$$|^\$|\$$|^\\\(|\\\)$|^\\\[|\\\]$/g, '')
+        .trim();
+
+      const isDisplay = part.startsWith('$$') || part.startsWith('\\[');
+
+      // Use KaTeX for simple expressions and MathJax for complex ones
+      if (isSimpleLatex(latex)) {
+        return (
+          <span
+            key={key}
+            dangerouslySetInnerHTML={{
+              __html: renderWithKatex(latex, isDisplay),
+            }}
+          />
+        );
+      }
+
+      // Wrap the LaTeX in appropriate delimiters for MathJax
+      latex = isDisplay ? `$$${latex}$$` : `$${latex}$`;
+
+      return (
+        <MathJax key={key} inline={!isDisplay} dynamic={true}>
+          {latex}
+        </MathJax>
+      );
+    }
+
+    // Check if the part contains any LaTeX-like content
+    if (part.includes('\\') || /[_^{}]/.test(part)) {
+      // Use KaTeX for simple expressions
+      if (isSimpleLatex(part)) {
+        return (
+          <span
+            key={key}
+            dangerouslySetInnerHTML={{
+              __html: renderWithKatex(part, false),
+            }}
+          />
+        );
+      }
+
+      // Use MathJax for complex expressions
+      return (
+        <MathJax key={key} inline={true} dynamic={true}>
+          {`$${part}$`}
+        </MathJax>
+      );
+    }
+
+    return <span key={key}>{part}</span>;
+  });
+};
 
 export const HintSection = ({
   userId,
@@ -250,29 +388,178 @@ export const HintSection = ({
 
   if (!isVisible) return null;
 
-  const formatMathNotation = (text: string): string => {
-    if (!text) return '';
-
-    text = text.replace(/\\\((.*?)\\\)/g, (_, equation) => `$${equation}$`);
-
-    text = text.replace(
-      /\\\[(.*?)\\\]/gm,
-      (_, equation) => `\n\n$$${equation}$$\n\n`
-    );
-
-    return text;
+  const formatMathNotation = (text: string): React.ReactNode | null => {
+    if (!text) return null;
+    return <>{renderTextWithLatex(text)}</>;
   };
 
+  // Update formatHintWithPageCircles to process text before sending to LaTeX rendering
   const formatHintWithPageCircles = (text: string): string => {
     if (!text) return '';
 
-    // Replace "Based on page X" or similar patterns with styled version
-    return text.replace(
-      /([Bb]ased on page\s+)(\d+)/g,
+    // Add support for multiple patterns for page references
+    let processedText = text;
+
+    // Handle "Based on page X" format (with spaces)
+    processedText = processedText.replace(
+      /([Bb]ased\s+on\s+page\s*)(\d+)/g,
       (match, prefix, pageNum) => {
-        return `${prefix}<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] font-medium text-xs">${pageNum}</span>`;
+        return `${prefix}[PAGE_MARKER_${pageNum}]`;
       }
     );
+
+    // Handle "Basedonpage X" format (without spaces)
+    processedText = processedText.replace(
+      /([Bb]asedonpage)(\s*)(\d+)/g,
+      (match, prefix, space, pageNum) => {
+        return `${prefix}${space}[PAGE_MARKER_${pageNum}]`;
+      }
+    );
+
+    // Handle specific format in the screenshot "[PAGE_M_ARKER_X]" which might appear
+    processedText = processedText.replace(
+      /\[PAGE_M_ARKER_(\d+)\]/g,
+      (match, pageNum) => {
+        return `[PAGE_MARKER_${pageNum}]`;
+      }
+    );
+
+    return processedText;
+  };
+
+  // This function processes the React nodes after LaTeX rendering to add page circles
+  const processPageMarkers = (nodes: React.ReactNode): React.ReactNode => {
+    if (!nodes || typeof nodes !== 'object') return nodes;
+
+    // If it's not an array (might be a single element), wrap it in array for processing
+    const nodeArray = React.Children.toArray(nodes);
+
+    return React.Children.map(nodeArray, (node) => {
+      // If it's a text node (string), replace page markers with JSX elements
+      if (typeof node === 'string') {
+        // Add debug output to see what's being processed
+        console.log('Processing text node:', node);
+
+        if (node.includes('[PAGE_MARKER_')) {
+          const parts = node.split(/\[PAGE_MARKER_(\d+)\]/g);
+          console.log('Split parts:', parts);
+
+          if (parts.length > 1) {
+            const result: React.ReactNode[] = [];
+
+            for (let i = 0; i < parts.length; i++) {
+              if (i % 2 === 0) {
+                // Even indices are text
+                if (parts[i]) result.push(parts[i]);
+              } else {
+                // Odd indices are page numbers
+                result.push(
+                  <span
+                    key={`page-${i}`}
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] font-medium text-xs"
+                  >
+                    {parts[i]}
+                  </span>
+                );
+              }
+            }
+            return <>{result}</>;
+          }
+        }
+        return node;
+      }
+
+      // If it's an element with props and children
+      if (React.isValidElement(node)) {
+        // Type assertion to handle children property
+        const element = node as React.ReactElement<{
+          children?: React.ReactNode;
+        }>;
+
+        if (element.props.children) {
+          return React.cloneElement(
+            element,
+            { ...element.props },
+            processPageMarkers(element.props.children)
+          );
+        }
+      }
+
+      return node;
+    });
+  };
+
+  // Update the method to use a more direct approach rather than relying on complex regex transformations
+  const renderHintWithMathAndPageCircles = (text: string): React.ReactNode => {
+    if (!text) return null;
+
+    // Create a regex pattern to match all known variations of page references
+    const pageRefPattern =
+      /([Bb]ased(?:\s*on)?\s*page\s*|[Bb]asedonpage\s*|[Pp]age\s+)(?:\[?PAGE_?M?_?ARKER_?)?(\d+)\]?/g;
+
+    // Check if we have any page references in this text
+    if (pageRefPattern.test(text)) {
+      // Reset the regex pattern (since test() moves the lastIndex forward)
+      pageRefPattern.lastIndex = 0;
+
+      // Split the text into chunks - some will be plain text, others will be page references
+      const chunks: Array<string> = [];
+      let lastIndex = 0;
+      let match;
+
+      while ((match = pageRefPattern.exec(text)) !== null) {
+        // Add the text up to the match
+        if (match.index > lastIndex) {
+          chunks.push(text.substring(lastIndex, match.index));
+        }
+
+        // Add a special marker for the page reference
+        chunks.push(
+          `__PAGE_REF_START__${match[1]}__PAGE_NUM_${match[2]}__PAGE_REF_END__`
+        );
+
+        // Update the last index
+        lastIndex = match.index + match[0].length;
+      }
+
+      // Add any remaining text
+      if (lastIndex < text.length) {
+        chunks.push(text.substring(lastIndex));
+      }
+
+      // Process each chunk with LaTeX rendering, then replace our special markers with page circles
+      const processedChunks = chunks.map((chunk) => {
+        if (chunk.startsWith('__PAGE_REF_START__')) {
+          // Extract the prefix and page number
+          const prefixMatch = chunk.match(/__PAGE_REF_START__(.*?)__PAGE_NUM_/);
+          const numMatch = chunk.match(/__PAGE_NUM_(\d+)__PAGE_REF_END__/);
+
+          if (prefixMatch && numMatch) {
+            const prefix = prefixMatch[1];
+            const pageNum = numMatch[1];
+
+            // Return the properly formatted page reference as JSX
+            return (
+              <React.Fragment key={`page-ref-${pageNum}`}>
+                {prefix}
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] font-medium text-xs">
+                  {pageNum}
+                </span>
+              </React.Fragment>
+            );
+          }
+        }
+
+        // For regular text chunks, process with LaTeX
+        return renderTextWithLatex(chunk);
+      });
+
+      // Return all processed chunks
+      return <>{processedChunks}</>;
+    }
+
+    // If no page references, just render with LaTeX as usual
+    return renderTextWithLatex(text);
   };
 
   return (
@@ -344,25 +631,7 @@ export const HintSection = ({
             </div>
           ) : (
             <div className="text-lg text-[var(--color-text-secondary)]">
-              <ReactMarkdown
-                remarkPlugins={[remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-                components={{
-                  p: ({ node, ...props }) => {
-                    return (
-                      <p
-                        dangerouslySetInnerHTML={{
-                          __html: formatHintWithPageCircles(
-                            props.children?.toString() || ''
-                          ),
-                        }}
-                      />
-                    );
-                  },
-                }}
-              >
-                {formatMathNotation(hint ?? '')}
-              </ReactMarkdown>
+              {hint ? renderHintWithMathAndPageCircles(hint) : null}
             </div>
           )}
         </div>

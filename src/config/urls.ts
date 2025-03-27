@@ -77,4 +77,18 @@ export const ENDPOINTS = {
   // Add auth status endpoint
   authStatus: (userId: string) =>
     `${API_URL}/api/user/auth-status?user_id=${encodeURIComponent(userId)}`,
+
+  // Analytics endpoints
+  userAnalytics: (userId: string) =>
+    `${API_URL}/api/analytics/user/${encodeURIComponent(userId)}`,
+  analyticsSummary: (userId: string) =>
+    `${API_URL}/api/analytics/summary/${encodeURIComponent(userId)}`,
+  updateStudyHours: (userId: string) =>
+    `${API_URL}/api/analytics/study-hours/${encodeURIComponent(userId)}`,
+  updateTestAnalytics: (userId: string) =>
+    `${API_URL}/api/analytics/test/${encodeURIComponent(userId)}`,
+  updateChatAnalytics: (userId: string) =>
+    `${API_URL}/api/analytics/chat/${encodeURIComponent(userId)}`,
+  updateHintAnalytics: (userId: string) =>
+    `${API_URL}/api/analytics/hint/${encodeURIComponent(userId)}`,
 };

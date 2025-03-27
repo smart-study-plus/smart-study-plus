@@ -22,6 +22,167 @@ import {
   QuestionType,
 } from '@/interfaces/test';
 import { StudyGuideResponse } from '@/interfaces/topic';
+import { MathJaxContext } from 'better-react-mathjax';
+
+// MathJax configuration
+const mathJaxConfig = {
+  loader: {
+    load: [
+      '[tex]/html',
+      '[tex]/ams',
+      '[tex]/noerrors',
+      '[tex]/noundefined',
+      '[tex]/mhchem',
+      '[tex]/cancel',
+    ],
+  },
+  tex: {
+    packages: {
+      '[+]': ['html', 'ams', 'noerrors', 'noundefined', 'mhchem', 'cancel'],
+    },
+    inlineMath: [
+      ['$', '$'],
+      ['\\(', '\\)'],
+    ],
+    displayMath: [
+      ['$$', '$$'],
+      ['\\[', '\\]'],
+    ],
+    processEscapes: true,
+    processEnvironments: true,
+    processRefs: true,
+    digits: /^(?:[0-9]+(?:\{,\}[0-9]{3})*(?:\.[0-9]*)?|\.[0-9]+)/,
+    tags: 'ams',
+    tagSide: 'right',
+    tagIndent: '0.8em',
+    useLabelIds: true,
+    maxMacros: 1000,
+    maxBuffer: 5 * 1024,
+    macros: {
+      // Number sets
+      '\\R': '\\mathbb{R}',
+      '\\N': '\\mathbb{N}',
+      '\\Z': '\\mathbb{Z}',
+      '\\Q': '\\mathbb{Q}',
+      '\\C': '\\mathbb{C}',
+
+      // Common operators and functions
+      '\\Var': '\\operatorname{Var}',
+      '\\Bias': '\\operatorname{Bias}',
+      '\\EPE': '\\operatorname{EPE}',
+      '\\RSS': '\\operatorname{RSS}',
+      '\\MSE': '\\operatorname{MSE}',
+      '\\E': '\\mathbb{E}',
+      '\\P': '\\mathbb{P}',
+
+      // Decorators
+      '\\hat': '\\widehat',
+      '\\bar': '\\overline',
+      '\\tilde': '\\widetilde',
+      '\\vec': '\\mathbf',
+      '\\mat': '\\mathbf',
+
+      // Greek letters shortcuts
+      '\\eps': '\\varepsilon',
+      '\\alp': '\\alpha',
+      '\\bet': '\\beta',
+      '\\gam': '\\gamma',
+      '\\del': '\\delta',
+      '\\the': '\\theta',
+      '\\kap': '\\kappa',
+      '\\lam': '\\lambda',
+      '\\sig': '\\sigma',
+      '\\Gam': '\\Gamma',
+      '\\Del': '\\Delta',
+      '\\The': '\\Theta',
+      '\\Lam': '\\Lambda',
+      '\\Sig': '\\Sigma',
+      '\\Ome': '\\Omega',
+
+      // Special operators
+      '\\T': '^{\\intercal}',
+      '\\given': '\\,|\\,',
+      '\\set': '\\{\\,',
+      '\\setend': '\\,\\}',
+      '\\abs': ['\\left|#1\\right|', 1],
+      '\\norm': ['\\left\\|#1\\right\\|', 1],
+      '\\inner': ['\\left\\langle#1\\right\\rangle', 1],
+      '\\ceil': ['\\left\\lceil#1\\right\\rceil', 1],
+      '\\floor': ['\\left\\lfloor#1\\right\\rfloor', 1],
+
+      // Limits and sums
+      '\\lim': '\\lim\\limits',
+      '\\sum': '\\sum\\limits',
+      '\\prod': '\\prod\\limits',
+      '\\int': '\\int\\limits',
+
+      // Additional statistical operators
+      '\\Cov': '\\operatorname{Cov}',
+      '\\Corr': '\\operatorname{Corr}',
+      '\\SE': '\\operatorname{SE}',
+      '\\Prob': '\\operatorname{P}',
+
+      // Additional mathematical operators
+      '\\argmax': '\\operatorname{arg\\,max}',
+      '\\argmin': '\\operatorname{arg\\,min}',
+      '\\trace': '\\operatorname{tr}',
+      '\\diag': '\\operatorname{diag}',
+
+      // Matrix notation
+      '\\bm': ['\\boldsymbol{#1}', 1],
+      '\\matrix': ['\\begin{matrix}#1\\end{matrix}', 1],
+      '\\pmatrix': ['\\begin{pmatrix}#1\\end{pmatrix}', 1],
+      '\\bmatrix': ['\\begin{bmatrix}#1\\end{bmatrix}', 1],
+
+      // Additional decorators
+      '\\underbar': ['\\underline{#1}', 1],
+      '\\overbar': ['\\overline{#1}', 1],
+
+      // Probability and statistics
+      '\\iid': '\\stackrel{\\text{iid}}{\\sim}',
+      '\\indep': '\\perp\\!\\!\\!\\perp',
+
+      // Calculus
+      '\\dd': '\\,\\mathrm{d}',
+      '\\partial': '\\partial',
+      '\\grad': '\\nabla',
+
+      // Sets and logic
+      '\\setminus': '\\backslash',
+      '\\implies': '\\Rightarrow',
+      '\\iff': '\\Leftrightarrow',
+
+      // Spacing
+      '\\negspace': '\\negmedspace{}',
+      '\\thinspace': '\\thinspace{}',
+      '\\medspace': '\\medspace{}',
+      '\\thickspace': '\\thickspace{}',
+      '\\quad': '\\quad{}',
+      '\\qquad': '\\qquad{}',
+    },
+  },
+  svg: {
+    fontCache: 'global',
+    scale: 1,
+    minScale: 0.5,
+    matchFontHeight: true,
+    mtextInheritFont: true,
+  },
+  options: {
+    enableMenu: false,
+    menuOptions: {
+      settings: {
+        zoom: 'Click',
+        zscale: '200%',
+      },
+    },
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+    renderActions: {
+      addMenu: [],
+      checkLoading: [],
+    },
+  },
+};
 
 // Fetcher for authenticated requests
 const fetcher = async (url: string) => {
@@ -143,6 +304,7 @@ const QuizPage: React.FC = () => {
         ([questionId, answer]) => ({
           question_id: questionId,
           user_answer_text: answer,
+          user_answer: answer,
           notes: notes[questionId] || '',
           question_type: 'short_answer' as QuestionType,
         })
@@ -161,6 +323,8 @@ const QuizPage: React.FC = () => {
         started_at: new Date(startTime * 1000).toISOString(),
         answers: formattedAnswers,
       };
+
+      console.log('Submitting quiz:', JSON.stringify(submissionData));
 
       const response = await fetch(ENDPOINTS.submitTest, {
         method: 'POST',
@@ -199,160 +363,162 @@ const QuizPage: React.FC = () => {
     totalQuestions > 0 && answeredQuestions === totalQuestions;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
-      <Header />
-      <main className="flex-1">
-        <div className="sticky top-[64px] left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Link
-                  href="/practice"
-                  className="inline-flex items-center text-gray-600 hover:text-gray-900 mr-4"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Link>
+    <MathJaxContext config={mathJaxConfig}>
+      <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+        <Header />
+        <main className="flex-1">
+          <div className="sticky top-[64px] left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <Link
+                    href="/practice"
+                    className="inline-flex items-center text-gray-600 hover:text-gray-900 mr-4"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back
+                  </Link>
+                </div>
+                <h2 className="text-2xl font-medium text-gray-900">
+                  Practice Quiz - {quiz?.section_title}
+                </h2>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-transparent">
+                  <span className="text-sm font-medium text-gray-700">
+                    {answeredQuestions}/{totalQuestions}
+                  </span>
+                </div>
               </div>
-              <h2 className="text-2xl font-medium text-gray-900">
-                Practice Quiz - {quiz?.section_title}
-              </h2>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-transparent">
-                <span className="text-sm font-medium text-gray-700">
-                  {answeredQuestions}/{totalQuestions}
+
+              <div className="flex items-center justify-center gap-1 mb-2">
+                {[...Array(totalQuestions)].map((_, index) => {
+                  // Determine if this indicator dot corresponds to a multiple choice or short answer
+                  const isMultipleChoice = index < totalMultipleChoice;
+                  const questionId = isMultipleChoice
+                    ? index.toString()
+                    : `sa_${index - totalMultipleChoice}`;
+
+                  const isAnswered = isMultipleChoice
+                    ? Object.keys(selectedAnswers).includes(questionId)
+                    : Object.keys(shortAnswers).includes(questionId);
+
+                  return (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                        isAnswered ? 'bg-[var(--color-primary)]' : 'bg-gray-200'
+                      }`}
+                    ></div>
+                  );
+                })}
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between text-md text-gray-500 mt-1">
+                <span>Progress: {progressPercentage.toFixed(0)}%</span>
+                <span>
+                  {answeredQuestions} of {totalQuestions} questions answered
                 </span>
               </div>
             </div>
-
-            <div className="flex items-center justify-center gap-1 mb-2">
-              {[...Array(totalQuestions)].map((_, index) => {
-                // Determine if this indicator dot corresponds to a multiple choice or short answer
-                const isMultipleChoice = index < totalMultipleChoice;
-                const questionId = isMultipleChoice
-                  ? index.toString()
-                  : `sa_${index - totalMultipleChoice}`;
-
-                const isAnswered = isMultipleChoice
-                  ? Object.keys(selectedAnswers).includes(questionId)
-                  : Object.keys(shortAnswers).includes(questionId);
-
-                return (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                      isAnswered ? 'bg-[var(--color-primary)]' : 'bg-gray-200'
-                    }`}
-                  ></div>
-                );
-              })}
-            </div>
-
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-
-            <div className="flex justify-between text-md text-gray-500 mt-1">
-              <span>Progress: {progressPercentage.toFixed(0)}%</span>
-              <span>
-                {answeredQuestions} of {totalQuestions} questions answered
-              </span>
-            </div>
           </div>
-        </div>
 
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          {loading ? (
-            <Loading size="lg" text="Loading quiz..." />
-          ) : anyError ? (
-            <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
-              <p className="text-xl text-red-500">Error: {error}</p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="mt-6"
-                variant="default"
-              >
-                Try Again
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-8">
-                {/* Multiple Choice Questions */}
-                {processedQuestions.multipleChoice.map((question, index) => (
-                  <QuestionCard
-                    key={`mc_${index}`}
-                    questionNumber={index + 1}
-                    question={{
-                      question_id: `${index}`,
-                      question_text: question.question,
-                      options: question.choices || {},
-                      correct_answer: question.correct || '',
-                      explanation: question.explanation || '',
-                      source_page: question.source_page,
-                      source_text: question.source_text,
-                    }}
-                    onSelectAnswer={handleSelectAnswer}
-                    selectedAnswer={selectedAnswers[index.toString()]}
-                    note={notes[index.toString()] || ''}
-                    onUpdateNote={(questionId: string, newNote: string) =>
-                      setNotes((prevNotes) => ({
-                        ...prevNotes,
-                        [questionId]: newNote,
-                      }))
-                    }
-                    userId={userData?.id || ''}
-                    testId={testId}
-                  />
-                ))}
-
-                {/* Short Answer Questions */}
-                {processedQuestions.shortAnswer.map((question, index) => (
-                  <ShortAnswerQuestionCard
-                    key={`sa_${index}`}
-                    questionNumber={totalMultipleChoice + index + 1}
-                    question={{
-                      question_id: `sa_${index}`,
-                      question_text: question.question,
-                      ideal_answer: question.ideal_answer,
-                      source_page: question.source_page,
-                      source_text: question.source_text,
-                    }}
-                    onAnswerChange={handleShortAnswer}
-                    answerText={shortAnswers[`sa_${index}`] || ''}
-                    note={notes[`sa_${index}`] || ''}
-                    onUpdateNote={(questionId: string, newNote: string) =>
-                      setNotes((prevNotes) => ({
-                        ...prevNotes,
-                        [questionId]: newNote,
-                      }))
-                    }
-                    userId={userData?.id || ''}
-                    testId={testId}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-10 flex justify-end">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+            {loading ? (
+              <Loading size="lg" text="Loading quiz..." />
+            ) : anyError ? (
+              <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
+                <p className="text-xl text-red-500">Error: {error}</p>
                 <Button
-                  onClick={handleSubmit}
-                  disabled={!isQuizComplete || submitting || !studyGuideData}
+                  onClick={() => window.location.reload()}
+                  className="mt-6"
                   variant="default"
-                  size="lg"
-                  className="text-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting
-                    ? 'Submitting...'
-                    : `Submit Quiz (${answeredQuestions}/${totalQuestions})`}
+                  Try Again
                 </Button>
               </div>
-            </>
-          )}
-        </div>
-      </main>
-    </div>
+            ) : (
+              <>
+                <div className="space-y-8">
+                  {/* Multiple Choice Questions */}
+                  {processedQuestions.multipleChoice.map((question, index) => (
+                    <QuestionCard
+                      key={`mc_${index}`}
+                      questionNumber={index + 1}
+                      question={{
+                        question_id: `${index}`,
+                        question_text: question.question,
+                        options: question.choices || {},
+                        correct_answer: question.correct || '',
+                        explanation: question.explanation || '',
+                        source_page: question.source_page,
+                        source_text: question.source_text,
+                      }}
+                      onSelectAnswer={handleSelectAnswer}
+                      selectedAnswer={selectedAnswers[index.toString()]}
+                      note={notes[index.toString()] || ''}
+                      onUpdateNote={(questionId: string, newNote: string) =>
+                        setNotes((prevNotes) => ({
+                          ...prevNotes,
+                          [questionId]: newNote,
+                        }))
+                      }
+                      userId={userData?.id || ''}
+                      testId={testId}
+                    />
+                  ))}
+
+                  {/* Short Answer Questions */}
+                  {processedQuestions.shortAnswer.map((question, index) => (
+                    <ShortAnswerQuestionCard
+                      key={`sa_${index}`}
+                      questionNumber={totalMultipleChoice + index + 1}
+                      question={{
+                        question_id: `sa_${index}`,
+                        question_text: question.question,
+                        ideal_answer: question.ideal_answer,
+                        source_page: question.source_page,
+                        source_text: question.source_text,
+                      }}
+                      onAnswerChange={handleShortAnswer}
+                      answerText={shortAnswers[`sa_${index}`] || ''}
+                      note={notes[`sa_${index}`] || ''}
+                      onUpdateNote={(questionId: string, newNote: string) =>
+                        setNotes((prevNotes) => ({
+                          ...prevNotes,
+                          [questionId]: newNote,
+                        }))
+                      }
+                      userId={userData?.id || ''}
+                      testId={testId}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-10 flex justify-end">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!isQuizComplete || submitting || !studyGuideData}
+                    variant="default"
+                    size="lg"
+                    className="text-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting
+                      ? 'Submitting...'
+                      : `Submit Quiz (${answeredQuestions}/${totalQuestions})`}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </MathJaxContext>
   );
 };
 
