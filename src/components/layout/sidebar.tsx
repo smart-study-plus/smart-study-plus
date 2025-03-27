@@ -13,6 +13,7 @@ import {
   HelpCircle,
   Settings,
   LogOut,
+  BarChart,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -44,6 +45,7 @@ const Sidebar = () => {
     { icon: PenTool, label: 'Test Mode', path: '/test' },
     { icon: HelpCircle, label: 'Help', path: '/help' },
     { icon: Settings, label: 'Settings', path: '/settings' },
+    { icon: BarChart, label: 'Leaderboard', path: '/leaderboard' },
     { icon: LogOut, label: 'Log out', action: handleLogout },
   ];
 
