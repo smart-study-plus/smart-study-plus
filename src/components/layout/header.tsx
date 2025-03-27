@@ -55,7 +55,7 @@ export function Header() {
     router.push(session ? '/dashboard' : '/');
   };
 
-  const navItems = [
+/*  const navItems = [
     {
       href: '/dashboard',
       label: 'Dashboard',
@@ -71,7 +71,7 @@ export function Header() {
     //   label: 'Tests',
     //   pattern: '/tests',
     // },
-  ];
+  ];*/
 
   const isActiveRoute = (pattern: string) => {
     return pathname.startsWith(pattern);
@@ -103,47 +103,6 @@ export function Header() {
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
                 SmartStudy+
               </span>
-            </div>
-          </div>
-
-          {/* Right section: Desktop nav + logout */}
-          <div className="flex items-center space-x-4">
-            {/* Desktop nav */}
-            <nav className="hidden md:flex space-x-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'text-base font-medium transition-colors hover:text-[var(--color-text)]',
-                    isActiveRoute(item.pattern)
-                      ? 'text-[var(--color-primary)] font-semibold'
-                      : 'text-[var(--color-text-muted)]'
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Desktop-only Logout */}
-            <div className="hidden md:block">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="hover:bg-gray-100 transition-colors min-w-[100px]"
-              >
-                {isLoggingOut ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Logging out...</span>
-                  </div>
-                ) : (
-                  'Log out'
-                )}
-              </Button>
             </div>
           </div>
         </div>
