@@ -101,7 +101,7 @@ export default function DashboardPage() {
       ? ENDPOINTS.enhancedStudyHours(userId, {
           includeOngoing: true,
           aggregateBy: studyTimeView,
-          includeAnonymous: true, // Explicitly request anonymous sessions
+          includeAnonymous: false, // Don't include anonymous sessions by default
         })
       : null,
     fetcher,
@@ -110,10 +110,18 @@ export default function DashboardPage() {
       revalidateOnFocus: true, // Revalidate when tab regains focus
       onError: (err) => {
         console.error('Error fetching study hours:', err);
-        // The component will display fallback message automatically
       },
     }
   );
+
+  // Add a function to check if user is new (no study hours)
+  const isNewUser = useMemo(() => {
+    if (!enhancedStudyHours) return true;
+    return (
+      enhancedStudyHours.total_hours === 0 &&
+      !enhancedStudyHours.has_ongoing_session
+    );
+  }, [enhancedStudyHours]);
 
   const { data: testAnalytics, error: testError } = useSWR(
     userId ? ENDPOINTS.testAnalytics(userId) : null,
@@ -296,9 +304,9 @@ export default function DashboardPage() {
     }
   }, [allGuideAnalytics, studyGuides, guideAnalytics, selectGuideById]);
 
-  // Add the function to claim anonymous sessions
+  // Modify the claim anonymous sessions function to only show for new users
   const handleClaimAnonymousSessions = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !isNewUser) return;
 
     try {
       setIsClaimingAnonymousSessions(true);
@@ -328,7 +336,7 @@ export default function DashboardPage() {
         toast.success(
           `Successfully claimed ${result.claimed_count} anonymous sessions!`
         );
-        // Refresh the study hours data
+        // After claiming, refetch with includeAnonymous=true
         mutate(
           ENDPOINTS.enhancedStudyHours(userId, {
             includeOngoing: true,
@@ -345,7 +353,7 @@ export default function DashboardPage() {
     } finally {
       setIsClaimingAnonymousSessions(false);
     }
-  }, [userId, supabase, studyTimeView]);
+  }, [userId, supabase, studyTimeView, isNewUser]);
 
   // Manually refresh study hours data when on dashboard tab
   useEffect(() => {
@@ -478,7 +486,7 @@ export default function DashboardPage() {
                                   <p className="text-gray-600">
                                     {Messages.NO_STUDY_HOURS}
                                   </p>
-                                  {userId && (
+                                  {userId && isNewUser && (
                                     <Button
                                       size="sm"
                                       variant="outline"

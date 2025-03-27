@@ -7,6 +7,9 @@ import { ENDPOINTS, API_URL } from '@/config/urls';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+// Get the base URL from environment variable or fallback to window.location.origin
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+
 interface AuthFormProps {
   method: 'signin' | 'signup' | null;
   onSuccess?: () => void;
@@ -50,7 +53,7 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${BASE_URL}/auth/callback`,
             data: {
               username: username,
             },
