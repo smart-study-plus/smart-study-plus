@@ -107,6 +107,56 @@ const SlidesGuidePage: React.FC = () => {
 
   const supabase = createClient();
 
+  // Add a refreshData function to update completed tests data
+  const refreshData = async () => {
+    try {
+      // Fetch latest completed tests data
+      const userData = await supabase.auth.getUser();
+      const userId = userData.data?.user?.id;
+
+      if (userId) {
+        const token = await supabase.auth
+          .getSession()
+          .then((res) => res.data.session?.access_token);
+
+        const completedTestsResponse = await fetch(
+          ENDPOINTS.testResults(userId),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (completedTestsResponse.ok) {
+          const completedTestsData = await completedTestsResponse.json();
+          const completed = new Set(
+            completedTestsData.test_results
+              ?.filter((test: CompletedTest) => test.study_guide_id === guideId)
+              .map((test: CompletedTest) => test.test_id) || []
+          ) as Set<string>;
+          setCompletedTests(completed);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing test completion data:', error);
+    }
+  };
+
+  // Add effect to refresh data when component is focused
+  useEffect(() => {
+    // Refresh data when window gets focus (user returns to the page)
+    const handleFocus = () => {
+      refreshData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    // Initial refresh
+    refreshData();
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   useEffect(() => {
     // Fetch practice tests when the guide is loaded
     const fetchPracticeTests = async () => {
@@ -269,7 +319,8 @@ const SlidesGuidePage: React.FC = () => {
         )}
         {topic.source_pages && topic.source_pages.length > 0 && (
           <div className="text-sm text-[var(--color-text-muted)]">
-            Source Page: {topic.source_pages.join(', ')}
+            Source Page{topic.source_pages.length > 1 ? 's' : ''}:{' '}
+            {topic.source_pages.join(', ')}
           </div>
         )}
         {topic.source_texts && topic.source_texts.length > 0 && (
@@ -277,7 +328,7 @@ const SlidesGuidePage: React.FC = () => {
             {topic.source_texts.map((text, index) => (
               <div
                 key={index}
-                className="p-3 bg-[var(--color-background-alt)] rounded-lg"
+                className="p-3 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-gray-200)]"
               >
                 <p className="text-sm text-[var(--color-text-muted)] italic">
                   "{text}"
@@ -556,7 +607,7 @@ const SlidesGuidePage: React.FC = () => {
                                                         {completedTests.has(
                                                           test.practice_test_id
                                                         )
-                                                          ? 'Quiz Completed'
+                                                          ? 'View Results'
                                                           : 'Take Quiz'}
                                                       </span>
                                                     </div>
@@ -638,11 +689,28 @@ const SlidesGuidePage: React.FC = () => {
                     </p>
                   </div>
                   {practiceTests.length > 0 && (
-                    <div>
+                    <div className="space-y-2">
                       <p className="text-sm text-gray-600 mb-1">Progress</p>
-                      <p className="font-medium">
-                        {completedTests.size}/{practiceTests.length} completed
-                      </p>
+                      <div className="flex justify-between">
+                        <p className="font-medium">
+                          {completedTests.size}/{practiceTests.length} completed
+                        </p>
+                        <p className="font-medium text-blue-600">
+                          {(
+                            (completedTests.size / practiceTests.length) *
+                            100
+                          ).toFixed(0)}
+                          %
+                        </p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${(completedTests.size / practiceTests.length) * 100}%`,
+                          }}
+                        ></div>
+                      </div>
                     </div>
                   )}
                 </div>

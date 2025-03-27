@@ -76,20 +76,7 @@ const PracticePage: React.FC = () => {
           ) || [];
         setStudyGuides(guides);
 
-        // Fetch slides-based study guides
-        try {
-          const slidesResponse = await fetchWithAuth(ENDPOINTS.slidesGuides);
-          if (slidesResponse.ok) {
-            const slidesData: SlidesGuideListResponse =
-              await slidesResponse.json();
-            if (slidesData.study_guides && slidesData.study_guides.length > 0) {
-              setSlidesGuides(slidesData.study_guides);
-            }
-          }
-        } catch (slidesError) {
-          console.warn('Failed to fetch slides study guides:', slidesError);
-        }
-
+        // First fetch completed tests data
         const completedTestsResponse = await fetchWithAuth(
           ENDPOINTS.testResults(authUserId)
         );
@@ -98,7 +85,6 @@ const PracticePage: React.FC = () => {
         let completedTests: CompletedTest[] = [];
 
         if (!completedTestsResponse.ok) {
-          console.warn('No test results found for user.');
           setProgressMap({});
           setSlidesProgressMap({});
         } else {
@@ -108,6 +94,54 @@ const PracticePage: React.FC = () => {
           completedTestsMap = new Set(
             completedTests.map((test: CompletedTest) => test.test_id)
           );
+        }
+
+        // Then fetch slides-based study guides and calculate their progress
+        const slidesResponse = await fetchWithAuth(ENDPOINTS.slidesGuides);
+        if (slidesResponse.ok) {
+          const slidesData: SlidesGuideListResponse =
+            await slidesResponse.json();
+          if (slidesData.study_guides && slidesData.study_guides.length > 0) {
+            setSlidesGuides(slidesData.study_guides);
+
+            // Calculate progress for slides study guides
+            const slidesProgressData: ProgressMap = {};
+            await Promise.all(
+              slidesData.study_guides.map(async (guide) => {
+                try {
+                  const slideTestsResponse = await fetchWithAuth(
+                    ENDPOINTS.slidesPracticeTests(guide._id)
+                  );
+                  if (slideTestsResponse.ok) {
+                    const slideTestsData = await slideTestsResponse.json();
+
+                    if (
+                      slideTestsData.practice_tests &&
+                      slideTestsData.practice_tests.length > 0
+                    ) {
+                      const totalTests = slideTestsData.practice_tests.length;
+                      const guideId = guide._id;
+
+                      // Get completed tests for this guide
+                      const guideCompletedTests = completedTests.filter(
+                        (test) => test.study_guide_id === guideId
+                      ).length;
+
+                      // Calculate progress percentage
+                      slidesProgressData[guide._id] =
+                        totalTests > 0
+                          ? (guideCompletedTests / totalTests) * 100
+                          : 0;
+                    }
+                  }
+                } catch (error) {
+                  slidesProgressData[guide._id] = 0;
+                }
+              })
+            );
+
+            setSlidesProgressMap(slidesProgressData);
+          }
         }
 
         // Calculate progress for regular study guides
@@ -129,41 +163,6 @@ const PracticePage: React.FC = () => {
           })
         );
         setProgressMap(progressData);
-
-        // Calculate progress for slides study guides
-        const slidesProgressData: ProgressMap = {};
-        await Promise.all(
-          slidesGuides.map(async (guide) => {
-            try {
-              const slideTestsResponse = await fetchWithAuth(
-                ENDPOINTS.slidesPracticeTests(guide._id)
-              );
-              if (slideTestsResponse.ok) {
-                const slideTestsData = await slideTestsResponse.json();
-                if (
-                  slideTestsData.practice_tests &&
-                  slideTestsData.practice_tests.length > 0
-                ) {
-                  const totalTests = slideTestsData.practice_tests.length;
-                  const guideCompletedTests = completedTests.filter(
-                    (test) => test.study_guide_id === guide._id
-                  ).length;
-                  slidesProgressData[guide._id] =
-                    totalTests > 0
-                      ? (guideCompletedTests / totalTests) * 100
-                      : 0;
-                }
-              }
-            } catch (error) {
-              console.warn(
-                `Failed to fetch practice tests for slides guide ${guide._id}:`,
-                error
-              );
-              slidesProgressData[guide._id] = 0;
-            }
-          })
-        );
-        setSlidesProgressMap(slidesProgressData);
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : 'An error occurred';
@@ -300,100 +299,83 @@ const PracticePage: React.FC = () => {
 
             {/* Slides-based Study Guides */}
             {slidesGuides.length > 0 && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="mb-8 mt-12"
-                >
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Slide-based Study Guides
-                  </h2>
-                </motion.div>
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid gap-8"
+              >
+                {slidesGuides.map((guide, index) => (
+                  <motion.div key={`slide-${index}`} variants={item}>
+                    <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden">
+                      <CardContent className="p-8">
+                        <div className="relative">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-primary)]/5 to-purple-300/5 rounded-full -translate-y-32 translate-x-32 group-hover:translate-x-28 transition-transform duration-500"></div>
 
-                <motion.div
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                  className="grid gap-8"
-                >
-                  {slidesGuides.map((guide, index) => (
-                    <motion.div key={`slide-${index}`} variants={item}>
-                      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden">
-                        <CardContent className="p-8">
-                          <div className="relative">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-200/10 to-indigo-300/10 rounded-full -translate-y-32 translate-x-32 group-hover:translate-x-28 transition-transform duration-500"></div>
-
-                            <div className="grid md:grid-cols-3 gap-8">
-                              <div className="md:col-span-2 space-y-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <SlidersHorizontal className="h-5 w-5 text-blue-600" />
-                                    <h2 className="text-2xl font-bold text-gray-900">
-                                      {guide.title ||
-                                        `Slides Guide ${index + 1}`}
-                                    </h2>
-                                  </div>
-                                  <p className="text-gray-600">
-                                    Comprehensive guide covering key concepts
-                                    and practice exercises
-                                  </p>
+                          <div className="grid md:grid-cols-3 gap-8">
+                            <div className="md:col-span-2 space-y-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="h-5 w-5 text-[var(--color-primary)]" />
+                                  <h2 className="text-2xl font-bold text-gray-900">
+                                    {guide.title || `Slides Guide ${index + 1}`}
+                                  </h2>
                                 </div>
-                                <div className="space-y-2">
-                                  <div className="flex justify-between items-center text-sm text-gray-600">
-                                    <span>
-                                      Progress:{' '}
-                                      {slidesProgressMap[guide._id]?.toFixed(
-                                        0
-                                      ) || 0}
-                                      %
-                                    </span>
-                                    <span className="font-medium text-blue-600">
-                                      {slidesProgressMap[guide._id]?.toFixed(
-                                        0
-                                      ) || 0}
-                                      /100
-                                    </span>
-                                  </div>
-                                  <Progress
-                                    value={slidesProgressMap[guide._id] || 0}
-                                    className="h-2"
-                                  />
-                                </div>
+                                <p className="text-gray-600">
+                                  Comprehensive guide covering key concepts and
+                                  practice exercises
+                                </p>
                               </div>
 
-                              <div className="md:border-l md:pl-8 flex flex-col justify-center items-center md:items-start gap-4">
-                                <div className="text-center md:text-left">
-                                  <p className="text-sm font-medium text-gray-600">
-                                    Status
-                                  </p>
-                                  <p className="text-lg font-semibold text-gray-900">
-                                    {slidesProgressMap[guide._id] === 0
-                                      ? 'Not Started'
-                                      : slidesProgressMap[guide._id] === 100
-                                        ? 'Completed'
-                                        : 'In Progress'}
-                                  </p>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-sm text-gray-600">
+                                  <span>
+                                    Progress:{' '}
+                                    {slidesProgressMap[guide._id]?.toFixed(0) ||
+                                      0}
+                                    %
+                                  </span>
+                                  <span className="font-medium text-[var(--color-primary)]">
+                                    {slidesProgressMap[guide._id]?.toFixed(0) ||
+                                      0}
+                                    /100
+                                  </span>
                                 </div>
-                                <Button
-                                  onClick={() =>
-                                    handleSlidesCardClick(guide._id)
-                                  }
-                                  className="w-full md:w-auto bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-300"
-                                >
-                                  View Slides
-                                  <SlidersHorizontal className="ml-2 h-4 w-4" />
-                                </Button>
+                                <Progress
+                                  value={slidesProgressMap[guide._id] || 0}
+                                  className="h-2"
+                                />
                               </div>
                             </div>
+
+                            <div className="md:border-l md:pl-8 flex flex-col justify-center items-center md:items-start gap-4">
+                              <div className="text-center md:text-left">
+                                <p className="text-sm font-medium text-gray-600">
+                                  Current Status
+                                </p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {slidesProgressMap[guide._id] === 0
+                                    ? 'Not Started'
+                                    : slidesProgressMap[guide._id] === 100
+                                      ? 'Completed'
+                                      : 'In Progress'}
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => handleSlidesCardClick(guide._id)}
+                                className="w-full md:w-auto bg-gradient-to-r from-[var(--color-primary)] to-purple-400 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90 transition-all duration-300"
+                              >
+                                View Study Guide
+                                <BookOpen className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
             )}
 
             {!loading &&

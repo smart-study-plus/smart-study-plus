@@ -94,6 +94,8 @@ const SlidesQuizPage: React.FC = () => {
         question_id: `sa_${i}`,
         question: q.question,
         ideal_answer: q.ideal_answer,
+        source_page: q.source_page,
+        source_text: q.source_text,
       }));
     }
 

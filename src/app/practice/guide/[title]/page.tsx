@@ -467,18 +467,53 @@ const StudyGuidePage: React.FC = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <BarChart className="h-5 w-5 text-[var(--color-primary)]" />
-                  Section Progress
+                  Guide Info
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Overall Progress</span>
-                      <span className="font-medium text-gray-900">
-                        {progress.toFixed(2)}%
-                      </span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
+                    <p className="text-sm text-gray-600 mb-1">Chapters</p>
+                    <p className="font-medium">
+                      {studyGuide?.chapters?.length || 0} chapters available
+                    </p>
                   </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Sections</p>
+                    <p className="font-medium">
+                      {studyGuide?.chapters?.reduce(
+                        (acc, chapter) => acc + (chapter.sections?.length || 0),
+                        0
+                      ) || 0}{' '}
+                      sections
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Practice Tests</p>
+                    <p className="font-medium">
+                      {testsData?.practice_tests?.length || 0} available
+                    </p>
+                  </div>
+                  {testsData?.practice_tests?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 mb-1">Progress</p>
+                      <div className="flex justify-between">
+                        <p className="font-medium">
+                          {completedTests.size}/
+                          {testsData.practice_tests.length} completed
+                        </p>
+                        <p className="font-medium text-[var(--color-primary)]">
+                          {progress.toFixed(0)}%
+                        </p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${progress}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
