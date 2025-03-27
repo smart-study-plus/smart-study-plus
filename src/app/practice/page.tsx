@@ -275,7 +275,7 @@ const PracticePage: React.FC = () => {
                                   Current Status
                                 </p>
                                 <p className="text-lg font-semibold text-gray-900">
-                                  {progressMap[guide.title] === 0
+                                  {(progressMap[guide.title] ?? 0) === 0
                                     ? 'Not Started'
                                     : 'In Progress'}
                                 </p>
@@ -354,7 +354,7 @@ const PracticePage: React.FC = () => {
                                   Current Status
                                 </p>
                                 <p className="text-lg font-semibold text-gray-900">
-                                  {slidesProgressMap[guide._id] === 0
+                                  {(slidesProgressMap[guide._id] ?? 0) === 0
                                     ? 'Not Started'
                                     : slidesProgressMap[guide._id] === 100
                                       ? 'Completed'
