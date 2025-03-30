@@ -197,6 +197,39 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Extended interface definitions to fix TypeScript errors
+interface ExtendedSubmissionResult extends SubmissionResult {
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  study_guide_title: string;
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  time_taken: number;
+  status: string;
+  questions: any[];
+  multiple_choice_count: number;
+  short_answer_count: number;
+  short_answer_correct: number;
+  mastery_updated?: boolean;
+}
+
+interface ExtendedStudyGuideResponse extends StudyGuideResponse {
+  title?: string;
+  chapters?: Array<{
+    title: string;
+    sections: Array<{
+      title: string;
+      key_concepts?: string[];
+      quizzes?: any[];
+      completed?: boolean;
+      source_pages?: string[];
+      source_texts?: string[];
+    }>;
+  }>;
+}
+
 const QuizPage: React.FC = () => {
   const params = useParams();
   const testId = typeof params.testId === 'string' ? params.testId : '';
@@ -208,6 +241,9 @@ const QuizPage: React.FC = () => {
   const [shortAnswers, setShortAnswers] = useState<{ [key: string]: string }>(
     {}
   );
+  const [confidenceLevels, setConfidenceLevels] = useState<{
+    [key: string]: number;
+  }>({});
 
   useEffect(() => {
     setStartTime(Math.floor(Date.now() / 1000));
@@ -227,7 +263,7 @@ const QuizPage: React.FC = () => {
 
   // Fetch study guide data
   const { data: studyGuideData, error: studyGuideError } =
-    useSWR<StudyGuideResponse>(
+    useSWR<ExtendedStudyGuideResponse>(
       title ? ENDPOINTS.studyGuide(title) : null,
       fetcher
     );
@@ -266,11 +302,48 @@ const QuizPage: React.FC = () => {
     return { multipleChoice, shortAnswer };
   }, [quiz]);
 
+  // Extract sections and topics from the study guide
+  const studyGuideTopics = React.useMemo(() => {
+    if (!studyGuideData || !studyGuideData.chapters) return {};
+
+    const topics: { [key: string]: { title: string; chapter: string } } = {};
+
+    studyGuideData.chapters.forEach((chapter) => {
+      chapter.sections.forEach((section) => {
+        topics[section.title] = {
+          title: section.title,
+          chapter: chapter.title,
+        };
+      });
+    });
+
+    return topics;
+  }, [studyGuideData]);
+
+  // Link quiz questions to study guide topics based on section title from test
+  const questionTopics = React.useMemo(() => {
+    if (!quiz) return {};
+
+    const sectionTitle = quiz.section_title || '';
+    return {
+      sectionTitle,
+      topicId: sectionTitle,
+    };
+  }, [quiz]);
+
   const handleSelectAnswer = (questionId: string, answer: string): void => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
     }));
+
+    // Set default confidence level if not already set
+    if (!confidenceLevels[questionId]) {
+      setConfidenceLevels((prev) => ({
+        ...prev,
+        [questionId]: 0.6, // Default neutral confidence
+      }));
+    }
   };
 
   const handleShortAnswer = (questionId: string, answer: string): void => {
@@ -278,10 +351,35 @@ const QuizPage: React.FC = () => {
       ...prev,
       [questionId]: answer,
     }));
+
+    // Set default confidence level if not already set
+    if (!confidenceLevels[questionId] && answer.trim() !== '') {
+      setConfidenceLevels((prev) => ({
+        ...prev,
+        [questionId]: 0.6, // Default neutral confidence
+      }));
+    }
+  };
+
+  const handleUpdateConfidence = (
+    questionId: string,
+    confidenceLevel: number
+  ): void => {
+    setConfidenceLevels((prev) => ({
+      ...prev,
+      [questionId]: confidenceLevel,
+    }));
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!userData?.id || !testId || !studyGuideData || !title || !startTime)
+    if (
+      !userData?.id ||
+      !testId ||
+      !studyGuideData ||
+      !title ||
+      !startTime ||
+      !quiz
+    )
       return;
 
     try {
@@ -289,25 +387,70 @@ const QuizPage: React.FC = () => {
       const studyGuideId = studyGuideData.study_guide_id || studyGuideData._id;
       if (!studyGuideId) throw new Error('Study guide ID not found');
 
+      // Get topic information for this test
+      const sectionTitle = quiz.section_title || '';
+      console.log(`Submitting test for section: ${sectionTitle}`);
+
+      // Find matching chapter/section in the study guide
+      let chapterTitle = '';
+      if (studyGuideData.chapters && sectionTitle) {
+        for (const chapter of studyGuideData.chapters) {
+          const matchingSection = chapter.sections.find(
+            (section) => section.title === sectionTitle
+          );
+          if (matchingSection) {
+            chapterTitle = chapter.title;
+            break;
+          }
+        }
+      }
+
       // Format multiple choice answers
       const multipleChoiceAnswers = Object.entries(selectedAnswers).map(
-        ([questionId, answer]) => ({
-          question_id: questionId,
-          user_answer: answer,
-          notes: notes[questionId] || '',
-          question_type: 'multiple_choice' as QuestionType,
-        })
+        ([questionId, answer]) => {
+          // Find the corresponding question to get correct_answer and other data
+          const question =
+            processedQuestions.multipleChoice[parseInt(questionId)];
+          const isCorrect = answer === question.correct;
+
+          return {
+            question_id: questionId,
+            question: question.question, // Add the question text
+            user_answer: answer,
+            correct_answer: question.correct,
+            is_correct: isCorrect,
+            explanation: question.explanation || '',
+            notes: notes[questionId] || '',
+            choices: question.choices || {},
+            question_type: 'multiple_choice' as QuestionType,
+            confidence_level: confidenceLevels[questionId] || 0.5,
+            topic_id: sectionTitle, // Use section title as topic ID
+            topic_name: sectionTitle || 'General',
+          };
+        }
       );
 
       // Format short answer responses
       const shortAnswerResponses = Object.entries(shortAnswers).map(
-        ([questionId, answer]) => ({
-          question_id: questionId,
-          user_answer_text: answer,
-          user_answer: answer,
-          notes: notes[questionId] || '',
-          question_type: 'short_answer' as QuestionType,
-        })
+        ([questionId, answer]) => {
+          // Extract the index from the question ID format "sa_X"
+          const index = parseInt(questionId.replace('sa_', ''));
+          const question = processedQuestions.shortAnswer[index];
+
+          return {
+            question_id: questionId,
+            question: question.question, // Add the question text
+            user_answer_text: answer,
+            user_answer: answer,
+            correct_answer: question.ideal_answer,
+            is_correct: false, // Short answers require evaluation - will be updated by backend
+            notes: notes[questionId] || '',
+            question_type: 'short_answer' as QuestionType,
+            confidence_level: confidenceLevels[questionId] || 0.5,
+            topic_id: sectionTitle, // Use section title as topic ID
+            topic_name: sectionTitle || 'General',
+          };
+        }
       );
 
       // Combine all answers
@@ -322,9 +465,17 @@ const QuizPage: React.FC = () => {
         study_guide_id: studyGuideId,
         started_at: new Date(startTime * 1000).toISOString(),
         answers: formattedAnswers,
+        // Add topic-specific info to help with mastery data organization
+        section_title: sectionTitle,
+        chapter_title: chapterTitle,
       };
 
-      console.log('Submitting quiz:', JSON.stringify(submissionData));
+      console.log('Submitting quiz with topic mastery data', {
+        studyGuideId,
+        sectionTitle,
+        chapterTitle,
+        answersCount: formattedAnswers.length,
+      });
 
       const response = await fetch(ENDPOINTS.submitTest, {
         method: 'POST',
@@ -337,7 +488,15 @@ const QuizPage: React.FC = () => {
 
       if (!response.ok) throw new Error('Failed to submit quiz');
 
-      const result: SubmissionResult = await response.json();
+      const result = (await response.json()) as ExtendedSubmissionResult;
+
+      // Log the mastery update status if included in the response
+      if (result.mastery_updated !== undefined) {
+        console.log(
+          `Topic mastery data ${result.mastery_updated ? 'was' : 'was not'} updated`
+        );
+      }
+
       router.push(
         `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}/results?submission=${result.submission_id}`
       );
@@ -470,6 +629,8 @@ const QuizPage: React.FC = () => {
                       }
                       userId={userData?.id || ''}
                       testId={testId}
+                      confidence={confidenceLevels[index.toString()] || 0.5}
+                      onUpdateConfidence={handleUpdateConfidence}
                     />
                   ))}
 
@@ -496,6 +657,8 @@ const QuizPage: React.FC = () => {
                       }
                       userId={userData?.id || ''}
                       testId={testId}
+                      confidence={confidenceLevels[`sa_${index}`] || 0.5}
+                      onUpdateConfidence={handleUpdateConfidence}
                     />
                   ))}
                 </div>

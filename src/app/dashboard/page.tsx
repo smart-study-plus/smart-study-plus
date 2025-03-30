@@ -36,6 +36,16 @@ import {
   GuideAnalytics,
   EnhancedStudyHours,
   TimePeriod,
+  TopicMasteryData,
+  ProcessedTopicMastery,
+  RawTopicMasteryResponse,
+  RawMasteryStudyGuide,
+  RawTopicChapter,
+  RawTopicSection,
+  RawTopicSubmission,
+  GroupedMasteryData,
+  ProcessedGuide,
+  ProcessedChapter,
 } from '@/interfaces/test';
 import { DashboardGuide } from '@/interfaces/topic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,6 +55,7 @@ import { formatTime } from '@/lib/utils';
 import * as Messages from '@/config/messages';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { TopicMasteryCard } from '../../components/dashboard/topic-mastery-card';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -84,12 +95,20 @@ export default function DashboardPage() {
   const [isClaimingAnonymousSessions, setIsClaimingAnonymousSessions] =
     useState(false);
 
+  // Fetch user data FIRST
   const { data: userData, error: userError } = useSWR('user', async () => {
     const { data } = await supabase.auth.getUser();
     return data?.user;
   });
 
-  const userId = userData?.id;
+  const userId = userData?.id; // Declare userId AFTER fetching userData
+
+  // Fetch Topic Mastery Data (Now userId is available)
+  const { data: rawMasteryData, error: masteryError } =
+    useSWR<RawTopicMasteryResponse>(
+      userId ? ENDPOINTS.topicMastery(userId) : null,
+      fetcher
+    );
 
   // Use enhanced study hours endpoint
   const {
@@ -201,6 +220,72 @@ export default function DashboardPage() {
 
     return guides;
   }, [studyGuidesResponse, allGuideAnalytics]);
+
+  // --- Process Mastery Data (Grouped by Guide -> Chapter -> Section) ---
+  const groupedMasteryData = useMemo(() => {
+    if (!rawMasteryData?.mastery_data?.study_guides) return {};
+
+    const grouped: GroupedMasteryData = {};
+
+    // Ensure correct typing for iteration
+    const guidesToProcess = rawMasteryData.mastery_data
+      .study_guides as RawMasteryStudyGuide[];
+
+    // Iterate through guides
+    for (const guide of guidesToProcess) {
+      // Use the correctly typed variable
+      if (!grouped[guide.study_guide_id]) {
+        grouped[guide.study_guide_id] = {
+          title: guide.study_guide_title,
+          chapters: {},
+        };
+      }
+
+      for (const chapter of guide.chapters as RawTopicChapter[]) {
+        if (!grouped[guide.study_guide_id].chapters[chapter.chapter_title]) {
+          grouped[guide.study_guide_id].chapters[chapter.chapter_title] = {
+            sections: [],
+          };
+        }
+
+        for (const section of chapter.sections as RawTopicSection[]) {
+          const userSubmissions = (
+            section.submissions as RawTopicSubmission[]
+          ).filter((sub) => sub.user_id === userId);
+
+          if (userSubmissions.length > 0) {
+            const sortedSubmissions = [...userSubmissions].sort(
+              (a, b) =>
+                new Date(b.last_interaction).getTime() -
+                new Date(a.last_interaction).getTime()
+            );
+            const latestSubmission = sortedSubmissions[0];
+
+            grouped[guide.study_guide_id].chapters[
+              chapter.chapter_title
+            ].sections.push({
+              studyGuideTitle: guide.study_guide_title,
+              studyGuideId: guide.study_guide_id,
+              chapterTitle: chapter.chapter_title,
+              sectionTitle: section.section_title,
+              masteryScore: latestSubmission.mastery_score,
+              accuracy: latestSubmission.accuracy_rate,
+              confidence: latestSubmission.confidence_score,
+              recency: latestSubmission.recency_weight * 100,
+              questionCount: latestSubmission.question_exposure_count,
+              lastInteraction: new Date(latestSubmission.last_interaction),
+            });
+          }
+        }
+        grouped[guide.study_guide_id].chapters[
+          chapter.chapter_title
+        ].sections.sort((a, b) => b.masteryScore - a.masteryScore);
+      }
+    }
+    console.log('Processed Grouped Mastery Data (Dashboard):', grouped);
+    return grouped;
+  }, [rawMasteryData, userId]);
+  // --- End Process Mastery Data ---
 
   const selectedGuide = studyGuides?.[selectedGuideIndex];
 
@@ -414,6 +499,11 @@ export default function DashboardPage() {
     }
   };
 
+  // Generate default values for the accordion to have all items open
+  const defaultAccordionValues = useMemo(() => {
+    return Object.keys(groupedMasteryData).map((_, index) => `guide-${index}`);
+  }, [groupedMasteryData]);
+
   return (
     <RouteGuard requireAuth>
       <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
@@ -455,6 +545,12 @@ export default function DashboardPage() {
                       className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
                     >
                       Guide-Specific Stats
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="topic-mastery"
+                      className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
+                    >
+                      Topic Mastery
                     </TabsTrigger>
                   </TabsList>
 
@@ -924,6 +1020,115 @@ export default function DashboardPage() {
                       onNextGuide={handleNextGuide}
                       onSelectGuide={selectGuideById}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="topic-mastery">
+                    {masteryError ? (
+                      <p className="text-red-500 text-center">
+                        Error loading mastery data.
+                      </p>
+                    ) : !rawMasteryData ? (
+                      <div className="flex justify-center items-center p-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+                        <p className="ml-3 text-lg text-gray-600">
+                          Loading Topic Mastery...
+                        </p>
+                      </div>
+                    ) : Object.keys(groupedMasteryData).length === 0 ? (
+                      <p className="text-gray-600 text-center">
+                        No topic mastery data available yet. Complete some
+                        quizzes!
+                      </p>
+                    ) : (
+                      <Accordion
+                        type="multiple"
+                        defaultValue={defaultAccordionValues}
+                        className="w-full space-y-4"
+                      >
+                        {Object.entries(groupedMasteryData).map(
+                          ([guideId, guideData], guideIndex) => (
+                            <AccordionItem
+                              key={guideId}
+                              value={`guide-${guideId}`}
+                              className="bg-white rounded-lg shadow-sm border border-gray-200"
+                            >
+                              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                                <span className="text-lg font-semibold text-gray-800">
+                                  {guideData.title}
+                                </span>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-6 pb-6 pt-0">
+                                {Object.keys(guideData.chapters).length ===
+                                0 ? (
+                                  <p className="text-gray-500 pt-4 border-t border-gray-100">
+                                    No chapter data for this guide yet.
+                                  </p>
+                                ) : (
+                                  <div className="space-y-4 pt-4 border-t border-gray-100">
+                                    {Object.entries(guideData.chapters).map(
+                                      ([chapterTitle, chapterData]) => (
+                                        <div key={chapterTitle}>
+                                          <h3 className="text-md font-semibold text-gray-700 mb-3">
+                                            {chapterTitle}
+                                          </h3>
+                                          {chapterData.sections.length === 0 ? (
+                                            <p className="text-sm text-gray-500 pl-2">
+                                              No section data for this chapter
+                                              yet.
+                                            </p>
+                                          ) : (
+                                            <motion.div
+                                              variants={staggerContainer}
+                                              initial="initial"
+                                              animate="animate"
+                                              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                                            >
+                                              {chapterData.sections.map(
+                                                (mastery) => (
+                                                  <motion.div
+                                                    key={`${mastery.studyGuideId}-${mastery.chapterTitle}-${mastery.sectionTitle}`}
+                                                    variants={fadeInUp}
+                                                  >
+                                                    <TopicMasteryCard
+                                                      studyGuideTitle={
+                                                        mastery.studyGuideTitle
+                                                      }
+                                                      sectionTitle={
+                                                        mastery.sectionTitle
+                                                      }
+                                                      masteryScore={
+                                                        mastery.masteryScore
+                                                      }
+                                                      accuracy={
+                                                        mastery.accuracy
+                                                      }
+                                                      recency={mastery.recency}
+                                                      confidence={
+                                                        mastery.confidence
+                                                      }
+                                                      questionCount={
+                                                        mastery.questionCount
+                                                      }
+                                                      lastInteraction={
+                                                        mastery.lastInteraction
+                                                      }
+                                                    />
+                                                  </motion.div>
+                                                )
+                                              )}
+                                            </motion.div>
+                                          )}
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </AccordionContent>
+                            </AccordionItem>
+                          )
+                        )}
+                      </Accordion>
+                    )}
                   </TabsContent>
                 </Tabs>
               </AnimatePresence>

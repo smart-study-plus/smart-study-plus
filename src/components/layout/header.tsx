@@ -94,6 +94,11 @@ export function Header() {
       label: 'Practice',
       pattern: '/practice',
     },
+    {
+      href: '/adaptive-test',
+      label: 'Adaptive Tests',
+      pattern: '/adaptive-test',
+    },
     // {
     //   href: '/tests',
     //   label: 'Tests',

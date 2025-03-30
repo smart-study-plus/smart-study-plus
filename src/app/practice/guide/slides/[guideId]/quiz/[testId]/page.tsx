@@ -74,6 +74,11 @@ const SlidesQuizPage: React.FC = () => {
   const [submitting, setSubmitting] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Add state for confidence levels
+  const [confidenceLevels, setConfidenceLevels] = useState<{
+    [key: string]: number;
+  }>({});
+
   const loading = !quiz || !slidesGuideData || !userData;
   const anyError = quizError || slidesGuideError || error;
 
@@ -102,11 +107,31 @@ const SlidesQuizPage: React.FC = () => {
     return { multipleChoice, shortAnswer };
   }, [quiz]);
 
+  // Add function to handle confidence updates
+  const handleUpdateConfidence = (
+    questionId: string,
+    confidenceLevel: number
+  ): void => {
+    setConfidenceLevels((prev) => ({
+      ...prev,
+      [questionId]: confidenceLevel,
+    }));
+  };
+
+  // Update answer handlers to set default confidence
   const handleSelectAnswer = (questionId: string, answer: string): void => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
     }));
+
+    // Set default confidence level if not already set
+    if (!confidenceLevels[questionId]) {
+      setConfidenceLevels((prev) => ({
+        ...prev,
+        [questionId]: 0.6, // Default neutral confidence
+      }));
+    }
   };
 
   const handleShortAnswer = (questionId: string, answer: string): void => {
@@ -114,6 +139,14 @@ const SlidesQuizPage: React.FC = () => {
       ...prev,
       [questionId]: answer,
     }));
+
+    // Set default confidence level if not already set
+    if (!confidenceLevels[questionId] && answer.trim() !== '') {
+      setConfidenceLevels((prev) => ({
+        ...prev,
+        [questionId]: 0.6, // Default neutral confidence
+      }));
+    }
   };
 
   const handleSubmit = async (): Promise<void> => {
@@ -132,6 +165,7 @@ const SlidesQuizPage: React.FC = () => {
           user_answer: answer,
           notes: notes[questionId] || '',
           question_type: 'multiple_choice' as QuestionType,
+          confidence_level: confidenceLevels[questionId] || 0.5,
         })
       );
 
@@ -143,6 +177,7 @@ const SlidesQuizPage: React.FC = () => {
           user_answer: answer,
           notes: notes[questionId] || '',
           question_type: 'short_answer' as QuestionType,
+          confidence_level: confidenceLevels[questionId] || 0.5,
         })
       );
 
@@ -308,6 +343,8 @@ const SlidesQuizPage: React.FC = () => {
                     }
                     userId={userData?.id || ''}
                     testId={testId}
+                    confidence={confidenceLevels[index.toString()] || 0.5}
+                    onUpdateConfidence={handleUpdateConfidence}
                   />
                 ))}
 
@@ -334,6 +371,8 @@ const SlidesQuizPage: React.FC = () => {
                     }
                     userId={userData?.id || ''}
                     testId={testId}
+                    confidence={confidenceLevels[`sa_${index}`] || 0.5}
+                    onUpdateConfidence={handleUpdateConfidence}
                   />
                 ))}
               </div>

@@ -590,6 +590,20 @@ const StudyGuidePage: React.FC = () => {
                 </h1>
                 <p className="mt-2 text-gray-600">Study Guide Content</p>
               </div>
+
+              {studyGuide?.study_guide_id && userId && (
+                <Link
+                  href={`/study-guide/${studyGuide.study_guide_id}/mastery`}
+                >
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
+                  >
+                    <BarChart className="h-4 w-4" />
+                    View Topic Mastery
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
 

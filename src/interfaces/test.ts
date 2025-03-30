@@ -184,3 +184,103 @@ export interface GuidePerformanceHistory {
   study_guide_id: string;
   test_results: PerformanceDataPoint[];
 }
+
+export interface TopicSubmission {
+  _id: string;
+  user_id: string;
+  topic_id: string;
+  accuracy_rate: number;
+  confidence_score: number;
+  last_interaction: string; // ISO date string
+  mastery_score: number;
+  question_exposure_count: number;
+  recency_weight: number;
+  questions: any[]; // Can be more specific if needed
+}
+
+export interface TopicSection {
+  section_title: string;
+  submissions: TopicSubmission[];
+}
+
+export interface MasteryStudyGuide {
+  study_guide_title: string;
+  study_guide_id: string;
+  sections: TopicSection[];
+}
+
+export interface TopicMasteryData {
+  message: string;
+  mastery_data: {
+    study_guides: MasteryStudyGuide[];
+  } | null;
+}
+
+// Type for the processed data used by the card
+export interface ProcessedTopicMastery {
+  studyGuideTitle: string;
+  studyGuideId: string;
+  chapterTitle: string;
+  sectionTitle: string;
+  masteryScore: number;
+  accuracy: number;
+  confidence: number;
+  recency: number;
+  questionCount: number;
+  lastInteraction: Date; // Use Date object
+}
+
+// Add the Raw types matching the backend response structure
+export interface RawTopicSubmission {
+  _id: string;
+  user_id: string;
+  topic_id: string;
+  accuracy_rate: number;
+  confidence_score: number;
+  last_interaction: string; // Date as string from backend
+  mastery_score: number;
+  question_exposure_count: number;
+  recency_weight: number;
+  questions: any[]; // Define more specifically if needed
+}
+
+export interface RawTopicSection {
+  section_title: string;
+  submissions: RawTopicSubmission[];
+}
+
+export interface RawTopicChapter {
+  chapter_title: string;
+  sections: RawTopicSection[];
+}
+
+export interface RawMasteryStudyGuide {
+  study_guide_title: string;
+  study_guide_id: string;
+  chapters: RawTopicChapter[];
+}
+
+export interface RawMasteryDataPayload {
+  study_guides: RawMasteryStudyGuide[];
+}
+
+export interface RawTopicMasteryResponse {
+  message: string;
+  mastery_data: RawMasteryDataPayload | null;
+}
+
+// Add the Processed types used for frontend grouping/display
+export interface ProcessedChapter {
+  sections: ProcessedTopicMastery[];
+}
+
+export interface ProcessedGuide {
+  title: string;
+  chapters: {
+    [chapterTitle: string]: ProcessedChapter;
+  };
+}
+
+export interface GroupedMasteryData {
+  [guideId: string]: ProcessedGuide;
+}

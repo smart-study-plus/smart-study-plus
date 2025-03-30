@@ -91,4 +91,33 @@ export const ENDPOINTS = {
     `${API_URL}/api/analytics/chat/${encodeURIComponent(userId)}`,
   updateHintAnalytics: (userId: string) =>
     `${API_URL}/api/analytics/hint/${encodeURIComponent(userId)}`,
+
+  // Topic mastery endpoints
+  topicMastery: (userId: string, studyGuideId?: string) =>
+    studyGuideId
+      ? `${API_URL}/api/mastery/${encodeURIComponent(userId)}?study_guide_id=${encodeURIComponent(studyGuideId)}`
+      : `${API_URL}/api/mastery/${encodeURIComponent(userId)}`,
+  topicSpecificMastery: (
+    userId: string,
+    studyGuideId: string,
+    topicId: string
+  ) =>
+    `${API_URL}/api/mastery/${encodeURIComponent(userId)}/${encodeURIComponent(studyGuideId)}/${encodeURIComponent(topicId)}`,
+  updateTopicMastery: `${API_URL}/api/mastery/update`,
+
+  // Add endpoint for generating adaptive tests
+  generateAdaptiveTest: `${API_URL}/api/mastery/generate-adaptive-test`,
+
+  // Add endpoint for listing existing adaptive tests
+  listAdaptiveTests: (userId: string, studyGuideId?: string) =>
+    studyGuideId
+      ? `${API_URL}/api/adaptive-tests/${encodeURIComponent(userId)}?study_guide_id=${encodeURIComponent(studyGuideId)}`
+      : `${API_URL}/api/adaptive-tests/${encodeURIComponent(userId)}`,
+
+  // Add endpoints for adaptive test submissions
+  submitAdaptiveTest: `${API_URL}/api/adaptive-tests/submit`,
+  listAdaptiveTestSubmissions: (userId: string, practiceTestId?: string) =>
+    practiceTestId
+      ? `${API_URL}/api/adaptive-tests/submissions/${encodeURIComponent(userId)}?practice_test_id=${encodeURIComponent(practiceTestId)}`
+      : `${API_URL}/api/adaptive-tests/submissions/${encodeURIComponent(userId)}`,
 };

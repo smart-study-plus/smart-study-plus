@@ -6,6 +6,7 @@ import { HintSection } from './HintSection';
 import { MathJax } from 'better-react-mathjax';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import ConfidenceSelector from './ConfidenceSelector';
 
 interface QuestionCardProps {
   questionNumber: number;
@@ -24,6 +25,8 @@ interface QuestionCardProps {
   onUpdateNote: (questionId: string, newNote: string) => void;
   userId: string;
   testId: string;
+  confidence?: number;
+  onUpdateConfidence?: (questionId: string, confidenceLevel: number) => void;
 }
 
 // Helper function to render with KaTeX
@@ -172,6 +175,8 @@ const QuestionCard = ({
   testId,
   note,
   onUpdateNote,
+  confidence = 0.6,
+  onUpdateConfidence,
 }: QuestionCardProps) => {
   const [showHint, setShowHint] = useState(false);
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -271,6 +276,15 @@ const QuestionCard = ({
               </button>
             ))}
         </div>
+
+        {/* Confidence Selector */}
+        {selectedAnswer && onUpdateConfidence && (
+          <ConfidenceSelector
+            questionId={question.question_id}
+            confidence={confidence}
+            onUpdateConfidence={onUpdateConfidence}
+          />
+        )}
       </div>
     </div>
   );

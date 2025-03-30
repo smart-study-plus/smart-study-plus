@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MathJax } from 'better-react-mathjax';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import ConfidenceSelector from './ConfidenceSelector';
 
 interface ShortAnswerQuestionProps {
   questionNumber: number;
@@ -21,6 +22,8 @@ interface ShortAnswerQuestionProps {
   onUpdateNote: (questionId: string, newNote: string) => void;
   userId: string;
   testId: string;
+  confidence?: number;
+  onUpdateConfidence?: (questionId: string, confidenceLevel: number) => void;
 }
 
 // Helper function to render with KaTeX
@@ -169,6 +172,8 @@ const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
   onUpdateNote,
   userId,
   testId,
+  confidence = 0.6,
+  onUpdateConfidence,
 }) => {
   const [showHint, setShowHint] = useState(false);
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -274,6 +279,15 @@ const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
             />
           </div>
         </div>
+
+        {/* Confidence Selector */}
+        {answerText && answerText.trim() !== '' && onUpdateConfidence && (
+          <ConfidenceSelector
+            questionId={question.question_id}
+            confidence={confidence}
+            onUpdateConfidence={onUpdateConfidence}
+          />
+        )}
       </div>
     </div>
   );
