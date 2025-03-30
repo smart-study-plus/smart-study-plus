@@ -392,6 +392,7 @@ const QuizResultsPage: React.FC = () => {
                       sourceText={question.source_text}
                       reference_part={question.reference_part}
                       feedback={question.feedback}
+                      confidenceLevel={question.confidence_level}
                     />
                   ))}
                 </div>

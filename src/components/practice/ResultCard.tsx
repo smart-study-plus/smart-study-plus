@@ -6,6 +6,7 @@ import {
   X,
   BookOpen,
   LightbulbIcon,
+  TrendingUp,
 } from 'lucide-react';
 import { AIChat } from './AIChat';
 import { MathJax } from 'better-react-mathjax';
@@ -28,6 +29,7 @@ interface ResultCardProps {
   sourceText?: string;
   reference_part?: string;
   feedback?: string;
+  confidenceLevel?: number;
 }
 
 // Helper function to render with KaTeX
@@ -195,6 +197,7 @@ export const ResultCard = ({
   sourceText,
   reference_part,
   feedback,
+  confidenceLevel,
 }: ResultCardProps) => {
   const [showChat, setShowChat] = useState(false);
 
@@ -256,6 +259,14 @@ export const ResultCard = ({
                     }`}
                   >
                     {renderTextWithLatex(displayUserAnswer)}
+                    {/* Display Confidence Level */}
+                    {confidenceLevel !== undefined &&
+                      confidenceLevel !== null && (
+                        <div className="mt-2 flex items-center text-sm text-gray-500">
+                          <TrendingUp className="w-4 h-4 mr-1 text-blue-500" />
+                          <span>Confidence: {confidenceLevel}</span>
+                        </div>
+                      )}
                   </p>
                 </div>
               </div>
