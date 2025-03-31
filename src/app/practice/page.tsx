@@ -87,6 +87,13 @@ const PracticePage: React.FC = () => {
       try {
         if (typeof window === 'undefined') return;
 
+        // Add a timeout to prevent indefinite loading
+        const fetchTimeout = setTimeout(() => {
+          console.log('Fetch timeout reached, stopping loading state');
+          setLoading(false);
+          setError('Loading took too long. Please try refreshing the page.');
+        }, 15000); // 15 second timeout
+
         const authUserId = await getUserId();
         if (!authUserId) throw new Error('User authentication required');
 
@@ -257,9 +264,16 @@ const PracticePage: React.FC = () => {
           })
         );
         setProgressMap(progressData);
+
+        // Clear the timeout once fetching is complete
+        clearTimeout(fetchTimeout);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching study guides:', error);
         setError(error instanceof Error ? error.message : 'An error occurred');
+        setLoading(false);
+      } finally {
+        // Ensure loading is set to false regardless of success or failure
         setLoading(false);
       }
     };
