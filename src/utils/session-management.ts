@@ -50,7 +50,7 @@ const handleInactiveSession = async () => {
     }
 
     // End the session in the backend
-    await fetch(ENDPOINTS.endSession(sessionId), {
+    await fetch(`${ENDPOINTS.endSession}?sessionId=${sessionId}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -146,7 +146,7 @@ export const endActiveSession = async () => {
       return;
     }
 
-    await fetch(ENDPOINTS.endSession(sessionId), {
+    await fetch(`${ENDPOINTS.endSession}?sessionId=${sessionId}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
