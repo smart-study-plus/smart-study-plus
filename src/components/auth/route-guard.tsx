@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { Loading } from '@/components/ui/loading';
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import * as Messages from '@/config/messages';
 
 interface RouteGuardProps {
   children: React.ReactNode;
@@ -47,11 +50,30 @@ export function RouteGuard({
   }, [requireAuth, router]);
 
   if (isAuthenticated === null) {
-    return <Loading size="lg" text="Checking authentication..." />;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+        <p className="mt-4 text-lg text-gray-600">Checking authentication...</p>
+      </div>
+    );
   }
 
   if (requireAuth && !isAuthenticated) {
-    return null;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
+          <p className="mb-8 text-gray-600">{Messages.USER_NOT_FOUND}</p>
+          <Link
+            href={`/auth?message=${encodeURIComponent(Messages.USER_NOT_FOUND)}`}
+          >
+            <Button className="bg-[var(--color-primary)] text-white">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!requireAuth && isAuthenticated) {

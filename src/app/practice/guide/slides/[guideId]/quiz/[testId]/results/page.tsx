@@ -185,10 +185,10 @@ const mathJaxConfig = {
   },
 };
 
-const QuizResultsPage: React.FC = () => {
+const SlidesQuizResultsPage: React.FC = () => {
   const params = useParams();
   const testId = typeof params.testId === 'string' ? params.testId : '';
-  const title = typeof params.title === 'string' ? params.title : '';
+  const guideId = typeof params.guideId === 'string' ? params.guideId : '';
   const router = useRouter();
 
   const [results, setResults] = useState<QuizResults | null>(null);
@@ -231,7 +231,7 @@ const QuizResultsPage: React.FC = () => {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link
-            href={`/practice/guide/${decodeURIComponent(title)}`}
+            href={`/practice/guide/slides/${encodeURIComponent(guideId)}`}
             className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -246,7 +246,21 @@ const QuizResultsPage: React.FC = () => {
           </div>
 
           {loading ? (
-            <Loading size="lg" text="Loading results..." />
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative w-20 h-20 mb-4">
+                <div className="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-t-purple-600 rounded-full animate-spin"></div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Loading Results
+                </h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  We&apos;re preparing your quiz results and feedback. This
+                  should only take a moment...
+                </p>
+              </div>
+            </div>
           ) : error ? (
             <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
               <p className="text-base text-red-500">Error: {error}</p>
@@ -265,7 +279,7 @@ const QuizResultsPage: React.FC = () => {
                   <Card
                     className={cn(
                       'bg-white shadow-lg hover:shadow-xl transition-all duration-300',
-                      'border-l-4 border-l-[var(--color-primary)]'
+                      'border-l-4 border-l-blue-500'
                     )}
                   >
                     <CardContent className="p-6">
@@ -273,7 +287,7 @@ const QuizResultsPage: React.FC = () => {
                         <h3 className="text-lg font-semibold text-gray-700">
                           Score
                         </h3>
-                        <Trophy className="h-6 w-6 text-[var(--color-primary)]" />
+                        <Trophy className="h-6 w-6 text-blue-500" />
                       </div>
                       <div className="flex items-baseline">
                         <span className="text-4xl font-bold text-gray-900">
@@ -405,4 +419,4 @@ const QuizResultsPage: React.FC = () => {
   );
 };
 
-export default QuizResultsPage;
+export default SlidesQuizResultsPage;

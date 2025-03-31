@@ -1,26 +1,23 @@
-'use client';
-
 import React, { useState } from 'react';
 import { BookOpen, Pencil } from 'lucide-react';
 import { HintSection } from './HintSection';
+import { Textarea } from '@/components/ui/textarea';
 import { MathJax } from 'better-react-mathjax';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import ConfidenceSelector from './ConfidenceSelector';
 
-interface QuestionCardProps {
+interface ShortAnswerQuestionProps {
   questionNumber: number;
   question: {
     question_id: string;
     question_text: string;
-    options: Record<string, string>;
-    correct_answer: string;
-    explanation: string;
+    ideal_answer: string;
     source_page?: number;
     source_text?: string;
   };
-  onSelectAnswer: (questionId: string, answer: string) => void;
-  selectedAnswer?: string;
+  onAnswerChange: (questionId: string, text: string) => void;
+  answerText: string;
   note: string;
   onUpdateNote: (questionId: string, newNote: string) => void;
   userId: string;
@@ -166,20 +163,24 @@ const renderTextWithLatex = (text: string) => {
   });
 };
 
-const QuestionCard = ({
+const ShortAnswerQuestionCard: React.FC<ShortAnswerQuestionProps> = ({
   questionNumber,
   question,
-  onSelectAnswer,
-  selectedAnswer,
-  userId,
-  testId,
+  onAnswerChange,
+  answerText,
   note,
   onUpdateNote,
+  userId,
+  testId,
   confidence = 0.6,
   onUpdateConfidence,
-}: QuestionCardProps) => {
+}) => {
   const [showHint, setShowHint] = useState(false);
   const [showNoteInput, setShowNoteInput] = useState(false);
+
+  const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onAnswerChange(question.question_id, e.target.value);
+  };
 
   return (
     <div className="bg-[var(--color-background)] rounded-xl p-8 shadow-lg border-2 border-gray-300">
@@ -260,25 +261,27 @@ const QuestionCard = ({
         )}
 
         <div className="ml-10 space-y-4">
-          {question?.options &&
-            Object.entries(question.options ?? {}).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => onSelectAnswer(question.question_id, key)}
-                className={`w-full text-left p-5 rounded-lg text-lg transition-colors border-2 ${
-                  selectedAnswer === key
-                    ? 'border-2 border-gray-400 bg-gray-200 text-gray-900'
-                    : 'border-[var(--color-gray-200)] hover:border-gray-400 hover:bg-[var(--color-background-alt)]'
-                }`}
-              >
-                <span className="text-xl font-medium mr-3">{key}.</span>
-                {renderTextWithLatex(value)}
-              </button>
-            ))}
+          <div className="w-full">
+            <h4 className="text-lg font-medium mb-2 text-[var(--color-text)]">
+              Your Answer:
+            </h4>
+            <Textarea
+              className="w-full p-4 text-lg rounded-lg border border-[var(--color-gray-200)] focus:border-[var(--color-primary)] focus:outline-none min-h-[120px]"
+              placeholder="Type your answer here..."
+              value={answerText || ''}
+              onChange={handleAnswerChange}
+              onBlur={(e) => {
+                // Ensure the answer is saved even on blur to prevent data loss
+                if (e.target.value && e.target.value.trim() !== '') {
+                  onAnswerChange(question.question_id, e.target.value);
+                }
+              }}
+            />
+          </div>
         </div>
 
         {/* Confidence Selector */}
-        {selectedAnswer && onUpdateConfidence && (
+        {answerText && answerText.trim() !== '' && onUpdateConfidence && (
           <ConfidenceSelector
             questionId={question.question_id}
             confidence={confidence}
@@ -290,4 +293,4 @@ const QuestionCard = ({
   );
 };
 
-export default QuestionCard;
+export default ShortAnswerQuestionCard;
