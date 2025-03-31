@@ -173,7 +173,7 @@ export interface TestSubmission {
   time_taken: number;
   submitted_at: string | Date; // Allow both string and Date
   status: string;
-  wrong_questions?: any[]; // Define more specifically if needed
+  wrong_questions?: WrongQuestion[]; // Define more specifically if needed
   section_title?: string;
   chapter_title?: string;
   is_existing_submission?: boolean; // Flag added in the backend response
@@ -224,7 +224,7 @@ export interface TopicSubmission {
   mastery_score: number;
   question_exposure_count: number;
   recency_weight: number;
-  questions: any[]; // Can be more specific if needed
+  questions: QuizQuestion[]; // Use QuizQuestion instead of any[]
 }
 
 export interface TopicSection {
@@ -270,7 +270,7 @@ export interface RawTopicSubmission {
   mastery_score: number;
   question_exposure_count: number;
   recency_weight: number;
-  questions: any[]; // Define more specifically if needed
+  questions: QuizQuestion[]; // Define more specifically using existing QuizQuestion type
 }
 
 export interface RawTopicSection {

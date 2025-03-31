@@ -200,7 +200,26 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-// Extended interface definitions to fix TypeScript errors
+interface QuizChoice {
+  question: string;
+  choices: Record<string, string>;
+  correct: string;
+  explanation: string;
+}
+
+interface ShortAnswer {
+  question: string;
+  ideal_answer: string;
+}
+
+interface SectionQuiz {
+  concept: string;
+  quizzes: {
+    multiple_choice: QuizChoice[];
+    short_answer: ShortAnswer[];
+  };
+}
+
 interface ExtendedSubmissionResult extends SubmissionResult {
   user_id: string;
   test_id: string;
@@ -211,7 +230,7 @@ interface ExtendedSubmissionResult extends SubmissionResult {
   total_questions: number;
   time_taken: number;
   status: string;
-  questions: any[];
+  questions: QuizQuestion[];
   multiple_choice_count: number;
   short_answer_count: number;
   short_answer_correct: number;
@@ -225,12 +244,53 @@ interface ExtendedStudyGuideResponse extends StudyGuideResponse {
     sections: Array<{
       title: string;
       key_concepts?: string[];
-      quizzes?: any[];
+      quizzes?: SectionQuiz[];
       completed?: boolean;
       source_pages?: string[];
       source_texts?: string[];
     }>;
   }>;
+}
+
+// Define interfaces for submission payloads
+interface AdaptiveTestSubmissionPayload {
+  user_id: string;
+  practice_test_id: string;
+  study_guide_id: string;
+  chapter_title: string;
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  time_taken: number;
+  questions: Array<{
+    question_id: string;
+    question: string;
+    question_type?: QuestionType | string;
+    user_answer?: string;
+    user_answer_text?: string;
+    correct_answer?: string;
+    is_correct: boolean;
+    choices?: Record<string, string> | undefined;
+  }>;
+}
+
+interface StandardTestSubmissionPayload {
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  started_at: string;
+  answers: Array<{
+    question_id: string;
+    user_answer?: string;
+    user_answer_text?: string;
+    notes?: string;
+    question_type?: QuestionType | string;
+    confidence_level?: number;
+    topic_id?: string;
+    topic_name?: string;
+  }>;
+  section_title: string;
+  chapter_title: string;
 }
 
 const QuizPage: React.FC = () => {
@@ -471,7 +531,9 @@ const QuizPage: React.FC = () => {
           ? ENDPOINTS.submitAdaptiveTest
           : ENDPOINTS.submitTest;
 
-      let submissionPayload: any;
+      let submissionPayload:
+        | AdaptiveTestSubmissionPayload
+        | StandardTestSubmissionPayload;
 
       if (testType === 'adaptive') {
         // Payload for /adaptive-tests/submit (AdaptiveTestSubmissionRequest)
@@ -607,7 +669,7 @@ const QuizPage: React.FC = () => {
           `/practice/guide/${encodeURIComponent(title)}/quiz/${testId}/results?submission=${standardResult.submission_id}`
         );
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error in handleSubmit:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit quiz');
       toast.error(
@@ -723,8 +785,8 @@ const QuizPage: React.FC = () => {
                     Loading Quiz
                   </h3>
                   <p className="text-gray-500 max-w-md mx-auto">
-                    We're preparing your quiz questions. This should only take a
-                    moment...
+                    We&apos;re preparing your quiz questions. This should only
+                    take a moment...
                   </p>
                 </div>
               </div>

@@ -30,7 +30,21 @@ interface RawTopicSubmission {
   mastery_score: number;
   question_exposure_count: number;
   recency_weight: number;
-  questions: any[]; // Define more specifically if needed
+  questions: QuestionData[]; // Define more specifically
+}
+
+interface QuestionData {
+  question_id: string;
+  question: string;
+  question_type: string;
+  user_answer?: string;
+  user_answer_text?: string;
+  correct_answer: string;
+  is_correct: boolean;
+  notes?: string;
+  confidence_level?: number;
+  topic_id?: string;
+  topic_name?: string;
 }
 
 interface RawTopicSection {
@@ -121,8 +135,8 @@ interface AdaptiveTestSubmissionQuestion {
   question_id?: string;
   question: string;
   question_type: string;
-  user_answer: any;
-  correct_answer: any;
+  user_answer: string; // Changed from any to string
+  correct_answer: string; // Changed from any to string
   is_correct: boolean;
   choices?: { [key: string]: string };
 }
@@ -387,11 +401,13 @@ export default function AdaptiveTestPage() {
       router.push(
         `/practice/guide/${encodeURIComponent(guideTitle)}/quiz/${testId}`
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error generating adaptive test:', error);
-      toast.error(`Error: ${error.message || 'Could not generate test'}`);
+      toast.error(
+        `Failed to generate adaptive test: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     } finally {
-      setGeneratingChapterId(null); // Reset loading state for the chapter
+      setGeneratingChapterId(null);
     }
   };
 

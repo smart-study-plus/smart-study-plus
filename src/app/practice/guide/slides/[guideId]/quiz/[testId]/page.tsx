@@ -37,6 +37,53 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Helper type for Slider props
+interface SliderProps {
+  onClick: () => void;
+  className?: string;
+}
+
+// Define interfaces for submission payloads
+interface AdaptiveTestSubmissionPayload {
+  user_id: string;
+  practice_test_id: string;
+  study_guide_id: string;
+  chapter_title: string;
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  time_taken: number;
+  questions: Array<{
+    question_id: string;
+    question: string;
+    question_type?: QuestionType | string;
+    user_answer?: string;
+    user_answer_text?: string;
+    correct_answer?: string;
+    is_correct: boolean;
+    choices?: Record<string, string> | undefined;
+  }>;
+}
+
+interface StandardTestSubmissionPayload {
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  started_at: string;
+  answers: Array<{
+    question_id: string;
+    user_answer?: string;
+    user_answer_text?: string;
+    notes?: string;
+    question_type?: QuestionType | string;
+    confidence_level?: number;
+    topic_id?: string;
+    topic_name?: string;
+  }>;
+  section_title: string;
+  chapter_title: string;
+}
+
 const SlidesQuizPage: React.FC = () => {
   const params = useParams();
   const testId = typeof params.testId === 'string' ? params.testId : '';
@@ -234,7 +281,9 @@ const SlidesQuizPage: React.FC = () => {
           ? ENDPOINTS.submitAdaptiveTest
           : ENDPOINTS.submitTest;
 
-      let submissionPayload: any;
+      let submissionPayload:
+        | AdaptiveTestSubmissionPayload
+        | StandardTestSubmissionPayload;
 
       if (testType === 'adaptive') {
         // Payload for /adaptive-tests/submit (AdaptiveTestSubmissionRequest)
@@ -353,7 +402,7 @@ const SlidesQuizPage: React.FC = () => {
           `/practice/guide/slides/${encodeURIComponent(guideId)}/quiz/${testId}/results?submission=${result.submission_id}`
         );
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error in handleSubmit (slides):', err);
       setError(err instanceof Error ? err.message : 'Failed to submit quiz');
       toast.error(
@@ -390,6 +439,17 @@ const SlidesQuizPage: React.FC = () => {
       }
     };
   }, []);
+
+  // Custom arrows for the slider
+  const PrevArrow = (props: SliderProps) => {
+    const { onClick } = props;
+    // ... existing code ...
+  };
+
+  const NextArrow = (props: SliderProps) => {
+    const { onClick } = props;
+    // ... existing code ...
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
@@ -468,8 +528,8 @@ const SlidesQuizPage: React.FC = () => {
                   Loading Quiz
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  We're preparing your quiz questions. This should only take a
-                  moment...
+                  We&apos;re preparing your quiz questions. This should only
+                  take a moment...
                 </p>
               </div>
             </div>

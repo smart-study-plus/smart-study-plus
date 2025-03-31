@@ -108,8 +108,8 @@ interface AdaptiveTestSubmissionQuestion {
   question_id?: string;
   question: string;
   question_type: string;
-  user_answer: any;
-  correct_answer: any;
+  user_answer: string;
+  correct_answer: string;
   is_correct: boolean;
   choices?: { [key: string]: string };
 }

@@ -256,8 +256,8 @@ const SlidesQuizResultsPage: React.FC = () => {
                   Loading Results
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  We're preparing your quiz results and feedback. This should
-                  only take a moment...
+                  We&apos;re preparing your quiz results and feedback. This
+                  should only take a moment...
                 </p>
               </div>
             </div>

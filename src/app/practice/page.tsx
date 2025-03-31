@@ -55,6 +55,21 @@ const item = {
   },
 };
 
+// Improved type for analytics guide data
+interface AnalyticsGuideData {
+  study_guide_id: string;
+  study_guide_title?: string;
+  guide_type?: string;
+  average_accuracy?: number;
+  total_tests?: number;
+}
+
+// Create a type for the arrow props
+interface ArrowProps {
+  onClick?: () => void;
+  className?: string;
+}
+
 const PracticePage: React.FC = () => {
   const [studyGuides, setStudyGuides] = useState<StudyGuide[]>([]);
   const [slidesGuides, setSlidesGuides] = useState<SlidesGuideListItem[]>([]);
@@ -127,7 +142,7 @@ const PracticePage: React.FC = () => {
         );
         const analyticsSet = new Set<string>();
         const slidesGuidesFromAnalytics: SlidesGuideListItem[] = [];
-        let analyticsData: any = {};
+        let analyticsData: { study_guides?: AnalyticsGuideData[] } = {};
 
         if (analyticsResponse.ok) {
           analyticsData = await analyticsResponse.json();
@@ -135,7 +150,7 @@ const PracticePage: React.FC = () => {
             analyticsData.study_guides &&
             analyticsData.study_guides.length > 0
           ) {
-            analyticsData.study_guides.forEach((guide: any) => {
+            analyticsData.study_guides.forEach((guide: AnalyticsGuideData) => {
               analyticsSet.add(guide.study_guide_id);
 
               // If this is a slides guide, and we don't already have it from the slides endpoint
@@ -203,11 +218,11 @@ const PracticePage: React.FC = () => {
                       ? (guideCompletedTests / totalTests) * 100
                       : 0;
                 }
-              } else if ((guide as any).fromAnalytics) {
+              } else if ((guide as SlidesGuideListItem).fromAnalytics) {
                 // For guides from analytics without test data, use analytics info to show some progress
                 const guideId = guide._id;
                 const guideAnalytics = analyticsData.study_guides?.find(
-                  (g: any) => g.study_guide_id === guideId
+                  (g: AnalyticsGuideData) => g.study_guide_id === guideId
                 );
 
                 if (guideAnalytics) {
@@ -242,11 +257,9 @@ const PracticePage: React.FC = () => {
           })
         );
         setProgressMap(progressData);
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'An error occurred';
-        setError(errorMessage);
-      } finally {
+      } catch (error) {
+        console.error('Error fetching study guides:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred');
         setLoading(false);
       }
     };
@@ -277,7 +290,7 @@ const PracticePage: React.FC = () => {
   };
 
   // Custom arrows for the slider
-  const PrevArrow = (props: any) => {
+  const PrevArrow = (props: ArrowProps) => {
     const { onClick } = props;
     return (
       <button
@@ -290,7 +303,7 @@ const PracticePage: React.FC = () => {
     );
   };
 
-  const NextArrow = (props: any) => {
+  const NextArrow = (props: ArrowProps) => {
     const { onClick } = props;
     return (
       <button
@@ -351,26 +364,28 @@ const PracticePage: React.FC = () => {
 
   // Function to render a guide card
   const renderGuideCard = (
-    guide: StudyGuide,
+    guide: StudyGuide | SlidesGuideListItem,
     index: number,
     isSlideGuide = false
   ) => {
-    const guideId = isSlideGuide ? (guide as any)._id : guide.title;
+    const guideId = isSlideGuide
+      ? (guide as SlidesGuideListItem)._id
+      : (guide as StudyGuide).title;
     const progressValue = isSlideGuide
       ? slidesProgressMap[guideId]
       : progressMap[guideId];
     const guideTitle = isSlideGuide
-      ? (guide as any).title || `Slides Guide ${index + 1}`
-      : guide.title.replace(/_/g, ' ');
+      ? (guide as SlidesGuideListItem).title || `Slides Guide ${index + 1}`
+      : (guide as StudyGuide).title.replace(/_/g, ' ');
 
     const handleClick = isSlideGuide
-      ? () => handleSlidesCardClick((guide as any)._id)
-      : () => handleCardClick(guide.title);
+      ? () => handleSlidesCardClick((guide as SlidesGuideListItem)._id)
+      : () => handleCardClick((guide as StudyGuide).title);
 
     // Check if this guide has analytics (keep functionality but don't show badge)
     const hasAnalytics = isSlideGuide
-      ? guidesWithAnalytics.has((guide as any)._id)
-      : guidesWithAnalytics.has(guide.id);
+      ? guidesWithAnalytics.has((guide as SlidesGuideListItem)._id)
+      : guidesWithAnalytics.has((guide as StudyGuide).id);
 
     return (
       <div key={isSlideGuide ? `slide-${index}` : index} className="px-2 py-3">
@@ -503,7 +518,7 @@ const PracticePage: React.FC = () => {
                 <div className="relative px-16">
                   <Slider {...sliderSettings} className="carousel-grid">
                     {slidesGuides.map((guide, index) =>
-                      renderGuideCard(guide as any, index, true)
+                      renderGuideCard(guide, index, true)
                     )}
                   </Slider>
                 </div>
