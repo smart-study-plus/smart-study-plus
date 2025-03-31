@@ -139,6 +139,16 @@ const StudyGuidePage: React.FC = () => {
     fetcher
   );
 
+  // Fetch guide analytics to check if this guide has stats
+  const { data: guideAnalytics } = useSWR(
+    userId && studyGuide?.study_guide_id
+      ? ENDPOINTS.guideAnalytics(userId, studyGuide.study_guide_id)
+      : null,
+    fetcher
+  );
+
+  const hasAnalytics = guideAnalytics && guideAnalytics.total_tests > 0;
+
   const { data: testsData, error: testsError } = useSWR(
     title ? ENDPOINTS.practiceTests(title) : null,
     fetcher
@@ -582,25 +592,39 @@ const StudyGuidePage: React.FC = () => {
               Back to Practice
             </Link>
 
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {studyGuide?.title ||
-                    decodeURIComponent(title).replace(/_/g, ' ')}
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  {studyGuide?.title.replace(/_/g, ' ')}
+                  {hasAnalytics && (
+                    <span className="ml-2 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full flex items-center">
+                      <BarChart className="h-4 w-4 mr-1" />
+                      Analytics Available
+                    </span>
+                  )}
                 </h1>
                 <p className="mt-2 text-gray-600">Study Guide Content</p>
               </div>
 
               {studyGuide?.study_guide_id && userId && (
                 <Link
-                  href={`/study-guide/${studyGuide.study_guide_id}/mastery`}
+                  href={`/dashboard?guide=${studyGuide.study_guide_id}`}
+                  className={
+                    !hasAnalytics ? 'pointer-events-none opacity-50' : ''
+                  }
                 >
                   <Button
                     variant="outline"
                     className="flex items-center gap-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
+                    disabled={!hasAnalytics}
+                    title={
+                      !hasAnalytics
+                        ? 'Take a quiz first to enable analytics'
+                        : 'View guide analytics'
+                    }
                   >
                     <BarChart className="h-4 w-4" />
-                    View Topic Mastery
+                    {hasAnalytics ? 'View Analytics' : 'No Analytics Yet'}
                   </Button>
                 </Link>
               )}
@@ -877,6 +901,71 @@ const StudyGuidePage: React.FC = () => {
                             }}
                           ></div>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Analytics info section */}
+                    {hasAnalytics && guideAnalytics && (
+                      <div className="pt-2 mt-3 border-t border-dashed border-gray-200">
+                        <p className="text-sm font-medium text-green-700 mb-3">
+                          Analytics Available
+                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              Tests Taken
+                            </p>
+                            <p className="font-medium">
+                              {guideAnalytics.total_tests}
+                            </p>
+                          </div>
+
+                          {guideAnalytics.average_accuracy !== undefined && (
+                            <div>
+                              <p className="text-sm text-gray-600 mb-1">
+                                Average Accuracy
+                              </p>
+                              <p className="font-medium">
+                                {guideAnalytics.average_accuracy.toFixed(0)}%
+                              </p>
+                            </div>
+                          )}
+
+                          {guideAnalytics.average_score !== undefined && (
+                            <div>
+                              <p className="text-sm text-gray-600 mb-1">
+                                Average Score
+                              </p>
+                              <p className="font-medium">
+                                {guideAnalytics.average_score.toFixed(1)} points
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="mt-3">
+                            <Link
+                              href={`/dashboard?guide=${studyGuide?.study_guide_id}`}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-xs flex items-center gap-1 bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
+                              >
+                                <BarChart className="h-3 w-3" />
+                                View Detailed Analytics
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!hasAnalytics && (
+                      <div className="pt-2 mt-3 border-t border-dashed border-gray-200">
+                        <p className="text-sm text-gray-600 mb-2">Analytics</p>
+                        <p className="text-sm text-amber-700">
+                          Take a quiz to generate analytics
+                        </p>
                       </div>
                     )}
                   </div>

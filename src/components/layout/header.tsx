@@ -4,7 +4,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -12,62 +12,35 @@ import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
 import { ENDPOINTS } from '@/config/urls';
+import { endActiveSession } from '@/utils/session-management';
 
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [prevPathname, setPrevPathname] = useState('');
+
+  // Track navigation state
+  useEffect(() => {
+    if (prevPathname !== pathname) {
+      setIsNavigating(false);
+      setPrevPathname(pathname);
+    }
+  }, [pathname, prevPathname]);
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+
+      // Use our utility function to end the active session
+      await endActiveSession();
+
+      // Sign out from Supabase
       const supabase = createClient();
-      const session_id = localStorage.getItem('session_id');
-
-      if (session_id) {
-        try {
-          const token = (await supabase.auth.getSession()).data.session
-            ?.access_token;
-
-          console.log('Ending session:', session_id);
-
-          try {
-            // Get current user data
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData?.user?.id;
-
-            const response = await fetch(ENDPOINTS.endSession, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                session_id,
-                user_id: userId, // Use the retrieved userId
-              }),
-            });
-
-            if (response.ok) {
-              console.log('Session ended successfully');
-            } else {
-              console.error('Failed to end session:', await response.text());
-            }
-          } catch (error) {
-            console.error('Error ending session:', error);
-          } finally {
-            // Always clear the session_id from localStorage
-            localStorage.removeItem('session_id');
-          }
-        } catch (error) {
-          console.error('Error getting auth token:', error);
-          // Still clear session_id if we can't get the token
-          localStorage.removeItem('session_id');
-        }
-      }
-
       await supabase.auth.signOut();
+
       router.push('/');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -80,7 +53,14 @@ export function Header() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+    setIsNavigating(true);
     router.push(session ? '/dashboard' : '/');
+  };
+
+  const handleNavLinkClick = (href: string) => {
+    if (href !== pathname) {
+      setIsNavigating(true);
+    }
   };
 
   const navItems = [
@@ -112,6 +92,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-white shadow-sm">
+      {isNavigating && (
+        <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-primary)]">
+          <div className="h-full bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse"></div>
+        </div>
+      )}
       <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div
@@ -128,6 +113,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => handleNavLinkClick(item.href)}
                 className={cn(
                   'text-base font-medium transition-colors hover:text-[var(--color-text)]',
                   isActiveRoute(item.pattern)

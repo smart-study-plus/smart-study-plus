@@ -49,6 +49,12 @@ export interface Quiz {
   section_title: string;
   questions: Question[];
   short_answer?: ShortAnswerQuestion[];
+  test_type?: 'standard' | 'adaptive';
+  chapter_title?: string;
+  practice_test_id?: string;
+  study_guide_id?: string;
+  study_guide_title?: string;
+  guide_type?: 'standard' | 'slides';
 }
 
 export interface CompletedTest {
@@ -148,6 +154,29 @@ export interface TestAnalytics {
   recent_wrong_questions: WrongQuestion[];
   weekly_progress: WeeklyProgress[];
   latest_test: LatestTest;
+}
+
+export interface TestSubmission {
+  _id?: string; // Or ObjectId depending on how you fetch/use it
+  submission_id?: string;
+  user_id: string;
+  test_id: string;
+  study_guide_id: string;
+  study_guide_title?: string;
+  questions: QuizQuestion[]; // Re-use QuizQuestion which is comprehensive
+  score: number;
+  accuracy: number;
+  total_questions: number;
+  multiple_choice_count?: number;
+  short_answer_count?: number;
+  short_answer_correct?: number;
+  time_taken: number;
+  submitted_at: string | Date; // Allow both string and Date
+  status: string;
+  wrong_questions?: any[]; // Define more specifically if needed
+  section_title?: string;
+  chapter_title?: string;
+  is_existing_submission?: boolean; // Flag added in the backend response
 }
 
 export interface GuideAnalytics {

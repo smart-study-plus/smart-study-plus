@@ -105,15 +105,27 @@ const ConfidenceSelector: React.FC<ConfidenceSelectorProps> = ({
         <div className="absolute inset-y-0 left-4/5 right-0 h-1 top-5 bg-green-400 rounded-r-full"></div>
 
         {/* Confidence level indicator */}
-        {confidence > 0 && (
-          <div
-            className="absolute h-3 w-3 top-4 bg-white border-2 border-gray-400 rounded-full shadow-md transition-all duration-300"
-            style={{
-              left: `${confidenceLevels.findIndex((level) => level.value === confidence) * 25 + 12.5}%`,
-              transform: 'translateX(-50%)',
-            }}
-          ></div>
-        )}
+        {confidence > 0 &&
+          (() => {
+            // Use IIFE to calculate position
+            const selectedIndex = confidenceLevels.findIndex(
+              (level) => level.value === confidence
+            );
+            // Calculate percentage based on index (0%, 25%, 50%, 75%, 100%)
+            const leftPercentage =
+              selectedIndex >= 0
+                ? (selectedIndex / (confidenceLevels.length - 1)) * 100
+                : 0;
+            return (
+              <div
+                className="absolute h-3 w-3 top-4 bg-white border-2 border-gray-400 rounded-full shadow-md transition-all duration-300"
+                style={{
+                  left: `${leftPercentage}%`, // Use calculated percentage
+                  transform: 'translateX(-50%)',
+                }}
+              ></div>
+            );
+          })()}
 
         {/* Confidence buttons */}
         <div className="relative flex justify-between">

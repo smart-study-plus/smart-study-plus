@@ -175,8 +175,20 @@ export function GuideStats({
         <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
         <p className="text-lg">{Messages.NO_DATA_AVAILABLE}</p>
         <p className="text-sm text-gray-500 mt-1">
-          Select a study guide to view detailed analytics
+          {allGuideAnalytics.length > 0
+            ? 'Select a study guide to view detailed analytics'
+            : 'Take a quiz in any study guide to see analytics here'}
         </p>
+
+        {allGuideAnalytics.length === 0 && (
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => (window.location.href = '/practice')}
+          >
+            Go to Practice
+          </Button>
+        )}
       </div>
     );
   }
@@ -226,18 +238,28 @@ export function GuideStats({
                         }
                       }}
                     >
-                      <p className="font-medium">
+                      <p className="font-medium flex items-center">
                         {analytics.study_guide_title ||
                           (selectedGuide &&
                           analytics.study_guide_id === selectedGuide.id
                             ? selectedGuide.title
                             : `Guide ${analytics.study_guide_id}`)}
+                        {analytics.guide_type === 'slides' && (
+                          <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            Slides
+                          </span>
+                        )}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Target className="h-4 w-4 text-yellow-500" />
                         <span className="text-sm">
                           Tests: {analytics.total_tests}
                         </span>
+                        {analytics.average_accuracy !== undefined && (
+                          <span className="text-sm ml-2">
+                            Accuracy: {analytics.average_accuracy.toFixed(0)}%
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -677,7 +699,7 @@ export function GuideStats({
           href={
             guideAnalytics?.guide_type === 'slides'
               ? `/practice/guide/slides/${encodeURIComponent(selectedGuide.id)}`
-              : `/practice/guide/${encodeURIComponent(selectedGuide.title)}`
+              : `/practice/guide/${encodeURIComponent(selectedGuide.title || selectedGuide.id)}`
           }
         >
           <Button
@@ -693,7 +715,7 @@ export function GuideStats({
                 `Navigating to: ${
                   guideAnalytics?.guide_type === 'slides'
                     ? `/practice/guide/slides/${selectedGuide.id}`
-                    : `/practice/guide/${selectedGuide.title}`
+                    : `/practice/guide/${selectedGuide.title || selectedGuide.id}`
                 }`
               );
             }}

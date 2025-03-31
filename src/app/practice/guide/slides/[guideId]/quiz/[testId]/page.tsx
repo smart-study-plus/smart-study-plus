@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import QuestionCard from '@/components/practice/card-question';
 import ShortAnswerQuestionCard from '@/components/practice/card-short-answer-question';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { ENDPOINTS } from '@/config/urls';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
@@ -19,7 +19,10 @@ import {
   SubmissionResult,
   ShortAnswerQuestion,
   QuestionType,
+  QuizQuestion,
 } from '@/interfaces/test';
+import { toast } from 'sonner';
+import { initSessionActivity } from '@/utils/session-management';
 
 // Fetcher for authenticated requests
 const fetcher = async (url: string) => {
@@ -150,73 +153,212 @@ const SlidesQuizPage: React.FC = () => {
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!userData?.id || !testId || !slidesGuideData || !guideId || !startTime)
+    if (
+      !userData?.id ||
+      !testId ||
+      !slidesGuideData ||
+      !guideId ||
+      !startTime ||
+      !quiz
+    )
       return;
 
     try {
       setSubmitting(true);
+      // Show a detailed submission toast
+      toast.info('Submitting and evaluating your test answers...', {
+        duration: 3000,
+      });
+
       const studyGuideId = slidesGuideData._id;
       if (!studyGuideId) throw new Error('Study guide ID not found');
 
-      // Format multiple choice answers
-      const multipleChoiceAnswers = Object.entries(selectedAnswers).map(
-        ([questionId, answer]) => ({
-          question_id: questionId,
-          user_answer: answer,
-          notes: notes[questionId] || '',
-          question_type: 'multiple_choice' as QuestionType,
-          confidence_level: confidenceLevels[questionId] || 0.5,
-        })
-      );
+      const sectionTitle = quiz.section_title || '';
+      const chapterTitle = quiz.chapter_title || 'All Topics';
 
-      // Format short answer responses
-      const shortAnswerResponses = Object.entries(shortAnswers).map(
-        ([questionId, answer]) => ({
+      // Format multiple choice answers (explicitly type as QuizQuestion)
+      const multipleChoiceAnswers: QuizQuestion[] = Object.entries(
+        selectedAnswers
+      ).map(([questionId, answer]) => {
+        const question =
+          processedQuestions.multipleChoice[parseInt(questionId)];
+        const isCorrect = answer === question?.correct;
+        return {
           question_id: questionId,
+          question: question?.question || '',
+          user_answer: answer,
+          correct_answer: question?.correct,
+          is_correct: isCorrect,
+          explanation: question?.explanation || '',
+          notes: notes[questionId] || '',
+          choices: question?.choices || {},
+          question_type: 'multiple_choice',
+          confidence_level: confidenceLevels[questionId] || 0.5,
+          topic_id: sectionTitle,
+          topic_name: sectionTitle || 'General',
+        };
+      });
+
+      // Format short answer responses (explicitly type as QuizQuestion)
+      const shortAnswerResponses: QuizQuestion[] = Object.entries(
+        shortAnswers
+      ).map(([questionId, answer]) => {
+        const index = parseInt(questionId.replace('sa_', ''));
+        const question = processedQuestions.shortAnswer[index];
+        return {
+          question_id: questionId,
+          question: question?.question || '',
           user_answer_text: answer,
           user_answer: answer,
+          correct_answer: question?.ideal_answer,
+          ideal_answer: question?.ideal_answer,
+          is_correct: false,
           notes: notes[questionId] || '',
-          question_type: 'short_answer' as QuestionType,
+          question_type: 'short_answer',
           confidence_level: confidenceLevels[questionId] || 0.5,
-        })
-      );
+          topic_id: sectionTitle,
+          topic_name: sectionTitle || 'General',
+        };
+      });
 
       // Combine all answers
-      const formattedAnswers = [
+      const formattedAnswers: QuizQuestion[] = [
         ...multipleChoiceAnswers,
         ...shortAnswerResponses,
       ];
 
-      const submissionData = {
-        user_id: userData.id,
-        test_id: testId,
-        study_guide_id: studyGuideId,
-        started_at: new Date(startTime * 1000).toISOString(),
-        answers: formattedAnswers,
-      };
+      // Determine test type and endpoint
+      const testType = quiz.test_type || 'standard';
+      const submitEndpoint =
+        testType === 'adaptive'
+          ? ENDPOINTS.submitAdaptiveTest
+          : ENDPOINTS.submitTest;
 
-      console.log('Submitting quiz:', JSON.stringify(submissionData));
+      let submissionPayload: any;
 
-      const response = await fetch(ENDPOINTS.submitTest, {
+      if (testType === 'adaptive') {
+        // Payload for /adaptive-tests/submit (AdaptiveTestSubmissionRequest)
+        let adaptiveCorrectCount = 0;
+        formattedAnswers.forEach((ans) => {
+          if (ans.question_type === 'multiple_choice' && ans.is_correct) {
+            adaptiveCorrectCount++;
+          }
+        });
+        const adaptiveAccuracy =
+          totalQuestions > 0
+            ? (adaptiveCorrectCount / totalQuestions) * 100
+            : 0;
+        const endTime = Math.floor(Date.now() / 1000);
+        const timeTaken = endTime - startTime;
+
+        submissionPayload = {
+          user_id: userData.id,
+          practice_test_id: testId,
+          study_guide_id: studyGuideId,
+          chapter_title: chapterTitle,
+          score: adaptiveCorrectCount,
+          accuracy: adaptiveAccuracy,
+          total_questions: totalQuestions,
+          time_taken: timeTaken,
+          questions: formattedAnswers.map((ans) => ({
+            question_id: ans.question_id,
+            question: ans.question,
+            question_type: ans.question_type,
+            user_answer: ans.user_answer,
+            correct_answer: ans.correct_answer,
+            is_correct: ans.is_correct ?? false,
+            choices: ans.choices,
+          })),
+        };
+        console.log(
+          'Submitting ADAPTIVE test (from slides page) to:',
+          submitEndpoint
+        );
+      } else {
+        // Payload for standard /practice/submit (TestSubmissionRequest)
+        submissionPayload = {
+          user_id: userData.id,
+          test_id: testId,
+          study_guide_id: studyGuideId,
+          started_at: new Date(startTime * 1000).toISOString(),
+          answers: formattedAnswers.map((ans) => ({
+            question_id: ans.question_id,
+            user_answer:
+              ans.question_type === 'multiple_choice'
+                ? ans.user_answer
+                : ans.user_answer_text,
+            user_answer_text:
+              ans.question_type === 'short_answer'
+                ? ans.user_answer_text
+                : undefined,
+            notes: ans.notes,
+            question_type: ans.question_type,
+            confidence_level: ans.confidence_level,
+            topic_id: ans.topic_id,
+            topic_name: ans.topic_name,
+          })),
+          section_title: sectionTitle,
+          chapter_title: chapterTitle,
+        };
+        console.log(
+          'Submitting STANDARD test (from slides page) to:',
+          submitEndpoint
+        );
+      }
+
+      console.log('Payload:', JSON.stringify(submissionPayload, null, 2));
+
+      const response = await fetch(submitEndpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(submissionData),
+        body: JSON.stringify(submissionPayload),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to submit quiz: ${errorText}`);
+        console.error('Submission Error:', response.status, errorText);
+        throw new Error(
+          `Failed to submit quiz: ${errorText || response.statusText}`
+        );
       }
 
-      const result: SubmissionResult = await response.json();
-      router.push(
-        `/practice/guide/slides/${encodeURIComponent(guideId)}/quiz/${testId}/results?submission=${result.submission_id}`
-      );
+      const result = await response.json();
+
+      // Navigate based on test type
+      if (testType === 'adaptive') {
+        console.log('Adaptive test submitted successfully:', result);
+        toast.success('Adaptive test submitted!', {
+          duration: 3000,
+          icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+        });
+
+        // Show loading indicator before navigation
+        toast.info('Returning to adaptive tests page...', {
+          duration: 2000,
+          icon: <Loader2 className="h-4 w-4 animate-spin" />,
+        });
+
+        router.push('/adaptive-test');
+      } else {
+        // Show loading indicator before navigation
+        toast.info('Loading quiz results...', {
+          duration: 2000,
+          icon: <Loader2 className="h-4 w-4 animate-spin" />,
+        });
+
+        router.push(
+          `/practice/guide/slides/${encodeURIComponent(guideId)}/quiz/${testId}/results?submission=${result.submission_id}`
+        );
+      }
     } catch (err) {
+      console.error('Error in handleSubmit (slides):', err);
       setError(err instanceof Error ? err.message : 'Failed to submit quiz');
+      toast.error(
+        `Submission failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     } finally {
       setSubmitting(false);
     }
@@ -235,6 +377,19 @@ const SlidesQuizPage: React.FC = () => {
     totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const isQuizComplete =
     totalQuestions > 0 && answeredQuestions === totalQuestions;
+
+  // Add this useEffect to initialize session activity tracking
+  useEffect(() => {
+    // Initialize session activity monitoring
+    const cleanupSessionActivity = initSessionActivity();
+
+    // Cleanup when component unmounts
+    return () => {
+      if (cleanupSessionActivity) {
+        cleanupSessionActivity();
+      }
+    };
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
@@ -303,7 +458,21 @@ const SlidesQuizPage: React.FC = () => {
 
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
           {loading ? (
-            <Loading size="lg" text="Loading quiz..." />
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative w-20 h-20 mb-4">
+                <div className="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-t-purple-600 rounded-full animate-spin"></div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Loading Quiz
+                </h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  We're preparing your quiz questions. This should only take a
+                  moment...
+                </p>
+              </div>
+            </div>
           ) : anyError ? (
             <div className="text-center p-10 bg-red-50 rounded-xl border border-red-200">
               <p className="text-xl text-red-500">Error: {error}</p>
@@ -385,9 +554,14 @@ const SlidesQuizPage: React.FC = () => {
                   size="lg"
                   className="text-xl bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting
-                    ? 'Submitting...'
-                    : `Submit Quiz (${answeredQuestions}/${totalQuestions})`}
+                  {submitting ? (
+                    <div className="flex items-center">
+                      <span className="mr-2">Submitting</span>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : (
+                    `Submit Quiz (${answeredQuestions}/${totalQuestions})`
+                  )}
                 </Button>
               </div>
             </>

@@ -123,6 +123,7 @@ export interface SlidesGuideListItem {
   description?: string;
   topics?: { title: string }[];
   slides?: { title: string; content: string }[];
+  fromAnalytics?: boolean;
 }
 
 export interface SlidesGuideListResponse {

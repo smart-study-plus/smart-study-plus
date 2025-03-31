@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ENDPOINTS, API_URL } from '@/config/urls';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { endActiveSession } from '@/utils/session-management';
 
 // Get the base URL from environment variable or fallback to window.location.origin
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
@@ -29,6 +30,15 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
     const message = searchParams.get('message');
     if (message) {
       setError(message);
+    }
+
+    // End any existing sessions when navigating to auth page
+    const endSession = async () => {
+      await endActiveSession();
+    };
+
+    if (typeof window !== 'undefined') {
+      endSession();
     }
   }, [searchParams]);
 

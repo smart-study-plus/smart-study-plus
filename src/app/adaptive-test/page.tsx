@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import useSWR from 'swr';
 import { ENDPOINTS } from '@/config/urls';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/route-guard';
+import { initSessionActivity } from '@/utils/session-management';
 
 // --- Interfaces (should potentially move to interfaces file) ---
 interface RawTopicSubmission {
@@ -115,7 +116,36 @@ interface ListAdaptiveTestsResponse {
   adaptive_tests: ExistingAdaptiveTestInfo[];
 }
 
-// --- End Interfaces ---
+// --- NEW: Interfaces for Adaptive Test Submissions ---
+interface AdaptiveTestSubmissionQuestion {
+  question_id?: string;
+  question: string;
+  question_type: string;
+  user_answer: any;
+  correct_answer: any;
+  is_correct: boolean;
+  choices?: { [key: string]: string };
+}
+
+interface AdaptiveTestSubmissionData {
+  submission_id: string;
+  user_id: string;
+  practice_test_id: string; // The ID of the adaptive test submitted
+  study_guide_id: string;
+  chapter_title: string;
+  score: number;
+  accuracy: number; // Percentage 0-100
+  total_questions: number;
+  time_taken: number; // Seconds
+  questions: AdaptiveTestSubmissionQuestion[];
+  submitted_at: string; // ISO Date string
+}
+
+interface ListAdaptiveTestSubmissionsResponse {
+  message: string;
+  submissions: AdaptiveTestSubmissionData[];
+}
+// --- END: New Interfaces ---
 
 // Fetcher function
 const fetcher = async (url: string) => {
@@ -165,13 +195,23 @@ export default function AdaptiveTestPage() {
     fetcher
   );
 
-  // --- NEW: Fetch existing adaptive tests for this user ---
+  // Fetch existing GENERATED adaptive tests
   const {
     data: existingTestsResponse,
     error: existingTestsError,
     isLoading: existingTestsLoading,
   } = useSWR<ListAdaptiveTestsResponse>(
     userId ? ENDPOINTS.listAdaptiveTests(userId) : null,
+    fetcher
+  );
+
+  // Fetch COMPLETED adaptive test submissions
+  const {
+    data: adaptiveSubmissionsResponse,
+    error: adaptiveSubmissionsError,
+    isLoading: adaptiveSubmissionsLoading,
+  } = useSWR<ListAdaptiveTestSubmissionsResponse>(
+    userId ? ENDPOINTS.listAdaptiveTestSubmissions(userId) : null,
     fetcher
   );
 
@@ -190,7 +230,23 @@ export default function AdaptiveTestPage() {
     });
     return map;
   }, [existingTestsResponse]);
-  // --- END: Fetch existing tests ---
+
+  // --- NEW: Memoize submitted adaptive tests for quick lookup by practice_test_id ---
+  const submittedAdaptiveTestsMap = useMemo(() => {
+    if (!adaptiveSubmissionsResponse?.submissions) return {};
+    const map: { [practiceTestId: string]: AdaptiveTestSubmissionData } = {};
+    adaptiveSubmissionsResponse.submissions.forEach((sub) => {
+      // Store the most recent submission if multiple exist for the same test ID
+      if (
+        !map[sub.practice_test_id] ||
+        new Date(sub.submitted_at) >
+          new Date(map[sub.practice_test_id].submitted_at)
+      ) {
+        map[sub.practice_test_id] = sub;
+      }
+    });
+    return map;
+  }, [adaptiveSubmissionsResponse]);
 
   // Process and group mastery data by Guide -> Chapter -> Section
   const groupedMasteryData = useMemo(() => {
@@ -341,6 +397,11 @@ export default function AdaptiveTestPage() {
 
   // --- NEW: Handler for starting an existing adaptive test ---
   const handleStartAdaptiveTest = (guideId: string, testId: string) => {
+    // Show loading toast while navigating
+    toast.info('Loading adaptive test...', {
+      duration: 3000,
+    });
+
     const guideTitle = groupedMasteryData[guideId]?.title || 'study-guide';
     router.push(
       `/practice/guide/${encodeURIComponent(guideTitle)}/quiz/${testId}`
@@ -348,7 +409,39 @@ export default function AdaptiveTestPage() {
   };
   // --- END: New Handler ---
 
-  const isLoading = masteryLoading || !userData || existingTestsLoading;
+  // --- NEW: Handler for viewing adaptive test results ---
+  const handleViewAdaptiveResults = (submissionId: string) => {
+    // Show loading toast while navigating
+    toast.info('Loading adaptive test results...', {
+      duration: 3000,
+      icon: <Loader2 className="h-4 w-4 animate-spin" />,
+    });
+
+    // Navigate to our dedicated adaptive test results page
+    router.push(`/adaptive-test/results/${submissionId}`);
+  };
+  // --- END: New Handler ---
+
+  const isLoading =
+    masteryLoading ||
+    !userData ||
+    existingTestsLoading ||
+    adaptiveSubmissionsLoading;
+  const anyError =
+    masteryError || existingTestsError || adaptiveSubmissionsError;
+
+  // Add useEffect hook to initialize session activity tracking inside the component
+  useEffect(() => {
+    // Initialize session activity monitoring
+    const cleanupSessionActivity = initSessionActivity();
+
+    // Cleanup when component unmounts
+    return () => {
+      if (cleanupSessionActivity) {
+        cleanupSessionActivity();
+      }
+    };
+  }, []);
 
   return (
     <RouteGuard requireAuth>
@@ -367,7 +460,7 @@ export default function AdaptiveTestPage() {
                   Loading Mastery Data...
                 </p>
               </div>
-            ) : masteryError || existingTestsError ? (
+            ) : anyError ? (
               <div className="text-center p-10 bg-red-100 border border-red-300 rounded-md">
                 <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                 <p className="text-red-700 font-semibold mb-2">
@@ -429,10 +522,16 @@ export default function AdaptiveTestPage() {
                                 const isGenerating =
                                   generatingChapterId === uniqueChapterId;
 
-                                // --- Check if test exists for this chapter ---
+                                // Check if an adaptive test has been generated
                                 const existingTest =
                                   existingAdaptiveTestsMap[uniqueChapterId];
-                                // --- End Check ---
+
+                                // Check if the existing test has been submitted
+                                const existingSubmission = existingTest
+                                  ? submittedAdaptiveTestsMap[
+                                      existingTest.practice_test_id
+                                    ]
+                                  : null;
 
                                 // TODO: Add actual eligibility check here based on required sections vs chapterData.sections
                                 const isEligible = true; // Placeholder: Assume eligible for now
@@ -447,25 +546,46 @@ export default function AdaptiveTestPage() {
                                       <span className="text-lg font-medium text-gray-700 flex-grow">
                                         {chapterTitle}
                                       </span>
-                                      {/* Adaptive Test Button at Chapter Level */}
-                                      {existingTest ? (
-                                        <Button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleStartAdaptiveTest(
-                                              guideId,
-                                              existingTest.practice_test_id
-                                            );
-                                          }}
-                                          size="sm"
-                                          variant="outline"
-                                          className="border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 flex-shrink-0"
-                                          title={`Start existing adaptive test for ${chapterTitle}`}
-                                        >
-                                          <PlayCircle className="h-4 w-4 mr-2" />
-                                          Start Test
-                                        </Button>
+
+                                      {/* --- Conditional Button Logic --- */}
+                                      {existingTest ? ( // Test exists
+                                        existingSubmission ? ( // Submission exists for this test
+                                          <Button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleViewAdaptiveResults(
+                                                existingSubmission.submission_id
+                                              );
+                                            }}
+                                            size="sm"
+                                            variant="secondary"
+                                            className="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-200 ease-in-out transform hover:scale-105 flex-shrink-0"
+                                            title={`View results for ${chapterTitle} adaptive test`}
+                                          >
+                                            {/* Optional Icon: <FileText className="h-4 w-4 mr-2" /> */}
+                                            View Results
+                                          </Button>
+                                        ) : (
+                                          // Test exists, but no submission yet
+                                          <Button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleStartAdaptiveTest(
+                                                guideId,
+                                                existingTest.practice_test_id
+                                              );
+                                            }}
+                                            size="sm"
+                                            variant="outline"
+                                            className="border-[var(--color-info)] text-[var(--color-info)] hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 flex-shrink-0"
+                                            title={`Start existing adaptive test for ${chapterTitle}`}
+                                          >
+                                            <PlayCircle className="h-4 w-4 mr-2" />
+                                            Start Test
+                                          </Button>
+                                        )
                                       ) : (
+                                        // No existing test found
                                         <Button
                                           onClick={(e) => {
                                             e.stopPropagation();
@@ -479,7 +599,7 @@ export default function AdaptiveTestPage() {
                                           variant={
                                             isEligible ? 'default' : 'secondary'
                                           }
-                                          className={`transition-all duration-200 ease-in-out transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed flex-shrink-0 ${isEligible ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 hover:bg-gray-400 cursor-help'}`}
+                                          className={`transition-all duration-200 ease-in-out transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed flex-shrink-0 ${isEligible ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white' : 'bg-gray-300 hover:bg-gray-400 cursor-help text-gray-600'}`}
                                           title={
                                             isEligible
                                               ? `Generate adaptive test for ${chapterTitle}`
@@ -496,6 +616,7 @@ export default function AdaptiveTestPage() {
                                             : 'Generate Test'}
                                         </Button>
                                       )}
+                                      {/* --- End Conditional Button Logic --- */}
                                     </AccordionTrigger>
                                     <AccordionContent className="px-4 pb-4 pt-2 border-t border-gray-200">
                                       {chapterData.sections.length === 0 ? (

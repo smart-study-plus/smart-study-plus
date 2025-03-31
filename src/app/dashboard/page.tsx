@@ -56,6 +56,7 @@ import * as Messages from '@/config/messages';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { TopicMasteryCard } from '../../components/dashboard/topic-mastery-card';
+import { initSessionActivity } from '@/utils/session-management';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -177,48 +178,60 @@ export default function DashboardPage() {
   const studyGuides = useMemo<DashboardGuide[]>(() => {
     if (!studyGuidesResponse?.study_guides) return [];
 
-    // First collect regular guides from study_guides endpoint
-    const guides = studyGuidesResponse.study_guides.map(
-      (guide: { study_guide_id: string; title: string }) => ({
-        id: guide.study_guide_id,
-        title: guide.title,
-        description: `Study guide for ${guide.title}`,
-        progress: 0,
-        type: 'regular' as const, // Mark as regular guide
-      })
-    );
+    // First get all available guide analytics
+    const guidesWithAnalytics = allGuideAnalytics?.study_guides || [];
+    console.log('All guides with analytics:', guidesWithAnalytics);
 
-    // Add slides-based guides from analytics if they're not already included
-    if (
-      allGuideAnalytics?.study_guides &&
-      allGuideAnalytics.study_guides.length > 0
-    ) {
-      console.log('Looking for slide-based guides in analytics');
+    // Create a map for fast lookup of analytics by guide ID
+    const analyticsMap = new Map();
+    guidesWithAnalytics.forEach((guide: GuideAnalytics) => {
+      analyticsMap.set(guide.study_guide_id, guide);
+    });
 
-      allGuideAnalytics.study_guides.forEach((analytic: GuideAnalytics) => {
-        // Check if this guide is a slides guide and not already in the list
-        if (
-          analytic.guide_type === 'slides' &&
-          !guides.some((g: DashboardGuide) => g.id === analytic.study_guide_id)
-        ) {
-          console.log(
-            `Adding slide-based guide: ${analytic.study_guide_id} - ${analytic.study_guide_title}`
-          );
-
-          guides.push({
-            id: analytic.study_guide_id,
-            title:
-              analytic.study_guide_title ||
-              `Slides Guide ${analytic.study_guide_id}`,
-            description: `Slides-based study guide`,
-            progress: analytic.average_accuracy || 0,
-            type: 'slides' as const, // Mark as slides guide
-          });
-        }
+    // Regular guides from study_guides endpoint that also have analytics
+    const regularGuides = studyGuidesResponse.study_guides
+      .filter((guide: { study_guide_id: string; title: string }) =>
+        analyticsMap.has(guide.study_guide_id)
+      )
+      .map((guide: { study_guide_id: string; title: string }) => {
+        const analytics = analyticsMap.get(guide.study_guide_id);
+        return {
+          id: guide.study_guide_id,
+          title: guide.title,
+          description: `Study guide for ${guide.title}`,
+          progress: analytics?.average_accuracy || 0,
+          type: 'regular' as const,
+        };
       });
-    }
 
-    return guides;
+    // Find guides in analytics that aren't in regular guides (these might be slides-based)
+    const additionalGuides: DashboardGuide[] = [];
+
+    guidesWithAnalytics.forEach((analytic: GuideAnalytics) => {
+      const guideId = analytic.study_guide_id;
+      const alreadyIncluded = regularGuides.some(
+        (g: DashboardGuide) => g.id === guideId
+      );
+
+      if (!alreadyIncluded) {
+        console.log(
+          `Adding guide from analytics: ${guideId} - ${analytic.study_guide_title} (${analytic.guide_type || 'unknown type'})`
+        );
+
+        additionalGuides.push({
+          id: guideId,
+          title: analytic.study_guide_title || `Guide ${guideId}`,
+          description: `Study guide with ${analytic.total_tests} test${analytic.total_tests !== 1 ? 's' : ''}`,
+          progress: analytic.average_accuracy || 0,
+          type: analytic.guide_type === 'slides' ? 'slides' : 'regular',
+        });
+      }
+    });
+
+    const allGuides = [...regularGuides, ...additionalGuides];
+    console.log(`Total guides for dashboard: ${allGuides.length}`);
+
+    return allGuides;
   }, [studyGuidesResponse, allGuideAnalytics]);
 
   // --- Process Mastery Data (Grouped by Guide -> Chapter -> Section) ---
@@ -375,19 +388,37 @@ export default function DashboardPage() {
   useEffect(() => {
     if (allGuideAnalytics?.study_guides?.length > 0 && studyGuides.length > 0) {
       console.log('Matching study guides with analytics...');
+
       // Find a guide that has analytics data
       const guideWithData = allGuideAnalytics.study_guides.find(
         (guide: GuideAnalytics) => guide.total_tests > 0
       );
 
-      if (guideWithData && !guideAnalytics) {
+      if (guideWithData) {
         console.log(
           `Found guide with data: ${guideWithData.study_guide_id}, trying to select it`
         );
-        selectGuideById(guideWithData.study_guide_id);
+
+        // Try to find this guide in studyGuides
+        const guideIndex = studyGuides.findIndex(
+          (guide: DashboardGuide) => guide.id === guideWithData.study_guide_id
+        );
+
+        if (guideIndex >= 0) {
+          console.log(`Found guide at index ${guideIndex}, selecting it`);
+          setSelectedGuideIndex(guideIndex);
+        } else {
+          console.log(
+            `Guide not found in studyGuides, something may be wrong with the filtering`
+          );
+          console.log(
+            'Available guides:',
+            studyGuides.map((g) => `${g.id} (${g.title})`)
+          );
+        }
       }
     }
-  }, [allGuideAnalytics, studyGuides, guideAnalytics, selectGuideById]);
+  }, [allGuideAnalytics, studyGuides]);
 
   // Modify the claim anonymous sessions function to only show for new users
   const handleClaimAnonymousSessions = useCallback(async () => {
@@ -462,7 +493,23 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [userId, enhancedStudyHours, mutateStudyHours]);
 
-  // Function to start a new session if needed
+  // Session activity monitoring
+  useEffect(() => {
+    // Only run on the client
+    if (typeof window === 'undefined') return;
+
+    // Initialize session activity monitoring and get the cleanup function
+    const cleanupSessionActivity = initSessionActivity();
+
+    // Return the cleanup function to be called when component unmounts
+    return () => {
+      if (cleanupSessionActivity) {
+        cleanupSessionActivity();
+      }
+    };
+  }, []);
+
+  // Modify the startNewSession function to include session activity monitoring
   const startNewSession = async (userId: string) => {
     try {
       console.log('Starting new session for dashboard');
@@ -486,6 +533,10 @@ export default function DashboardPage() {
         const data = await response.json();
         localStorage.setItem('session_id', data.session_id);
         console.log('Dashboard session started:', data.session_id);
+
+        // Initialize session activity monitoring since we started a new session
+        initSessionActivity();
+
         // Refresh study hours to include this new session
         mutateStudyHours();
       } else {
