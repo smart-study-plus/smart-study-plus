@@ -57,6 +57,100 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { TopicMasteryCard } from '../../components/dashboard/topic-mastery-card';
 import { initSessionActivity } from '@/utils/session-management';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+// MathJax configuration
+const mathJaxConfig = {
+  loader: {
+    load: [
+      '[tex]/html',
+      '[tex]/ams',
+      '[tex]/noerrors',
+      '[tex]/noundefined',
+      '[tex]/mhchem',
+      '[tex]/cancel',
+    ],
+  },
+  tex: {
+    packages: {
+      '[+]': ['html', 'ams', 'noerrors', 'noundefined', 'mhchem', 'cancel'],
+    },
+    inlineMath: [
+      ['$', '$'],
+      ['\\(', '\\)'],
+    ],
+    displayMath: [
+      ['$$', '$$'],
+      ['\\[', '\\]'],
+    ],
+    processEscapes: true,
+    processEnvironments: true,
+    processRefs: true,
+    digits: /^(?:[0-9]+(?:\{,\}[0-9]{3})*(?:\.[0-9]*)?|\.[0-9]+)/,
+    tags: 'ams',
+    tagSide: 'right',
+    tagIndent: '0.8em',
+    useLabelIds: true,
+    maxMacros: 1000,
+    maxBuffer: 5 * 1024,
+    macros: {
+      // Number sets
+      '\\R': '\\mathbb{R}',
+      '\\N': '\\mathbb{N}',
+      '\\Z': '\\mathbb{Z}',
+      '\\Q': '\\mathbb{Q}',
+      '\\C': '\\mathbb{C}',
+      // Common operators and functions
+      '\\Var': '\\operatorname{Var}',
+      '\\Bias': '\\operatorname{Bias}',
+      '\\EPE': '\\operatorname{EPE}',
+      '\\RSS': '\\operatorname{RSS}',
+      '\\MSE': '\\operatorname{MSE}',
+      '\\E': '\\mathbb{E}',
+      '\\P': '\\mathbb{P}',
+      // Decorators
+      '\\hat': '\\widehat',
+      '\\bar': '\\overline',
+      '\\tilde': '\\widetilde',
+      '\\vec': '\\mathbf',
+      '\\mat': '\\mathbf',
+      // Greek letters shortcuts
+      '\\eps': '\\varepsilon',
+      '\\alp': '\\alpha',
+      '\\bet': '\\beta',
+      '\\gam': '\\gamma',
+      '\\del': '\\delta',
+      '\\the': '\\theta',
+      '\\kap': '\\kappa',
+      '\\lam': '\\lambda',
+      '\\sig': '\\sigma',
+      '\\Gam': '\\Gamma',
+      '\\Del': '\\Delta',
+      '\\The': '\\Theta',
+      '\\Lam': '\\Lambda',
+      '\\Sig': '\\Sigma',
+      '\\Ome': '\\Omega',
+      // Special operators
+      '\\T': '^{\\intercal}',
+      '\\given': '\\,|\\,',
+      '\\set': '\\{\\,',
+      '\\setend': '\\,\\}',
+      '\\abs': ['\\left|#1\\right|', 1],
+      '\\norm': ['\\left\\|#1\\right\\|', 1],
+      '\\inner': ['\\left\\langle#1\\right\\rangle', 1],
+      '\\ceil': ['\\left\\lceil#1\\right\\rceil', 1],
+      '\\floor': ['\\left\\lfloor#1\\right\\rfloor', 1],
+    },
+  },
+  svg: {
+    fontCache: 'global',
+  },
+  options: {
+    enableMenu: false,
+  },
+};
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -555,638 +649,789 @@ export default function DashboardPage() {
     return Object.keys(groupedMasteryData).map((_, index) => `guide-${index}`);
   }, [groupedMasteryData]);
 
+  // Helper function to render with KaTeX
+  const renderWithKatex = (
+    text: string,
+    displayMode: boolean = false
+  ): string => {
+    try {
+      return katex.renderToString(text, {
+        displayMode,
+        throwOnError: false,
+        strict: false,
+        trust: true,
+        macros: mathJaxConfig.tex.macros,
+      });
+    } catch (error) {
+      console.error('KaTeX rendering error:', error);
+      return text;
+    }
+  };
+
+  // Helper function to determine if text is simple LaTeX
+  const isSimpleLatex = (text: string): boolean => {
+    // Check if text contains only basic LaTeX commands and symbols
+    const simpleLatexPattern = /^[a-zA-Z0-9\s\+\-\*\/\^\{\}\(\)\[\]\_\$\\]+$/;
+    return simpleLatexPattern.test(text);
+  };
+
+  // Helper function to render text with LaTeX
+  const renderTextWithLatex = (text: string) => {
+    if (!text) return null;
+
+    // First, unescape all double backslashes
+    let processedText = text.replace(/\\\\/g, '\\');
+
+    // Handle special LaTeX commands and symbols
+    processedText = processedText
+      // Handle \mathbb{R} notation
+      .replace(/\\mathbb\{([^}]+)\}/g, (_, p1) => `\\mathbb{${p1}}`)
+      // Handle subscripts and superscripts with multiple characters
+      .replace(/_{([^}]+)}/g, '_{$1}')
+      .replace(/\^{([^}]+)}/g, '^{$1}')
+      // Handle special spacing around operators
+      .replace(/\\sum(?![a-zA-Z])/g, '\\sum\\limits')
+      .replace(/\\int(?![a-zA-Z])/g, '\\int\\limits')
+      .replace(/\\prod(?![a-zA-Z])/g, '\\prod\\limits')
+      // Handle spacing around vertical bars and other delimiters
+      .replace(/\|/g, '\\,|\\,')
+      .replace(/\\mid/g, '\\,|\\,')
+      // Handle matrix transpose
+      .replace(/\\T(?![a-zA-Z])/g, '^{\\intercal}')
+      // Handle common statistical notation
+      .replace(/\\Var/g, '\\operatorname{Var}')
+      .replace(/\\Bias/g, '\\operatorname{Bias}')
+      .replace(/\\MSE/g, '\\operatorname{MSE}')
+      .replace(/\\EPE/g, '\\operatorname{EPE}')
+      // Handle escaped curly braces
+      .replace(/\\\{/g, '{')
+      .replace(/\\\}/g, '}');
+
+    // Split text by existing LaTeX delimiters while preserving the delimiters
+    const parts = processedText.split(
+      /(\$\$[\s\S]*?\$\$|\$[^$\n]*?\$|\\\([^)]*?\\\)|\\\[[\s\S]*?\\\])/g
+    );
+
+    return parts.map((part, index) => {
+      // Generate a more unique key using content hash
+      const key = `${index}-${hashString(part)}`;
+
+      if (
+        part.startsWith('$') ||
+        part.startsWith('\\(') ||
+        part.startsWith('\\[')
+      ) {
+        // Remove the delimiters
+        let latex = part
+          .replace(/^\$\$|\$\$$|^\$|\$$|^\\\(|\\\)$|^\\\[|\\\]$/g, '')
+          .trim();
+
+        const isDisplay = part.startsWith('$$') || part.startsWith('\\[');
+
+        // Use KaTeX for simple expressions and MathJax for complex ones
+        if (isSimpleLatex(latex)) {
+          return (
+            <span
+              key={key}
+              dangerouslySetInnerHTML={{
+                __html: renderWithKatex(latex, isDisplay),
+              }}
+            />
+          );
+        }
+
+        // Wrap the LaTeX in appropriate delimiters for MathJax
+        latex = isDisplay ? `$$${latex}$$` : `$${latex}$`;
+
+        return (
+          <MathJax key={key} inline={!isDisplay} dynamic={true}>
+            {latex}
+          </MathJax>
+        );
+      }
+
+      // Check if the part contains any LaTeX-like content
+      if (part.includes('\\') || /[_^{}]/.test(part)) {
+        // Use KaTeX for simple expressions
+        if (isSimpleLatex(part)) {
+          return (
+            <span
+              key={key}
+              dangerouslySetInnerHTML={{
+                __html: renderWithKatex(part, false),
+              }}
+            />
+          );
+        }
+
+        // Use MathJax for complex expressions
+        return (
+          <MathJax key={key} inline={true} dynamic={true}>
+            {`$${part}$`}
+          </MathJax>
+        );
+      }
+
+      return <span key={key}>{part}</span>;
+    });
+  };
+
+  // Simple string hashing function for generating unique keys
+  const hashString = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(36); // Convert to base-36 for shorter strings
+  };
+
   return (
-    <RouteGuard requireAuth>
-      <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
-        <Header />
-        <main className="flex-1">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-12 text-center"
-            >
-              <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-                Welcome back, {userName}!
-              </h1>
-              <p className="text-xl text-gray-600">
-                Let&apos;s boost your learning today
-              </p>
-            </motion.div>
-
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
-                <p className="text-lg text-gray-600">
-                  Loading your dashboard...
+    <MathJaxContext config={mathJaxConfig}>
+      <RouteGuard requireAuth>
+        <div className="flex min-h-screen flex-col bg-[var(--color-background-alt)]">
+          <Header />
+          <main className="flex-1">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-12 text-center"
+              >
+                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+                  Welcome back, {userName}!
+                </h1>
+                <p className="text-xl text-gray-600">
+                  Let&apos;s boost your learning today
                 </p>
-              </div>
-            ) : (
-              <AnimatePresence>
-                <Tabs defaultValue="overall" className="mb-12">
-                  <TabsList className="flex w-full border-b border-gray-200 mb-6 p-0 bg-transparent space-x-8">
-                    <TabsTrigger
-                      value="overall"
-                      className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
-                    >
-                      Overall Stats
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="guide-specific"
-                      className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
-                    >
-                      Guide-Specific Stats
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="topic-mastery"
-                      className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
-                    >
-                      Topic Mastery
-                    </TabsTrigger>
-                  </TabsList>
+              </motion.div>
 
-                  <TabsContent value="overall">
-                    <motion.div
-                      variants={staggerContainer}
-                      initial="initial"
-                      animate="animate"
-                      className="space-y-8"
-                    >
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+                  <p className="text-lg text-gray-600">
+                    Loading your dashboard...
+                  </p>
+                </div>
+              ) : (
+                <AnimatePresence>
+                  <Tabs defaultValue="overall" className="mb-12">
+                    <TabsList className="flex w-full border-b border-gray-200 mb-6 p-0 bg-transparent space-x-8">
+                      <TabsTrigger
+                        value="overall"
+                        className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        Overall Stats
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="guide-specific"
+                        className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        Guide-Specific Stats
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="topic-mastery"
+                        className="px-1 py-2 text-gray-600 data-[state=active]:text-[var(--color-primary)] data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-primary)] rounded-none bg-transparent hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        Topic Mastery
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="overall">
                       <motion.div
-                        variants={fadeInUp}
-                        className="grid gap-8 md:grid-cols-3 mb-12"
+                        variants={staggerContainer}
+                        initial="initial"
+                        animate="animate"
+                        className="space-y-8"
                       >
                         <motion.div
                           variants={fadeInUp}
-                          className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
+                          className="grid gap-8 md:grid-cols-3 mb-12"
                         >
-                          <CardContent className="p-6 relative">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[var(--color-primary)]/20 to-purple-300/20 rounded-bl-full"></div>
-                            <Clock className="h-8 w-8 text-[var(--color-primary)] mb-4" />
-                            <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
-                              Total Study Time
-                            </CardTitle>
-                            <div className="flex flex-col">
-                              {studyHoursError ||
-                              !enhancedStudyHours?.total_hours ? (
-                                <div className="space-y-2">
-                                  <p className="text-gray-600">
-                                    {Messages.NO_STUDY_HOURS}
-                                  </p>
-                                  {userId && isNewUser && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="mt-2 text-xs"
-                                      onClick={handleClaimAnonymousSessions}
-                                      disabled={isClaimingAnonymousSessions}
-                                    >
-                                      {isClaimingAnonymousSessions ? (
-                                        <>
-                                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                          Claiming...
-                                        </>
-                                      ) : (
-                                        'Find My Sessions'
-                                      )}
-                                    </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="flex items-baseline">
-                                    <span className="text-4xl font-bold text-gray-900">
-                                      {enhancedStudyHours.total_hours}
-                                    </span>
-                                    <span className="ml-2 text-gray-600">
-                                      hours total
-                                    </span>
+                          <motion.div
+                            variants={fadeInUp}
+                            className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
+                          >
+                            <CardContent className="p-6 relative">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[var(--color-primary)]/20 to-purple-300/20 rounded-bl-full"></div>
+                              <Clock className="h-8 w-8 text-[var(--color-primary)] mb-4" />
+                              <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
+                                Total Study Time
+                              </CardTitle>
+                              <div className="flex flex-col">
+                                {studyHoursError ||
+                                !enhancedStudyHours?.total_hours ? (
+                                  <div className="space-y-2">
+                                    <p className="text-gray-600">
+                                      {Messages.NO_STUDY_HOURS}
+                                    </p>
+                                    {userId && isNewUser && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="mt-2 text-xs"
+                                        onClick={handleClaimAnonymousSessions}
+                                        disabled={isClaimingAnonymousSessions}
+                                      >
+                                        {isClaimingAnonymousSessions ? (
+                                          <>
+                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                            Claiming...
+                                          </>
+                                        ) : (
+                                          'Find My Sessions'
+                                        )}
+                                      </Button>
+                                    )}
                                   </div>
-
-                                  {enhancedStudyHours.has_ongoing_session && (
-                                    <div className="mt-2 text-sm flex items-center text-green-600">
-                                      <Activity className="h-4 w-4 mr-1" />
-                                      <span>
-                                        Ongoing:{' '}
-                                        {enhancedStudyHours.ongoing_hours.toFixed(
-                                          2
-                                        )}{' '}
-                                        hours
+                                ) : (
+                                  <>
+                                    <div className="flex items-baseline">
+                                      <span className="text-4xl font-bold text-gray-900">
+                                        {enhancedStudyHours.total_hours}
+                                      </span>
+                                      <span className="ml-2 text-gray-600">
+                                        hours total
                                       </span>
                                     </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </CardContent>
+
+                                    {enhancedStudyHours.has_ongoing_session && (
+                                      <div className="mt-2 text-sm flex items-center text-green-600">
+                                        <Activity className="h-4 w-4 mr-1" />
+                                        <span>
+                                          Ongoing:{' '}
+                                          {enhancedStudyHours.ongoing_hours.toFixed(
+                                            2
+                                          )}{' '}
+                                          hours
+                                        </span>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </CardContent>
+                          </motion.div>
+
+                          <motion.div
+                            variants={fadeInUp}
+                            className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
+                          >
+                            <CardContent className="p-6 relative">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-200/30 to-orange-300/30 rounded-bl-full"></div>
+                              <Target className="h-8 w-8 text-yellow-500 mb-4" />
+                              <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
+                                Average Score
+                              </CardTitle>
+                              <div className="flex items-baseline">
+                                {testError || !testAnalytics?.average_score ? (
+                                  <p className="text-gray-600">
+                                    {Messages.NO_TEST_DATA}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <span className="text-4xl font-bold text-gray-900">
+                                      {testAnalytics.average_score.toFixed(2)}
+                                    </span>
+                                    <span className="ml-2 text-gray-600">
+                                      points
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </CardContent>
+                          </motion.div>
+
+                          <motion.div
+                            variants={fadeInUp}
+                            className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
+                          >
+                            <CardContent className="p-6 relative">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-200/30 to-emerald-300/30 rounded-bl-full"></div>
+                              <Award className="h-8 w-8 text-green-500 mb-4" />
+                              <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
+                                Tests Taken
+                              </CardTitle>
+                              <div className="flex items-baseline">
+                                {testError || !testAnalytics?.total_tests ? (
+                                  <p className="text-gray-600">
+                                    {Messages.NO_TEST_DATA}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <span className="text-4xl font-bold text-gray-900">
+                                      {testAnalytics.total_tests}
+                                    </span>
+                                    <span className="ml-2 text-gray-600">
+                                      total
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </CardContent>
+                          </motion.div>
                         </motion.div>
 
-                        <motion.div
-                          variants={fadeInUp}
-                          className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
-                        >
-                          <CardContent className="p-6 relative">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-200/30 to-orange-300/30 rounded-bl-full"></div>
-                            <Target className="h-8 w-8 text-yellow-500 mb-4" />
-                            <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
-                              Average Score
-                            </CardTitle>
-                            <div className="flex items-baseline">
-                              {testError || !testAnalytics?.average_score ? (
-                                <p className="text-gray-600">
-                                  {Messages.NO_TEST_DATA}
-                                </p>
-                              ) : (
-                                <>
-                                  <span className="text-4xl font-bold text-gray-900">
-                                    {testAnalytics.average_score.toFixed(2)}
-                                  </span>
-                                  <span className="ml-2 text-gray-600">
-                                    points
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </CardContent>
-                        </motion.div>
-
-                        <motion.div
-                          variants={fadeInUp}
-                          className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg"
-                        >
-                          <CardContent className="p-6 relative">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-200/30 to-emerald-300/30 rounded-bl-full"></div>
-                            <Award className="h-8 w-8 text-green-500 mb-4" />
-                            <CardTitle className="text-lg font-semibold text-gray-700 mb-2">
-                              Tests Taken
-                            </CardTitle>
-                            <div className="flex items-baseline">
-                              {testError || !testAnalytics?.total_tests ? (
-                                <p className="text-gray-600">
-                                  {Messages.NO_TEST_DATA}
-                                </p>
-                              ) : (
-                                <>
-                                  <span className="text-4xl font-bold text-gray-900">
-                                    {testAnalytics.total_tests}
-                                  </span>
-                                  <span className="ml-2 text-gray-600">
-                                    total
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </CardContent>
-                        </motion.div>
-                      </motion.div>
-
-                      {/* Study Time Periods Section */}
-                      {enhancedStudyHours?.time_periods &&
-                        enhancedStudyHours.time_periods.length > 0 && (
-                          <motion.div variants={fadeInUp} className="mb-12">
-                            <Card className="bg-white shadow-lg">
-                              <CardHeader className="border-b border-gray-100">
-                                <div className="flex justify-between items-center">
-                                  <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
-                                    <Calendar className="h-6 w-6 text-[var(--color-primary)] mr-2" />
-                                    Study Activity
-                                  </CardTitle>
-                                  <div className="flex items-center space-x-2">
-                                    <TabsList className="bg-gray-100">
-                                      <TabsTrigger
-                                        value="week"
-                                        onClick={() => setStudyTimeView('week')}
-                                        className={
-                                          studyTimeView === 'week'
-                                            ? 'bg-white'
-                                            : ''
-                                        }
-                                      >
-                                        Week
-                                      </TabsTrigger>
-                                    </TabsList>
+                        {/* Study Time Periods Section */}
+                        {enhancedStudyHours?.time_periods &&
+                          enhancedStudyHours.time_periods.length > 0 && (
+                            <motion.div variants={fadeInUp} className="mb-12">
+                              <Card className="bg-white shadow-lg">
+                                <CardHeader className="border-b border-gray-100">
+                                  <div className="flex justify-between items-center">
+                                    <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                                      <Calendar className="h-6 w-6 text-[var(--color-primary)] mr-2" />
+                                      Study Activity
+                                    </CardTitle>
+                                    <div className="flex items-center space-x-2">
+                                      <TabsList className="bg-gray-100">
+                                        <TabsTrigger
+                                          value="week"
+                                          onClick={() =>
+                                            setStudyTimeView('week')
+                                          }
+                                          className={
+                                            studyTimeView === 'week'
+                                              ? 'bg-white'
+                                              : ''
+                                          }
+                                        >
+                                          Week
+                                        </TabsTrigger>
+                                      </TabsList>
+                                    </div>
                                   </div>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                  <div className="space-y-5">
+                                    {enhancedStudyHours.time_periods.map(
+                                      (period: TimePeriod, index: number) => (
+                                        <motion.div
+                                          key={period.period}
+                                          initial={{ opacity: 0, y: 10 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ delay: index * 0.05 }}
+                                          className="relative"
+                                        >
+                                          <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center">
+                                              <BarChart3 className="h-4 w-4 text-gray-500 mr-2" />
+                                              <span className="text-sm font-medium text-gray-700">
+                                                {period.period}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                              <span className="text-sm text-gray-500">
+                                                {period.session_count}{' '}
+                                                {period.session_count === 1
+                                                  ? 'session'
+                                                  : 'sessions'}
+                                              </span>
+                                              <span className="text-sm font-bold text-[var(--color-primary)]">
+                                                {period.hours.toFixed(1)} hrs
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <Progress
+                                            value={Math.min(
+                                              period.hours * 10,
+                                              100
+                                            )}
+                                            className="h-2"
+                                          />
+                                        </motion.div>
+                                      )
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          )}
+
+                        <motion.div
+                          variants={fadeInUp}
+                          className="grid gap-8 md:grid-cols-3"
+                        >
+                          <Card className="col-span-2 bg-white shadow-lg">
+                            <CardHeader className="border-b border-gray-100">
+                              <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                                <Zap className="h-6 w-6 text-yellow-500 mr-2" />
+                                Recently Missed Questions
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                              {testError ||
+                              !testAnalytics?.recent_wrong_questions ||
+                              testAnalytics.recent_wrong_questions.length ===
+                                0 ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-gray-600">
+                                  <p>{Messages.NO_TEST_DATA}</p>
                                 </div>
-                              </CardHeader>
-                              <CardContent className="p-6">
-                                <div className="space-y-5">
-                                  {enhancedStudyHours.time_periods.map(
-                                    (period: TimePeriod, index: number) => (
+                              ) : (
+                                <Accordion
+                                  type="single"
+                                  collapsible
+                                  className="w-full"
+                                >
+                                  {testAnalytics.recent_wrong_questions.map(
+                                    (q: WrongQuestion, index: number) => (
                                       <motion.div
-                                        key={period.period}
-                                        initial={{ opacity: 0, y: 10 }}
+                                        key={index}
+                                        initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="relative"
+                                        transition={{ delay: index * 0.1 }}
+                                      >
+                                        <AccordionItem
+                                          value={`item-${index}`}
+                                          className="border-b border-gray-100 last:border-0"
+                                        >
+                                          <AccordionTrigger className="text-sm text-gray-900 hover:no-underline py-4">
+                                            <div className="flex items-center">
+                                              <span className="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded-full mr-3 text-xs font-medium">
+                                                {index + 1}
+                                              </span>
+                                              {renderTextWithLatex(q.question)}
+                                            </div>
+                                          </AccordionTrigger>
+                                          <AccordionContent>
+                                            <div className="pl-9 pt-2 space-y-3">
+                                              <div className="flex items-center text-sm bg-red-200 p-2 rounded">
+                                                <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
+                                                <span className="text-gray-900 ml-1">
+                                                  {q.user_choice}.{' '}
+                                                  {renderTextWithLatex(
+                                                    q.user_answer_text
+                                                  )}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center text-sm bg-green-200 p-2 rounded">
+                                                <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                                <span className="text-gray-900 ml-1">
+                                                  {q.correct_answer}.{' '}
+                                                  {renderTextWithLatex(
+                                                    q.correct_answer_text
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      </motion.div>
+                                    )
+                                  )}
+                                </Accordion>
+                              )}
+                            </CardContent>
+                          </Card>
+
+                          <Card className="bg-white shadow-lg">
+                            <CardHeader className="border-b border-gray-100">
+                              <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+                                <Target className="h-6 w-6 text-[var(--color-primary)] mr-2" />
+                                Weekly Progress
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                              {testError ||
+                              !testAnalytics?.weekly_progress ||
+                              testAnalytics.weekly_progress.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-gray-600">
+                                  <p>{Messages.INSUFFICIENT_DATA}</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-6">
+                                  {testAnalytics.weekly_progress.map(
+                                    (week: WeeklyProgress, index: number) => (
+                                      <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.1 }}
                                       >
                                         <div className="flex justify-between items-center mb-2">
-                                          <div className="flex items-center">
-                                            <BarChart3 className="h-4 w-4 text-gray-500 mr-2" />
-                                            <span className="text-sm font-medium text-gray-700">
-                                              {period.period}
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center space-x-3">
-                                            <span className="text-sm text-gray-500">
-                                              {period.session_count}{' '}
-                                              {period.session_count === 1
-                                                ? 'session'
-                                                : 'sessions'}
-                                            </span>
-                                            <span className="text-sm font-bold text-[var(--color-primary)]">
-                                              {period.hours.toFixed(1)} hrs
-                                            </span>
-                                          </div>
+                                          <span className="text-sm font-medium text-gray-600">
+                                            Week Starting:{' '}
+                                            {new Date(
+                                              week.week_start
+                                            ).toLocaleDateString('en-US', {
+                                              month: 'short',
+                                              day: 'numeric',
+                                              year: 'numeric',
+                                            })}
+                                          </span>
+                                          <span className="text-sm font-bold text-[var(--color-primary)]">
+                                            {week.average_accuracy.toFixed(2)}%
+                                          </span>
                                         </div>
                                         <Progress
-                                          value={Math.min(
-                                            period.hours * 10,
-                                            100
-                                          )}
+                                          value={week.average_accuracy}
                                           className="h-2"
                                         />
                                       </motion.div>
                                     )
                                   )}
                                 </div>
-                              </CardContent>
-                            </Card>
-                          </motion.div>
-                        )}
+                              )}
+                            </CardContent>
+                          </Card>
 
-                      <motion.div
-                        variants={fadeInUp}
-                        className="grid gap-8 md:grid-cols-3"
-                      >
-                        <Card className="col-span-2 bg-white shadow-lg">
-                          <CardHeader className="border-b border-gray-100">
-                            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
-                              <Zap className="h-6 w-6 text-yellow-500 mr-2" />
-                              Recently Missed Questions
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-6">
-                            {testError ||
-                            !testAnalytics?.recent_wrong_questions ||
-                            testAnalytics.recent_wrong_questions.length ===
-                              0 ? (
-                              <div className="flex flex-col items-center justify-center py-6 text-gray-600">
-                                <p>{Messages.NO_TEST_DATA}</p>
-                              </div>
-                            ) : (
-                              <Accordion
-                                type="single"
-                                collapsible
-                                className="w-full"
-                              >
-                                {testAnalytics.recent_wrong_questions.map(
-                                  (q: WrongQuestion, index: number) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ opacity: 0, y: 20 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                    >
-                                      <AccordionItem
-                                        value={`item-${index}`}
-                                        className="border-b border-gray-100 last:border-0"
-                                      >
-                                        <AccordionTrigger className="text-sm text-gray-900 hover:no-underline py-4">
-                                          <div className="flex items-center">
-                                            <span className="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded-full mr-3 text-xs font-medium">
-                                              {index + 1}
-                                            </span>
-                                            {q.question}
-                                          </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                          <div className="pl-9 pt-2 space-y-3">
-                                            <div className="flex items-center text-sm bg-red-200 p-2 rounded">
-                                              <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                                              <span className="text-gray-900 ml-1">
-                                                {q.user_choice}.{' '}
-                                                {q.user_answer_text}
-                                              </span>
-                                            </div>
-                                            <div className="flex items-center text-sm bg-green-200 p-2 rounded">
-                                              <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                                              <span className="text-gray-900 ml-1">
-                                                {q.correct_answer}.{' '}
-                                                {q.correct_answer_text}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        </AccordionContent>
-                                      </AccordionItem>
-                                    </motion.div>
-                                  )
-                                )}
-                              </Accordion>
-                            )}
-                          </CardContent>
-                        </Card>
-
-                        <Card className="bg-white shadow-lg">
-                          <CardHeader className="border-b border-gray-100">
-                            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
-                              <Target className="h-6 w-6 text-[var(--color-primary)] mr-2" />
-                              Weekly Progress
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-6">
-                            {testError ||
-                            !testAnalytics?.weekly_progress ||
-                            testAnalytics.weekly_progress.length === 0 ? (
-                              <div className="flex flex-col items-center justify-center py-6 text-gray-600">
-                                <p>{Messages.INSUFFICIENT_DATA}</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-6">
-                                {testAnalytics.weekly_progress.map(
-                                  (week: WeeklyProgress, index: number) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ opacity: 0, x: -20 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                    >
-                                      <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-medium text-gray-600">
-                                          Week Starting:{' '}
-                                          {new Date(
-                                            week.week_start
-                                          ).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric',
-                                          })}
-                                        </span>
-                                        <span className="text-sm font-bold text-[var(--color-primary)]">
-                                          {week.average_accuracy.toFixed(2)}%
-                                        </span>
-                                      </div>
-                                      <Progress
-                                        value={week.average_accuracy}
-                                        className="h-2"
-                                      />
-                                    </motion.div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-
-                        <Card className="col-span-3 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
-                          <CardHeader className="border-b border-gray-100 py-4">
-                            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
-                              <GraduationCap className="h-5 w-5 text-[var(--color-primary)] mr-2" />
-                              Latest Test Results
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4">
-                            {isLoading ? (
-                              <div className="flex flex-col items-center justify-center py-6">
-                                <Loader2 className="h-6 w-6 animate-spin text-[var(--color-primary)]" />
-                                <p className="mt-3 text-sm text-gray-600">
-                                  Loading latest results...
-                                </p>
-                              </div>
-                            ) : testError || !testAnalytics?.latest_test ? (
-                              <div className="flex flex-col items-center justify-center py-8 text-gray-600">
-                                <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
-                                <p className="text-lg">
-                                  {Messages.NO_TEST_RESULTS}
-                                </p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  Complete a test to see your results here
-                                </p>
-                              </div>
-                            ) : (
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                <div className="mb-4">
-                                  <p className="text-xs text-gray-500">
-                                    Completed on{' '}
-                                    {new Date(
-                                      testAnalytics.latest_test.submitted_at
-                                    ).toLocaleDateString('en-US', {
-                                      month: 'long',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                      hour: 'numeric',
-                                      minute: 'numeric',
-                                      hour12: true,
-                                    })}
+                          <Card className="col-span-3 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                            <CardHeader className="border-b border-gray-100 py-4">
+                              <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+                                <GraduationCap className="h-5 w-5 text-[var(--color-primary)] mr-2" />
+                                Latest Test Results
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                              {isLoading ? (
+                                <div className="flex flex-col items-center justify-center py-6">
+                                  <Loader2 className="h-6 w-6 animate-spin text-[var(--color-primary)]" />
+                                  <p className="mt-3 text-sm text-gray-600">
+                                    Loading latest results...
                                   </p>
                                 </div>
-
+                              ) : testError || !testAnalytics?.latest_test ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-gray-600">
+                                  <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
+                                  <p className="text-lg">
+                                    {Messages.NO_TEST_RESULTS}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    Complete a test to see your results here
+                                  </p>
+                                </div>
+                              ) : (
                                 <motion.div
-                                  variants={staggerContainer}
-                                  initial="initial"
-                                  animate="animate"
-                                  className="grid gap-4 md:grid-cols-3 mb-4"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.3 }}
                                 >
-                                  <motion.div
-                                    variants={fadeInUp}
-                                    className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
-                                  >
-                                    <Percent className="h-6 w-6 text-[var(--color-primary)] mb-2" />
-                                    <h4 className="text-base font-semibold text-gray-700 mb-1">
-                                      Accuracy
-                                    </h4>
-                                    <div className="flex items-baseline">
-                                      <span className="text-2xl font-bold text-gray-900">
-                                        {testAnalytics.latest_test.accuracy.toFixed(
-                                          0
-                                        )}
-                                        %
-                                      </span>
-                                    </div>
-                                    <p className="mt-1 text-xs text-gray-600">
-                                      ({testAnalytics.latest_test.score}/
-                                      {
-                                        testAnalytics.latest_test
-                                          .total_questions
-                                      }{' '}
-                                      correct)
+                                  <div className="mb-4">
+                                    <p className="text-xs text-gray-500">
+                                      Completed on{' '}
+                                      {new Date(
+                                        testAnalytics.latest_test.submitted_at
+                                      ).toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        hour12: true,
+                                      })}
                                     </p>
-                                  </motion.div>
+                                  </div>
 
                                   <motion.div
-                                    variants={fadeInUp}
-                                    className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
+                                    variants={staggerContainer}
+                                    initial="initial"
+                                    animate="animate"
+                                    className="grid gap-4 md:grid-cols-3 mb-4"
                                   >
-                                    <Timer className="h-6 w-6 text-yellow-500 mb-2" />
-                                    <h4 className="text-base font-semibold text-gray-700 mb-1">
-                                      Time Spent
-                                    </h4>
-                                    <div className="flex items-baseline">
-                                      <span className="text-2xl font-bold text-gray-900">
-                                        {formatTime(
-                                          testAnalytics.latest_test.time_taken
-                                        )}
-                                      </span>
-                                      {testAnalytics.latest_test.time_taken <
-                                        60 && (
-                                        <span className="ml-1 text-xs text-gray-600">
-                                          seconds
+                                    <motion.div
+                                      variants={fadeInUp}
+                                      className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
+                                    >
+                                      <Percent className="h-6 w-6 text-[var(--color-primary)] mb-2" />
+                                      <h4 className="text-base font-semibold text-gray-700 mb-1">
+                                        Accuracy
+                                      </h4>
+                                      <div className="flex items-baseline">
+                                        <span className="text-2xl font-bold text-gray-900">
+                                          {testAnalytics.latest_test.accuracy.toFixed(
+                                            0
+                                          )}
+                                          %
                                         </span>
-                                      )}
-                                    </div>
-                                  </motion.div>
+                                      </div>
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        ({testAnalytics.latest_test.score}/
+                                        {
+                                          testAnalytics.latest_test
+                                            .total_questions
+                                        }{' '}
+                                        correct)
+                                      </p>
+                                    </motion.div>
 
-                                  <motion.div
-                                    variants={fadeInUp}
-                                    className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
-                                  >
-                                    <CheckCircle2 className="h-6 w-6 text-green-500 mb-2" />
-                                    <h4 className="text-base font-semibold text-gray-700 mb-1">
-                                      Status
-                                    </h4>
-                                    <div className="flex items-baseline">
-                                      <span className="text-2xl font-bold text-gray-900 capitalize">
-                                        {testAnalytics.latest_test.status}
-                                      </span>
-                                    </div>
+                                    <motion.div
+                                      variants={fadeInUp}
+                                      className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
+                                    >
+                                      <Timer className="h-6 w-6 text-yellow-500 mb-2" />
+                                      <h4 className="text-base font-semibold text-gray-700 mb-1">
+                                        Time Spent
+                                      </h4>
+                                      <div className="flex items-baseline">
+                                        <span className="text-2xl font-bold text-gray-900">
+                                          {formatTime(
+                                            testAnalytics.latest_test.time_taken
+                                          )}
+                                        </span>
+                                        {testAnalytics.latest_test.time_taken <
+                                          60 && (
+                                          <span className="ml-1 text-xs text-gray-600">
+                                            seconds
+                                          </span>
+                                        )}
+                                      </div>
+                                    </motion.div>
+
+                                    <motion.div
+                                      variants={fadeInUp}
+                                      className="bg-white border hover:shadow-md transition-all duration-300 rounded-lg p-4 relative"
+                                    >
+                                      <CheckCircle2 className="h-6 w-6 text-green-500 mb-2" />
+                                      <h4 className="text-base font-semibold text-gray-700 mb-1">
+                                        Status
+                                      </h4>
+                                      <div className="flex items-baseline">
+                                        <span className="text-2xl font-bold text-gray-900 capitalize">
+                                          {testAnalytics.latest_test.status}
+                                        </span>
+                                      </div>
+                                    </motion.div>
                                   </motion.div>
                                 </motion.div>
-                              </motion.div>
-                            )}
-                          </CardContent>
-                        </Card>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
-                  </TabsContent>
+                    </TabsContent>
 
-                  <TabsContent value="guide-specific">
-                    <GuideStats
-                      selectedGuide={selectedGuide || null}
-                      guideAnalytics={guideAnalytics || null}
-                      allGuideAnalytics={allGuideAnalytics?.study_guides || []}
-                      onPreviousGuide={handlePreviousGuide}
-                      onNextGuide={handleNextGuide}
-                      onSelectGuide={selectGuideById}
-                    />
-                  </TabsContent>
+                    <TabsContent value="guide-specific">
+                      <GuideStats
+                        selectedGuide={selectedGuide || null}
+                        guideAnalytics={guideAnalytics || null}
+                        allGuideAnalytics={
+                          allGuideAnalytics?.study_guides || []
+                        }
+                        onPreviousGuide={handlePreviousGuide}
+                        onNextGuide={handleNextGuide}
+                        onSelectGuide={selectGuideById}
+                      />
+                    </TabsContent>
 
-                  <TabsContent value="topic-mastery">
-                    {masteryError ? (
-                      <p className="text-red-500 text-center">
-                        Error loading mastery data.
-                      </p>
-                    ) : !rawMasteryData ? (
-                      <div className="flex justify-center items-center p-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
-                        <p className="ml-3 text-lg text-gray-600">
-                          Loading Topic Mastery...
+                    <TabsContent value="topic-mastery">
+                      {masteryError ? (
+                        <p className="text-red-500 text-center">
+                          Error loading mastery data.
                         </p>
-                      </div>
-                    ) : Object.keys(groupedMasteryData).length === 0 ? (
-                      <p className="text-gray-600 text-center">
-                        No topic mastery data available yet. Complete some
-                        quizzes!
-                      </p>
-                    ) : (
-                      <Accordion
-                        type="multiple"
-                        defaultValue={defaultAccordionValues}
-                        className="w-full space-y-4"
-                      >
-                        {Object.entries(groupedMasteryData).map(
-                          ([guideId, guideData], guideIndex) => (
-                            <AccordionItem
-                              key={guideId}
-                              value={`guide-${guideId}`}
-                              className="bg-white rounded-lg shadow-sm border border-gray-200"
-                            >
-                              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                                <span className="text-lg font-semibold text-gray-800">
-                                  {guideData.title}
-                                </span>
-                              </AccordionTrigger>
-                              <AccordionContent className="px-6 pb-6 pt-0">
-                                {Object.keys(guideData.chapters).length ===
-                                0 ? (
-                                  <p className="text-gray-500 pt-4 border-t border-gray-100">
-                                    No chapter data for this guide yet.
-                                  </p>
-                                ) : (
-                                  <div className="space-y-4 pt-4 border-t border-gray-100">
-                                    {Object.entries(guideData.chapters).map(
-                                      ([chapterTitle, chapterData]) => (
-                                        <div key={chapterTitle}>
-                                          <h3 className="text-md font-semibold text-gray-700 mb-3">
-                                            {chapterTitle}
-                                          </h3>
-                                          {chapterData.sections.length === 0 ? (
-                                            <p className="text-sm text-gray-500 pl-2">
-                                              No section data for this chapter
-                                              yet.
-                                            </p>
-                                          ) : (
-                                            <motion.div
-                                              variants={staggerContainer}
-                                              initial="initial"
-                                              animate="animate"
-                                              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-                                            >
-                                              {chapterData.sections.map(
-                                                (mastery) => (
-                                                  <motion.div
-                                                    key={`${mastery.studyGuideId}-${mastery.chapterTitle}-${mastery.sectionTitle}`}
-                                                    variants={fadeInUp}
-                                                  >
-                                                    <TopicMasteryCard
-                                                      studyGuideTitle={
-                                                        mastery.studyGuideTitle
-                                                      }
-                                                      sectionTitle={
-                                                        mastery.sectionTitle
-                                                      }
-                                                      masteryScore={
-                                                        mastery.masteryScore
-                                                      }
-                                                      accuracy={
-                                                        mastery.accuracy
-                                                      }
-                                                      recency={mastery.recency}
-                                                      confidence={
-                                                        mastery.confidence
-                                                      }
-                                                      questionCount={
-                                                        mastery.questionCount
-                                                      }
-                                                      lastInteraction={
-                                                        mastery.lastInteraction
-                                                      }
-                                                    />
-                                                  </motion.div>
-                                                )
-                                              )}
-                                            </motion.div>
-                                          )}
-                                        </div>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-                              </AccordionContent>
-                            </AccordionItem>
-                          )
-                        )}
-                      </Accordion>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </AnimatePresence>
-            )}
-          </div>
-        </main>
-      </div>
-    </RouteGuard>
+                      ) : !rawMasteryData ? (
+                        <div className="flex justify-center items-center p-10">
+                          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+                          <p className="ml-3 text-lg text-gray-600">
+                            Loading Topic Mastery...
+                          </p>
+                        </div>
+                      ) : Object.keys(groupedMasteryData).length === 0 ? (
+                        <p className="text-gray-600 text-center">
+                          No topic mastery data available yet. Complete some
+                          quizzes!
+                        </p>
+                      ) : (
+                        <Accordion
+                          type="multiple"
+                          defaultValue={defaultAccordionValues}
+                          className="w-full space-y-4"
+                        >
+                          {Object.entries(groupedMasteryData).map(
+                            ([guideId, guideData], guideIndex) => (
+                              <AccordionItem
+                                key={guideId}
+                                value={`guide-${guideId}`}
+                                className="bg-white rounded-lg shadow-sm border border-gray-200"
+                              >
+                                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                                  <span className="text-lg font-semibold text-gray-800">
+                                    {guideData.title}
+                                  </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-6 pt-0">
+                                  {Object.keys(guideData.chapters).length ===
+                                  0 ? (
+                                    <p className="text-gray-500 pt-4 border-t border-gray-100">
+                                      No chapter data for this guide yet.
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                                      {Object.entries(guideData.chapters).map(
+                                        ([chapterTitle, chapterData]) => (
+                                          <div key={chapterTitle}>
+                                            <h3 className="text-md font-semibold text-gray-700 mb-3">
+                                              {chapterTitle}
+                                            </h3>
+                                            {chapterData.sections.length ===
+                                            0 ? (
+                                              <p className="text-sm text-gray-500 pl-2">
+                                                No section data for this chapter
+                                                yet.
+                                              </p>
+                                            ) : (
+                                              <motion.div
+                                                variants={staggerContainer}
+                                                initial="initial"
+                                                animate="animate"
+                                                className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                                              >
+                                                {chapterData.sections.map(
+                                                  (mastery) => (
+                                                    <motion.div
+                                                      key={`${mastery.studyGuideId}-${mastery.chapterTitle}-${mastery.sectionTitle}`}
+                                                      variants={fadeInUp}
+                                                    >
+                                                      <TopicMasteryCard
+                                                        studyGuideTitle={
+                                                          mastery.studyGuideTitle
+                                                        }
+                                                        sectionTitle={
+                                                          mastery.sectionTitle
+                                                        }
+                                                        masteryScore={
+                                                          mastery.masteryScore
+                                                        }
+                                                        accuracy={
+                                                          mastery.accuracy
+                                                        }
+                                                        recency={
+                                                          mastery.recency
+                                                        }
+                                                        confidence={
+                                                          mastery.confidence
+                                                        }
+                                                        questionCount={
+                                                          mastery.questionCount
+                                                        }
+                                                        lastInteraction={
+                                                          mastery.lastInteraction
+                                                        }
+                                                      />
+                                                    </motion.div>
+                                                  )
+                                                )}
+                                              </motion.div>
+                                            )}
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                                </AccordionContent>
+                              </AccordionItem>
+                            )
+                          )}
+                        </Accordion>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </AnimatePresence>
+              )}
+            </div>
+          </main>
+        </div>
+      </RouteGuard>
+    </MathJaxContext>
   );
 }
