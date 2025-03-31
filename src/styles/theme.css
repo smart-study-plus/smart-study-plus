@@ -6,6 +6,8 @@
   /* Primary Colors */
   --color-primary: #0d9488;
   --color-primary-hover: #0f766e;
+  --color-primary-light: #d1faf3;
+  --color-primary-dark: #0f766e;
   --color-primary-gradient: #9333ea; /* Purple-600 for gradient */
 
   /* Secondary Colors */
@@ -34,6 +36,7 @@
   /* Background Colors */
   --color-background: #ffffff;
   --color-background-alt: #f8fafc;
+  /* f8fafc */
 
   /* Text Colors */
   --color-text: #0f172a;
@@ -45,6 +48,8 @@
 [data-theme='dark'] {
   --color-primary: #2dd4bf;
   --color-primary-hover: #14b8a6;
+  --color-primary-light: #134e4a;
+  --color-primary-dark: #5eead4;
   --color-primary-gradient: #a855f7; /* Adjusted purple for dark theme */
 
   --color-background: #0f172a;

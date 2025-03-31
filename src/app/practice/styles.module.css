@@ -1,0 +1,65 @@
+/* Carousel Grid Styles */
+:global(.carousel-grid .slick-track) {
+  display: flex !important;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+:global(.carousel-grid .slick-slide) {
+  height: inherit !important;
+  margin: 0 10px;
+}
+
+:global(.carousel-grid .slick-slide > div) {
+  height: 100%;
+}
+
+:global(.carousel-grid .slick-dots) {
+  bottom: -35px;
+}
+
+:global(.slick-slider .slick-list) {
+  padding-bottom: 10px;
+}
+
+/* Space between rows */
+:global(.slick-slider .slick-track .slick-slide) {
+  margin-bottom: 16px;
+}
+
+/* Fix arrow positions for multi-row layout */
+:global(.carousel-grid .slick-prev),
+:global(.carousel-grid .slick-next) {
+  z-index: 10;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+:global(.carousel-grid .slick-prev) {
+  left: -40px;
+}
+
+:global(.carousel-grid .slick-next) {
+  right: -40px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  :global(.carousel-grid .slick-prev) {
+    left: -30px;
+  }
+  
+  :global(.carousel-grid .slick-next) {
+    right: -30px;
+  }
+}
+
+@media (max-width: 768px) {
+  :global(.carousel-grid .slick-prev) {
+    left: -25px;
+  }
+  
+  :global(.carousel-grid .slick-next) {
+    right: -25px;
+  }
+} 

@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 import {
   GuideAnalytics,
@@ -35,6 +36,8 @@ import {
   TooltipProps,
 } from 'recharts';
 import { format } from 'date-fns';
+import * as Messages from '@/config/messages';
+import { useEffect, useState } from 'react';
 
 interface GuideStatsProps {
   selectedGuide: {
@@ -43,8 +46,10 @@ interface GuideStatsProps {
     description: string;
   } | null;
   guideAnalytics: GuideAnalytics | null;
+  allGuideAnalytics?: GuideAnalytics[];
   onPreviousGuide: () => void;
   onNextGuide: () => void;
+  onSelectGuide?: (guideId: string) => boolean;
 }
 
 const fadeInUp = {
@@ -110,28 +115,188 @@ const CustomTooltip = ({
 export function GuideStats({
   selectedGuide,
   guideAnalytics,
+  allGuideAnalytics = [],
   onPreviousGuide,
   onNextGuide,
+  onSelectGuide,
 }: GuideStatsProps) {
+  // Add console logs to help debug
+  useEffect(() => {
+    console.log('GuideStats - selectedGuide:', selectedGuide);
+    console.log('GuideStats - guideAnalytics:', guideAnalytics);
+    console.log('GuideStats - allGuideAnalytics:', allGuideAnalytics);
+
+    // Debug logging for guide type detection
+    if (guideAnalytics) {
+      console.log(
+        'Guide type detected:',
+        guideAnalytics.guide_type || 'not specified'
+      );
+      if (guideAnalytics.guide_type === 'slides') {
+        console.log('This is a slides-based guide!');
+      }
+    }
+  }, [selectedGuide, guideAnalytics, allGuideAnalytics]);
+
+  // Get the current user ID
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch the current user ID
+    const getCurrentUser = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (data?.user?.id) {
+        setUserId(data.user.id);
+        console.log('Current user ID:', data.user.id);
+      }
+    };
+
+    getCurrentUser();
+  }, []);
+
   const { data: performanceHistory, error: performanceError } = useSWR(
-    selectedGuide?.id ? ENDPOINTS.guidePerformance(selectedGuide.id) : null,
+    selectedGuide?.id && userId
+      ? ENDPOINTS.guidePerformance(selectedGuide.id, userId)
+      : null,
     fetcher
   );
 
+  // Log the performance history data to help debug
+  useEffect(() => {
+    if (performanceHistory) {
+      console.log('Performance history data:', performanceHistory);
+    }
+  }, [performanceHistory]);
+
   if (!selectedGuide) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-        <p className="text-lg text-gray-600">No study guides available yet.</p>
-        <Link href="/practice">
-          <Button className="bg-[var(--color-primary)] text-white">
-            Browse Practice Materials
+      <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+        <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-lg">{Messages.NO_DATA_AVAILABLE}</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {allGuideAnalytics.length > 0
+            ? 'Select a study guide to view detailed analytics'
+            : 'Take a quiz in any study guide to see analytics here'}
+        </p>
+
+        {allGuideAnalytics.length === 0 && (
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => (window.location.href = '/practice')}
+          >
+            Go to Practice
           </Button>
-        </Link>
+        )}
       </div>
     );
   }
 
-  // Prepare chart data
+  const hasAnyGuideData = allGuideAnalytics.length > 0;
+
+  if (!guideAnalytics || guideAnalytics.total_tests === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+        {hasAnyGuideData ? (
+          <>
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {selectedGuide.title}
+              </h2>
+              <p className="text-gray-600">{selectedGuide.description}</p>
+            </div>
+
+            <Target className="h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Practice with this guide to see your performance analytics
+            </p>
+
+            {allGuideAnalytics.length > 0 && (
+              <div className="mt-8">
+                <p className="text-gray-600 mb-4">Available guide analytics:</p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {allGuideAnalytics.map((analytics) => (
+                    <div
+                      key={analytics.study_guide_id}
+                      className={`bg-white p-4 rounded-lg border ${selectedGuide && selectedGuide.id === analytics.study_guide_id ? 'border-blue-500 shadow-md' : 'shadow-sm'} hover:shadow-md transition-shadow cursor-pointer`}
+                      onClick={() => {
+                        console.log(
+                          `Clicked on guide with ID: ${analytics.study_guide_id}, type: ${analytics.guide_type || 'regular'}`
+                        );
+                        if (onSelectGuide) {
+                          const selected = onSelectGuide(
+                            analytics.study_guide_id
+                          );
+                          console.log(`Guide selection result: ${selected}`);
+                          // If the guide selection failed, this might be a slides-based guide not in studyGuides
+                          if (!selected && analytics.guide_type === 'slides') {
+                            // Manually force the URL navigation to the slides guide
+                            window.location.href = `/practice/guide/slides/${encodeURIComponent(analytics.study_guide_id)}`;
+                          }
+                        }
+                      }}
+                    >
+                      <p className="font-medium flex items-center">
+                        {analytics.study_guide_title ||
+                          (selectedGuide &&
+                          analytics.study_guide_id === selectedGuide.id
+                            ? selectedGuide.title
+                            : `Guide ${analytics.study_guide_id}`)}
+                        {analytics.guide_type === 'slides' && (
+                          <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            Slides
+                          </span>
+                        )}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Target className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">
+                          Tests: {analytics.total_tests}
+                        </span>
+                        {analytics.average_accuracy !== undefined && (
+                          <span className="text-sm ml-2">
+                            Accuracy: {analytics.average_accuracy.toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-8 mt-8">
+              <Button
+                variant="outline"
+                onClick={onPreviousGuide}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous Guide
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onNextGuide}
+                className="flex items-center gap-2"
+              >
+                Next Guide <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Target className="h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-lg">{Messages.NO_STUDY_GUIDE_RESULTS}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Practice with this guide to see your performance analytics
+            </p>
+          </>
+        )}
+      </div>
+    );
+  }
+
   const chartData = performanceHistory?.test_results
     ? [...performanceHistory.test_results]
         .sort(
@@ -531,9 +696,30 @@ export function GuideStats({
         className="flex justify-between items-center"
       >
         <Link
-          href={`/practice/guide/${encodeURIComponent(selectedGuide.title)}`}
+          href={
+            guideAnalytics?.guide_type === 'slides'
+              ? `/practice/guide/slides/${encodeURIComponent(selectedGuide.id)}`
+              : `/practice/guide/${encodeURIComponent(selectedGuide.title || selectedGuide.id)}`
+          }
         >
-          <Button className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90">
+          <Button
+            className="bg-gradient-to-r from-[var(--color-primary)] to-purple-600 text-white hover:from-[var(--color-primary)]/90 hover:to-purple-600/90"
+            onClick={() => {
+              console.log(
+                `Exploring guide: ${selectedGuide.title}, ID: ${selectedGuide.id}`
+              );
+              console.log(
+                `Guide type: ${guideAnalytics?.guide_type || 'regular'}`
+              );
+              console.log(
+                `Navigating to: ${
+                  guideAnalytics?.guide_type === 'slides'
+                    ? `/practice/guide/slides/${selectedGuide.id}`
+                    : `/practice/guide/${selectedGuide.title || selectedGuide.id}`
+                }`
+              );
+            }}
+          >
             Explore Guide
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

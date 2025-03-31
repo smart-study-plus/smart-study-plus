@@ -7,6 +7,8 @@ import './globals.css';
 import React from 'react';
 import { Provider } from 'jotai';
 import { Prompt } from 'next/font/google';
+import { Toaster } from 'sonner';
+import { SessionIndicatorWrapper } from '@/components/ui/session-indicator-wrapper';
 
 export const metadata: Metadata = {
   title: 'Smart Study+',
@@ -32,7 +34,11 @@ const RootLayout = ({
 }>) => (
   <html lang="en" className={prompt.className}>
     <body>
-      <Provider>{children}</Provider>
+      <Provider>
+        {children}
+        <SessionIndicatorWrapper />
+      </Provider>
+      <Toaster richColors position="top-right" closeButton />
     </body>
   </html>
 );
