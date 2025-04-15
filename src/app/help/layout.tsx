@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Test Mode - SmartStudy+',
+  title: 'Help - SmartStudy+',
   description: 'Study better',
 };
 
