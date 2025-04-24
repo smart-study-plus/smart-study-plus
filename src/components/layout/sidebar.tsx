@@ -28,7 +28,6 @@ interface NavItem {
 
 const Sidebar = () => {
   const pathname = usePathname();
-  if (pathname === '/') return null;
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -60,6 +59,8 @@ const Sidebar = () => {
     window.addEventListener('toggle-sidebar', handleToggle);
     return () => window.removeEventListener('toggle-sidebar', handleToggle);
   }, []);
+
+  if (pathname === '/') return null;
 
   return (
     <>
