@@ -28,6 +28,7 @@ interface NavItem {
 
 const Sidebar = () => {
   const pathname = usePathname();
+  if (pathname === '/') return null;
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = React.useState(false);
