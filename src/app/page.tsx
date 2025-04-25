@@ -73,12 +73,12 @@ export default function Home() {
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative"
             >
-              <button
+            <button
                 onClick={() => setShowAuthModal(false)}
-                className="absolute -top-2 -right-2 bg-[var(--color-background)] rounded-full p-1 hover:bg-[var(--color-gray-100)] transition-colors"
-              >
-                <X className="h-5 w-5 text-[var(--color-text)]" />
-              </button>
+                className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors z-10"
+            >
+                <X className="h-5 w-5 text-gray-700" />
+            </button>
               <AuthForm method={authMethod} onSuccess={handleAuthSuccess} />
             </motion.div>
           </motion.div>
