@@ -6,11 +6,10 @@
 
 import { redirect, useSearchParams } from 'next/navigation';
 import { signOut } from './actions';
-import { useEffect } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthForm } from '@/components/auth/auth-form';
 import { toast } from 'sonner';
-import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
@@ -20,7 +19,7 @@ const AuthContent = () => {
   const method = searchParams.get('m');
   const err = searchParams.get('e');
   const verification = searchParams.get('verification');
-  const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     if (verification === 'pending') {
@@ -29,7 +28,7 @@ const AuthContent = () => {
         description:
           'Check your inbox and spam folder for the verification email before signing in.',
       });
-      // clean up the URL to prevent showing the toast again on refresh
+
       window.history.replaceState({}, '', '/auth?m=signin');
     }
 
@@ -57,7 +56,7 @@ const AuthContent = () => {
 
   if (isSigningOut) {
     return (
-      <div className="bg-gray-100 h-screen flex flex-col justify-center items-center gap-4">
+      <div className="min-h-screen flex flex-col justify-center items-center gap-4 px-4">
         <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
         <p className="text-lg text-gray-600">Signing out...</p>
       </div>
@@ -65,19 +64,24 @@ const AuthContent = () => {
   }
 
   return (
-    <div className="bg-gray-100 h-screen flex justify-center items-center">
-      <AuthForm
-        method={method}
-        err={err}
-        onSuccess={() => router.push('/dashboard')}
-      />
+    <div className="min-h-screen flex flex-col justify-center items-center px-6 py-10 sm:px-10 md:px-16 lg:px-20">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6 md:p-8">
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
+          {method === 'signin' ? 'Sign In' : 'Sign Up'}
+        </h2>
+        <AuthForm
+          method={method}
+          err={err}
+          onSuccess={() => router.push('/dashboard')}
+        />
+      </div>
     </div>
   );
 };
 
 export default function Authentication() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
       <AuthContent />
     </Suspense>
   );

@@ -20,6 +20,7 @@
     "better-react-mathjax": "^2.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.4.10",
     "jotai": "^2.11.3",
@@ -41,6 +42,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -72,3 +76,4 @@
     }
   }
 }
+

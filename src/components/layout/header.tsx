@@ -7,7 +7,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, Loader2 } from 'lucide-react';
+import { Brain, Loader2, Menu } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
@@ -22,12 +22,10 @@ export function Header() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      const supabase = createClient();
       const session_id = localStorage.getItem('session_id');
 
       if (session_id) {
-        const token = (await supabase.auth.getSession()).data.session
-          ?.access_token;
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
 
         await fetch(ENDPOINTS.endSession, {
           method: 'POST',
@@ -57,7 +55,7 @@ export function Header() {
     router.push(session ? '/dashboard' : '/');
   };
 
-  const navItems = [
+/*  const navItems = [
     {
       href: '/dashboard',
       label: 'Dashboard',
@@ -73,7 +71,7 @@ export function Header() {
     //   label: 'Tests',
     //   pattern: '/tests',
     // },
-  ];
+  ];*/
 
   const isActiveRoute = (pattern: string) => {
     return pathname.startsWith(pattern);
@@ -83,47 +81,30 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-[var(--color-gray-200)] bg-white shadow-sm">
       <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <div
-            onClick={handleLogoClick}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <Brain className="h-8 w-8 text-[var(--color-primary)]" />
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
-              SmartStudy+
-            </span>
+          {/* Left section: Hamburger + Logo */}
+          <div className="flex items-center gap-3">
+            {/* Hamburger (mobile only) */}
+            <button
+              className="md:hidden p-2 text-[var(--color-text)] focus:outline-none"
+              onClick={() => {
+                const event = new CustomEvent('toggle-sidebar');
+                window.dispatchEvent(event);
+              }}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            {/* Logo */}
+            <div
+              onClick={handleLogoClick}
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <Brain className="h-8 w-8 text-[var(--color-primary)]" />
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-purple-600">
+                SmartStudy+
+              </span>
+            </div>
           </div>
-          <nav className="hidden md:flex space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'text-base font-medium transition-colors hover:text-[var(--color-text)]',
-                  isActiveRoute(item.pattern)
-                    ? 'text-[var(--color-primary)] font-semibold'
-                    : 'text-[var(--color-text-muted)]'
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="hover:bg-gray-100 transition-colors min-w-[100px]"
-          >
-            {isLoggingOut ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Logging out...</span>
-              </div>
-            ) : (
-              'Log out'
-            )}
-          </Button>
         </div>
       </div>
     </header>

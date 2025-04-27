@@ -6,11 +6,11 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Test Mode - SmartStudy+',
+  title: 'Leaderboards - SmartStudy+',
   description: 'Study better',
 };
 
-const TestLayout = ({
+const LeaderboardLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -20,5 +20,4 @@ const TestLayout = ({
   </main>
 );
 
-export default TestLayout;
-
+export default LeaderboardLayout;
