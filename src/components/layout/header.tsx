@@ -73,6 +73,11 @@ export function Header() {
     //   label: 'Tests',
     //   pattern: '/tests',
     // },
+    {
+      href: '/discussions',
+      label: 'Discussions',
+      pattern: '/discussions',
+    },
   ];
 
   const isActiveRoute = (pattern: string) => {

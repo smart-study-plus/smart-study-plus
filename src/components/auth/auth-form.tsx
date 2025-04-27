@@ -5,6 +5,8 @@ import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ENDPOINTS } from '@/config/urls';
 import { useSearchParams } from 'next/navigation';
+import { UserMetadata, UserResponse } from '@supabase/auth-js';
+import useAppStore from '@/stores/app-store';
 
 interface AuthFormProps {
   method: 'signin' | 'signup' | null;
@@ -17,6 +19,8 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { setAuth } = useAppStore();
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -25,6 +29,19 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
       setError(message);
     }
   }, [searchParams]);
+
+  const handleSetState = async (user: UserResponse) => {
+    const data = user.data.user?.user_metadata;
+    console.log('firing with data: ', data);
+
+    if (data != undefined) {
+      setAuth({
+        username: data.display_name || 'Anonymous',
+        isAuthenticated: true,
+        userMetadata: data,
+      });
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,8 +66,13 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
 
       if (authError) throw authError;
 
-      const token = (await supabase.auth.getSession()).data.session
-        ?.access_token;
+      const user = await supabase.auth.getUser();
+      await handleSetState(user);
+
+      const auth = await supabase.auth.getSession();
+      const session = auth.data.session;
+
+      const token = session?.access_token;
       if (token) {
         const response = await fetch(ENDPOINTS.startSession, {
           method: 'POST',

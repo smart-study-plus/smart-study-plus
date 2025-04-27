@@ -5,7 +5,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React from 'react';
-import { Provider } from 'jotai';
 import { Prompt } from 'next/font/google';
 
 export const metadata: Metadata = {
@@ -31,9 +30,7 @@ const RootLayout = ({
   children: React.ReactNode;
 }>) => (
   <html lang="en" className={prompt.className}>
-    <body>
-      <Provider>{children}</Provider>
-    </body>
+    <body>{children}</body>
   </html>
 );
 
