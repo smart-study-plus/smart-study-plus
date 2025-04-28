@@ -3,7 +3,7 @@
  */
 
 @import '../styles/theme.css';
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* preserve v3 behavior after tailwind upgrade */
 

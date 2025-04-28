@@ -15,7 +15,9 @@ interface UserStudyStats {
 const LeaderboardPage = () => {
   const [leaderboardData, setLeaderboardData] = useState<UserStudyStats[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [mode, setMode] = useState<'studyHours' | 'testScores' | 'guidesCompleted'>('studyHours');
+  const [mode, setMode] = useState<
+    'studyHours' | 'testScores' | 'guidesCompleted'
+  >('studyHours');
   const supabase = createClient();
 
   useEffect(() => {
@@ -49,11 +51,17 @@ const LeaderboardPage = () => {
       let sorted: UserStudyStats[] = [];
 
       if (mode === 'studyHours') {
-        sorted = data.filter(u => u.total_hours! > 0).sort((a, b) => b.total_hours! - a.total_hours!);
+        sorted = data
+          .filter((u) => u.total_hours! > 0)
+          .sort((a, b) => b.total_hours! - a.total_hours!);
       } else if (mode === 'testScores') {
-        sorted = data.filter(u => u.average_score! > 0).sort((a, b) => b.average_score! - a.average_score!);
+        sorted = data
+          .filter((u) => u.average_score! > 0)
+          .sort((a, b) => b.average_score! - a.average_score!);
       } else if (mode === 'guidesCompleted') {
-        sorted = data.filter(u => u.guides_completed! > 0).sort((a, b) => b.guides_completed! - a.guides_completed!);
+        sorted = data
+          .filter((u) => u.guides_completed! > 0)
+          .sort((a, b) => b.guides_completed! - a.guides_completed!);
       }
 
       setLeaderboardData(sorted);
@@ -68,13 +76,22 @@ const LeaderboardPage = () => {
 
       {/* Mode Switcher */}
       <div className="flex justify-center gap-4 mb-6">
-        <Button variant={mode === 'studyHours' ? 'default' : 'outline'} onClick={() => setMode('studyHours')}>
+        <Button
+          variant={mode === 'studyHours' ? 'default' : 'outline'}
+          onClick={() => setMode('studyHours')}
+        >
           Study Hours
         </Button>
-        <Button variant={mode === 'testScores' ? 'default' : 'outline'} onClick={() => setMode('testScores')}>
+        <Button
+          variant={mode === 'testScores' ? 'default' : 'outline'}
+          onClick={() => setMode('testScores')}
+        >
           Test Scores
         </Button>
-        <Button variant={mode === 'guidesCompleted' ? 'default' : 'outline'} onClick={() => setMode('guidesCompleted')}>
+        <Button
+          variant={mode === 'guidesCompleted' ? 'default' : 'outline'}
+          onClick={() => setMode('guidesCompleted')}
+        >
           Guides Completed
         </Button>
       </div>
@@ -84,8 +101,11 @@ const LeaderboardPage = () => {
           <thead className="bg-gray-100">
             <tr>
               <th className="px-6 py-3 font-semibold w-20 text-center">Rank</th>
-              <th className="px-6 py-3 font-semibold w-48">Name</th> {/* fixed width */}
-              <th className="px-6 py-3 font-semibold w-48 text-center"> {/* fixed width */}
+              <th className="px-6 py-3 font-semibold w-48">Name</th>{' '}
+              {/* fixed width */}
+              <th className="px-6 py-3 font-semibold w-48 text-center">
+                {' '}
+                {/* fixed width */}
                 {mode === 'studyHours' && 'Study Time'}
                 {mode === 'testScores' && 'Avg Test Score'}
                 {mode === 'guidesCompleted' && 'Guides Completed'}
@@ -105,8 +125,10 @@ const LeaderboardPage = () => {
                 <td className="px-6 py-4">{index + 1}</td>
                 <td className="px-6 py-4">{user.name}</td>
                 <td className="px-6 py-4">
-                  {mode === 'studyHours' && `${user.total_hours?.toFixed(2)} hrs`}
-                  {mode === 'testScores' && `${user.average_score?.toFixed(2)}%`}
+                  {mode === 'studyHours' &&
+                    `${user.total_hours?.toFixed(2)} hrs`}
+                  {mode === 'testScores' &&
+                    `${user.average_score?.toFixed(2)}%`}
                   {mode === 'guidesCompleted' && `${user.guides_completed}`}
                 </td>
               </tr>

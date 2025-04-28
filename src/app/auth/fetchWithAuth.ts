@@ -1,6 +1,9 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+export async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {}
+) {
   try {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -8,7 +11,9 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
       throw new Error('❌ NEXT_PUBLIC_API_URL is missing from .env.local');
     }
 
-    console.log(`🔍 Fetching: ${API_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
+    console.log(
+      `🔍 Fetching: ${API_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+    );
 
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +46,9 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 
     if (!response.ok) {
       console.error(`❌ API Error: ${response.status} ${response.statusText}`);
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`
+      );
     }
 
     return response;
@@ -50,4 +57,3 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
     throw error;
   }
 }
-

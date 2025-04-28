@@ -25,7 +25,8 @@ export function Header() {
       const session_id = localStorage.getItem('session_id');
 
       if (session_id) {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const token = (await supabase.auth.getSession()).data.session
+          ?.access_token;
 
         await fetch(ENDPOINTS.endSession, {
           method: 'POST',

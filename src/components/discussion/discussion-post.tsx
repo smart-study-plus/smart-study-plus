@@ -4,7 +4,6 @@ import { RouteGuard } from '@/components/auth/route-guard';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Gavel, Pin, ShieldBan } from 'lucide-react';
-// import DOMPurify from 'dompurify'; // TODO!!!!!!!!! do NOT run without this in production
 import { Post } from '@/interfaces/discussion';
 import useAppStore from '@/stores/app-store';
 import { useEffect, useState } from 'react';
