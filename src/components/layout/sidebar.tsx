@@ -43,8 +43,8 @@ const Sidebar = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: BookOpen, label: 'Practice Mode', path: '/practice' },
     { icon: PenTool, label: 'Test Mode', path: '/test' },
-    { icon: HelpCircle, label: 'Help', path: '/help' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
+    //{ icon: HelpCircle, label: 'Help', path: '/help' },
+    //{ icon: Settings, label: 'Settings', path: '/settings' },
     { icon: BarChart, label: 'Leaderboard', path: '/leaderboard' },
     { icon: LogOut, label: 'Log out', action: handleLogout },
   ];
