@@ -68,11 +68,27 @@ export function Header() {
       label: 'Practice',
       pattern: '/practice',
     },
-    // {
-    //   href: '/tests',
-    //   label: 'Tests',
-    //   pattern: '/tests',
-    // },
+    {
+        href: '/test',
+        label: 'Tests',
+        pattern: '/test',
+    },
+    {
+      href: '/analytics',
+      label: 'Analytics',
+      pattern: '/analytics',
+    },
+
+    {
+      href: '/help',
+      label: 'Help',
+      pattern: '/help',
+    },
+    {
+      href: '/settings',
+      label: 'Settings',
+      pattern: '/settings',
+    },
   ];
 
   const isActiveRoute = (pattern: string) => {
