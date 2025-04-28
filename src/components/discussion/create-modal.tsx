@@ -37,7 +37,7 @@ export default function PostModal({
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 transition-opacity duration-300">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 transform transition-all duration-300 scale-100">
             <Button
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"

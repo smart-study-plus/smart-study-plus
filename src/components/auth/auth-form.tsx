@@ -4,8 +4,8 @@ import { FormEvent, useState, ChangeEvent, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ENDPOINTS } from '@/config/urls';
-import { useSearchParams } from 'next/navigation';
-import { UserMetadata, UserResponse } from '@supabase/auth-js';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { UserResponse } from '@supabase/auth-js';
 import useAppStore from '@/stores/app-store';
 
 interface AuthFormProps {
@@ -20,7 +20,7 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAppStore();
-
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -30,19 +30,6 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
     }
   }, [searchParams]);
 
-  const handleSetState = async (user: UserResponse) => {
-    const data = user.data.user?.user_metadata;
-    console.log('firing with data: ', data);
-
-    if (data != undefined) {
-      setAuth({
-        username: data.display_name || 'Anonymous',
-        isAuthenticated: true,
-        userMetadata: data,
-      });
-    }
-  };
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -50,47 +37,80 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
 
     try {
       const supabase = createClient();
-      const { error: authError } =
-        method === 'signup'
-          ? await supabase.auth.signUp({
-              email,
-              password,
-              options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-              },
-            })
-          : await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
 
-      if (authError) throw authError;
-
-      const user = await supabase.auth.getUser();
-      await handleSetState(user);
-
-      const auth = await supabase.auth.getSession();
-      const session = auth.data.session;
-
-      const token = session?.access_token;
-      if (token) {
-        const response = await fetch(ENDPOINTS.startSession, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+      if (method === 'signup') {
+        const { error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
-          body: JSON.stringify({ device: 'browser' }),
         });
 
-        if (response.ok) {
-          const { session_id } = await response.json();
-          localStorage.setItem('session_id', session_id);
-        }
-      }
+        if (authError) throw authError;
 
-      if (onSuccess) {
-        onSuccess();
+        // Show confirmation message for signup
+        setError('Please check your email to confirm your account.');
+        setLoading(false);
+        return;
+      } else {
+        // Sign in
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+
+        // Get user data
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          throw new Error('Failed to retrieve user data');
+        }
+
+        // Update auth state
+        setAuth({
+          username: user.user_metadata?.display_name || 'Anonymous',
+          isAuthenticated: true,
+          userMetadata: user.user_metadata,
+        });
+
+        // Get session
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          try {
+            const response = await fetch(ENDPOINTS.startSession, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ device: 'browser' }),
+            });
+
+            if (response.ok) {
+              const { session_id } = await response.json();
+              localStorage.setItem('session_id', session_id);
+            }
+          } catch (apiError) {
+            console.error('API error:', apiError);
+            // Continue anyway since authentication was successful
+          }
+        }
+
+        // Handle success
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -146,8 +166,14 @@ export function AuthForm({ method, onSuccess }: AuthFormProps) {
           </div>
         </div>
         {error && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-            <p className="text-sm text-red-600">{error}</p>
+          <div
+            className={`p-3 rounded-lg ${error.includes('check your email') ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
+          >
+            <p
+              className={`text-sm ${error.includes('check your email') ? 'text-green-600' : 'text-red-600'}`}
+            >
+              {error}
+            </p>
           </div>
         )}
         <Button

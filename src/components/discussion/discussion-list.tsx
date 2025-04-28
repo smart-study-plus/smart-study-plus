@@ -46,7 +46,7 @@ export default function DiscussionListing({ posts }: DiscussionListProps) {
 
   return (
     <main>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto sm:px-6 lg:px-8 py-8">
         <PostModal
           postInput={newPostContent}
           postTitle={newPostTitle}

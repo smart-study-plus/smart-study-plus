@@ -4,5 +4,10 @@ export interface Auth {
   username: string | null;
   isAuthenticated: boolean;
   userMetadata: UserMetadata | null;
-  setAuth: (userMetadata: UserMetadata | null) => void;
+  setAuth: (auth: {
+    username: string;
+    isAuthenticated: boolean;
+    userMetadata: UserMetadata;
+  }) => void;
+  clearAuth: () => void;
 }

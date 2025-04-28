@@ -5,6 +5,8 @@ import {
   ParentPostState,
 } from '@/interfaces/discussion';
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { UserMetadata } from '@supabase/supabase-js';
 
 interface AppState
   extends ParentPostState,
@@ -40,19 +42,38 @@ const createAuthSlice = (set: any): Auth => ({
   username: null,
   isAuthenticated: false,
   userMetadata: null,
-  setAuth: () =>
-    set((state: AppState) => ({
-      username: state.username,
-      isAuthenticated: state.isAuthenticated,
-      userMetadata: state.userMetadata,
-    })),
+  setAuth: (auth: {
+    username: string;
+    isAuthenticated: boolean;
+    userMetadata: UserMetadata;
+  }) =>
+    set({
+      username: auth.username,
+      isAuthenticated: auth.isAuthenticated,
+      userMetadata: auth.userMetadata,
+    }),
+  clearAuth: () =>
+    set({ username: null, isAuthenticated: false, userMetadata: null }),
 });
 
-const useAppStore = create<AppState>((set) => ({
-  ...createParentPostSlice(set),
-  ...createPostSlice(set),
-  ...createModeratorSlice(set),
-  ...createAuthSlice(set),
-}));
+const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      ...createParentPostSlice(set),
+      ...createPostSlice(set),
+      ...createModeratorSlice(set),
+      ...createAuthSlice(set),
+    }),
+    {
+      name: 'app-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        username: state.username,
+        isAuthenticated: state.isAuthenticated,
+        userMetadata: state.userMetadata,
+      }),
+    }
+  )
+);
 
 export default useAppStore;

@@ -9,7 +9,7 @@ export async function getDiscussions(parentId?: number): Promise<Post[]> {
     const query = parentId !== undefined ? `?parent_id=${parentId}` : '';
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SSP_API_URL}/api/discussions/posts${query}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/posts${query}`
     );
     if (!res.ok) {
       // no posts
@@ -39,7 +39,7 @@ export async function getDiscussions(parentId?: number): Promise<Post[]> {
 export async function addPost(post: Post) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SSP_API_URL}/api/discussions/posts`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/posts`,
       {
         method: 'POST',
         headers: {

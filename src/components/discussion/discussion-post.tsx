@@ -82,7 +82,7 @@ export default function DiscussionPost({
   return (
     <RouteGuard requireAuth>
       <Header />
-      <main className="container mx-auto px-4 my-10">
+      <main className="container mx-auto sm:px-6 lg:px-8 py-8 my-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <h1 className="font-bold text-3xl text-gray-900">

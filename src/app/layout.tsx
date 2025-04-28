@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import React from 'react';
 import { Prompt } from 'next/font/google';
+import Sidebar from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
   title: 'Smart Study+',
@@ -30,7 +31,12 @@ const RootLayout = ({
   children: React.ReactNode;
 }>) => (
   <html lang="en" className={prompt.className}>
-    <body>{children}</body>
+    <body>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1">{children}</main>
+      </div>
+    </body>
   </html>
 );
 
