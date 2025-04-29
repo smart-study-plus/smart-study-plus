@@ -16,6 +16,7 @@ import {
   BarChart,
   X,
   type LucideIcon,
+  Megaphone,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
@@ -43,6 +44,7 @@ const Sidebar = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: BookOpen, label: 'Practice Mode', path: '/practice' },
     { icon: PenTool, label: 'Test Mode', path: '/test' },
+    { icon: Megaphone, label: 'Discussions', path: '/discussions' },
     //{ icon: HelpCircle, label: 'Help', path: '/help' },
     //{ icon: Settings, label: 'Settings', path: '/settings' },
     { icon: BarChart, label: 'Leaderboard', path: '/leaderboard' },

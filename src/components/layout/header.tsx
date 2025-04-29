@@ -25,7 +25,8 @@ export function Header() {
       const session_id = localStorage.getItem('session_id');
 
       if (session_id) {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const token = (await supabase.auth.getSession()).data.session
+          ?.access_token;
 
         await fetch(ENDPOINTS.endSession, {
           method: 'POST',
@@ -55,7 +56,7 @@ export function Header() {
     router.push(session ? '/dashboard' : '/');
   };
 
-/*  const navItems = [
+  const navItems = [
     {
       href: '/dashboard',
       label: 'Dashboard',
@@ -71,7 +72,12 @@ export function Header() {
     //   label: 'Tests',
     //   pattern: '/tests',
     // },
-  ];*/
+    {
+      href: '/discussions',
+      label: 'Discussions',
+      pattern: '/discussions',
+    },
+  ];
 
   const isActiveRoute = (pattern: string) => {
     return pathname.startsWith(pattern);

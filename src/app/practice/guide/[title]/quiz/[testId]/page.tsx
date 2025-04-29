@@ -140,7 +140,10 @@ const QuizPage: React.FC = () => {
         {/* Sticky Header with Progress */}
         <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
           <div className="container mx-auto py-4 flex flex-col sm:flex-row items-center justify-between">
-            <Link href="/practice" className="flex items-center text-gray-600 hover:text-gray-900 mb-2 sm:mb-0">
+            <Link
+              href="/practice"
+              className="flex items-center text-gray-600 hover:text-gray-900 mb-2 sm:mb-0"
+            >
               <ChevronLeft className="h-5 w-5 mr-1" />
               Back
             </Link>
@@ -154,7 +157,10 @@ const QuizPage: React.FC = () => {
 
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-            <div className="h-2 bg-blue-500 transition-all duration-300" style={{ width: `${progressPercentage}%` }} />
+            <div
+              className="h-2 bg-blue-500 transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
         </div>
 
@@ -165,7 +171,11 @@ const QuizPage: React.FC = () => {
           ) : anyError ? (
             <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
               <p className="text-lg text-red-500">Error: {error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4" variant="default">
+              <Button
+                onClick={() => window.location.reload()}
+                className="mt-4"
+                variant="default"
+              >
                 Try Again
               </Button>
             </div>
@@ -188,7 +198,10 @@ const QuizPage: React.FC = () => {
                     selectedAnswer={selectedAnswers[index.toString()]}
                     note={notes[index.toString()] || ''}
                     onUpdateNote={(questionId, newNote) =>
-                      setNotes((prevNotes) => ({ ...prevNotes, [questionId]: newNote }))
+                      setNotes((prevNotes) => ({
+                        ...prevNotes,
+                        [questionId]: newNote,
+                      }))
                     }
                     userId={userData?.id || ''}
                     testId={testId}
@@ -198,7 +211,11 @@ const QuizPage: React.FC = () => {
 
               {/* Submit Button */}
               <div className="mt-8 flex justify-center">
-                <Button onClick={handleSubmit} disabled={!isQuizComplete || submitting} className="w-full sm:w-auto text-lg">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!isQuizComplete || submitting}
+                  className="w-full sm:w-auto text-lg"
+                >
                   {submitting ? 'Submitting...' : 'Submit Quiz'}
                 </Button>
               </div>

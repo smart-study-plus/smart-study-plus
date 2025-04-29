@@ -1,8 +1,7 @@
-import { render, screen } from "@testing-library/react";
-import HelloWorld from "../src/components/HelloWorld";
+import { render, screen } from '@testing-library/react';
+import HelloWorld from '../src/components/HelloWorld';
 
-
-test("renders Hello World text", () => {
+test('renders Hello World text', () => {
   render(<HelloWorld />);
-  expect(screen.getByText("Hello World!")).toBeInTheDocument();
+  expect(screen.getByText('Hello World!')).toBeInTheDocument();
 });

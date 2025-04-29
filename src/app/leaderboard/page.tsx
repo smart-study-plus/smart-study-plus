@@ -168,13 +168,22 @@ const LeaderboardPage = () => {
 
       {/* Mode Switcher */}
       <div className="flex justify-center gap-4 mb-6">
-        <Button variant={mode === 'studyHours' ? 'default' : 'outline'} onClick={() => setMode('studyHours')}>
+        <Button
+          variant={mode === 'studyHours' ? 'default' : 'outline'}
+          onClick={() => setMode('studyHours')}
+        >
           Study Hours
         </Button>
-        <Button variant={mode === 'testScores' ? 'default' : 'outline'} onClick={() => setMode('testScores')}>
+        <Button
+          variant={mode === 'testScores' ? 'default' : 'outline'}
+          onClick={() => setMode('testScores')}
+        >
           Test Scores
         </Button>
-        <Button variant={mode === 'guidesCompleted' ? 'default' : 'outline'} onClick={() => setMode('guidesCompleted')}>
+        <Button
+          variant={mode === 'guidesCompleted' ? 'default' : 'outline'}
+          onClick={() => setMode('guidesCompleted')}
+        >
           Guides Completed
         </Button>
       </div>
@@ -186,6 +195,11 @@ const LeaderboardPage = () => {
               <th className="px-6 py-3 font-semibold w-20 text-center">Rank</th>
               <th className="px-6 py-3 font-semibold w-48">Name</th>
               <th className="px-6 py-3 font-semibold w-48 text-center">
+              <th className="px-6 py-3 font-semibold w-48">Name</th>{' '}
+              {/* fixed width */}
+              <th className="px-6 py-3 font-semibold w-48 text-center">
+                {' '}
+                {/* fixed width */}
                 {mode === 'studyHours' && 'Study Time'}
                 {mode === 'testScores' && 'Avg Test Score'}
                 {mode === 'guidesCompleted' && 'Guides Completed'}
@@ -203,6 +217,11 @@ const LeaderboardPage = () => {
                 <td className="px-6 py-4 text-center">
                   {mode === 'studyHours' && `${user.total_hours?.toFixed(2)} hrs`}
                   {mode === 'testScores' && `${user.average_score?.toFixed(2)}%`}
+                <td className="px-6 py-4">
+                  {mode === 'studyHours' &&
+                    `${user.total_hours?.toFixed(2)} hrs`}
+                  {mode === 'testScores' &&
+                    `${user.average_score?.toFixed(2)}%`}
                   {mode === 'guidesCompleted' && `${user.guides_completed}`}
                 </td>
               </tr>
