@@ -76,7 +76,7 @@ export default function PostModal({
                     toggleModal();
                   }}
                 >
-                  Submit Reply
+                  {isReply ? 'Reply' : 'Post'}
                 </Button>
                 <Link href="https://www.markdownguide.org/basic-syntax/">
                   <p className="text-xs text-[var(--color-primary)] hover:text-purple-600">

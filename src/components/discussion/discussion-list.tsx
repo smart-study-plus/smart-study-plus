@@ -13,8 +13,7 @@ interface DiscussionListProps {
 }
 
 export default function DiscussionListing({ posts }: DiscussionListProps) {
-  const { setPosts, isModerator, toggleModerator, username, isAuthenticated } =
-    useAppStore();
+  const { setPosts, username, isAuthenticated } = useAppStore();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setnewPostContent] = useState('');
 

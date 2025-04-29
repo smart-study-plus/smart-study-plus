@@ -32,8 +32,6 @@ export default function DiscussionPost({
     isAuthenticated,
   } = useAppStore();
 
-  console.log(username, isAuthenticated, isModerator);
-
   useEffect(() => {
     setParentPost(parentPost);
     setPosts(posts);

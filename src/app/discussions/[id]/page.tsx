@@ -1,7 +1,5 @@
-import { createClient } from '@/utils/supabase/server';
 import DiscussionPost from '@/components/discussion/discussion-post';
 import { Post } from '@/interfaces/discussion';
-import { Loader2 } from 'lucide-react';
 import { getDiscussions } from '@/app/discussions/actions';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -11,7 +9,6 @@ export default async function DiscussionView({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const supabase = await createClient();
   const { id } = await params;
   const postId = parseInt(id, 10);
   const posts = await getDiscussions(postId);
@@ -28,11 +25,7 @@ export default async function DiscussionView({
 
   if (parentPost === undefined) redirect('/discussions');
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
   const childPosts = posts.filter((post: Post) => post.parentId === postId);
-  const username = userData?.user?.user_metadata?.display_name || null;
-  const isAuthenticated = !!userData?.user;
 
   return <DiscussionPost parentPost={parentPost} posts={childPosts} />;
 }

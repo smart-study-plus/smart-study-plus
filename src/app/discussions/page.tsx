@@ -7,8 +7,27 @@ import { getDiscussions } from '@/app/discussions/actions';
 
 export default async function Discussions() {
   const posts = await getDiscussions();
-  // sort by pinned first
-  posts.sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1));
+
+  if (posts.length === 0)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <h1>No discussions found.</h1>
+        <p>Why not start one?</p>
+      </div>
+    );
+
+  // sort by pinned first, then reverse id
+  posts.sort((a, b) => {
+    if (a.isPinned !== b.isPinned) {
+      return a.isPinned ? -1 : 1;
+    }
+
+    // satisfy the linter gods
+    const aId = a.id ?? 0;
+    const bId = b.id ?? 0;
+
+    return bId - aId;
+  });
 
   return (
     <RouteGuard requireAuth>

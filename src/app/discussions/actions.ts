@@ -57,8 +57,8 @@ export async function addPost(post: Post) {
 
 export async function deletePost(postId: number) {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SSP_API_URL}/api/discussions/posts/${postId}`,
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/posts/${postId}`,
       {
         method: 'DELETE',
       }
@@ -74,8 +74,8 @@ export async function deletePost(postId: number) {
 export async function updatePost(post: Post) {
   // todo: unused
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SSP_API_URL}/api/discussions/posts/${post.id}`,
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/posts/${post.id}`,
       {
         method: 'PUT',
         headers: {

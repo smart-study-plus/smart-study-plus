@@ -24,7 +24,6 @@
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.4.10",
-    "isomorphic-dompurify": "^2.24.0",
     "jotai-persist": "^0.0.0",
     "katex": "^0.16.21",
     "lucide-react": "^0.503.0",
