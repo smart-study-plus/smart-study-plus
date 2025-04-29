@@ -35,11 +35,11 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        
+
       - name: Success Message
         if: success()
         run: echo "✅ Build completed successfully!"
-        
+
       - name: Leave a comment if fail
         if: failure()
         uses: actions/github-script@v7

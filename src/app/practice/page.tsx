@@ -49,23 +49,29 @@ const PracticePage: React.FC = () => {
           console.warn('No test results found for user.');
           setProgressMap({});
         } else {
-          const completedTestsData: TestResultsResponse = await completedTestsResponse.json();
-          completedTestsMap = new Set(completedTestsData.test_results.map(
-            (test: CompletedTest) => test.test_id
-          ));
+          const completedTestsData: TestResultsResponse =
+            await completedTestsResponse.json();
+          completedTestsMap = new Set(
+            completedTestsData.test_results.map(
+              (test: CompletedTest) => test.test_id
+            )
+          );
         }
 
         const progressData: ProgressMap = {};
         await Promise.all(
           guides.map(async (guide: StudyGuide) => {
-            const testResponse = await fetchWithAuth(ENDPOINTS.practiceTests(guide.title));
+            const testResponse = await fetchWithAuth(
+              ENDPOINTS.practiceTests(guide.title)
+            );
             if (testResponse.ok) {
               const testData: StudyGuide = await testResponse.json();
               const totalTests = testData.practice_tests.length;
-              const completedTests = testData.practice_tests.filter(test => 
+              const completedTests = testData.practice_tests.filter((test) =>
                 completedTestsMap.has(test.practice_test_id)
               ).length;
-              progressData[guide.title] = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
+              progressData[guide.title] =
+                totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
             }
           })
         );
@@ -138,12 +144,17 @@ const PracticePage: React.FC = () => {
 
                     <div className="mt-4">
                       <div className="text-sm text-gray-600 flex justify-between">
-                        <span>Progress: {progressMap[guide.title]?.toFixed(0) || 0}%</span>
+                        <span>
+                          Progress: {progressMap[guide.title]?.toFixed(0) || 0}%
+                        </span>
                         <span className="font-medium text-primary">
                           {progressMap[guide.title]?.toFixed(0) || 0}/100
                         </span>
                       </div>
-                      <Progress value={progressMap[guide.title] || 0} className="h-2 mt-1" />
+                      <Progress
+                        value={progressMap[guide.title] || 0}
+                        className="h-2 mt-1"
+                      />
                     </div>
 
                     <Button

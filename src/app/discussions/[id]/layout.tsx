@@ -5,19 +5,20 @@
 import type { Metadata } from 'next';
 import React from 'react';
 
+// todo: get post title here
 export const metadata: Metadata = {
-  title: 'Settings - SmartStudy+',
+  title: 'Viewing Post - SmartStudy+',
   description: 'Study better',
 };
 
-const SettingsLayout = ({
+const DiscussionPostLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) => (
-  <main className="w-full min-h-screen bg-gray-50">
-    <div className="max-w-[1440px] mx-auto px-6 py-8">{children}</div>
-  </main>
+  <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    {children}
+  </div>
 );
 
-export default SettingsLayout;
+export default DiscussionPostLayout;

@@ -6,7 +6,6 @@ import React from 'react';
 import Link from 'next/link';
 
 const Header = async () => {
-
   return (
     <header className="fixed w-full top-0 z-50 bg-[var(--color-background)] border-b border-[var(--color-gray-200)]">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">

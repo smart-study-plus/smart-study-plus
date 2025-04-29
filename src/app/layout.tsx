@@ -5,7 +5,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React from 'react';
-import { Provider } from 'jotai';
 import { Prompt } from 'next/font/google';
 import Sidebar from '@/components/layout/sidebar';
 
@@ -33,15 +32,12 @@ const RootLayout = ({
 }>) => (
   <html lang="en" className={prompt.className}>
     <body>
-      <Provider>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1">{children}</main>
-        </div>
-      </Provider>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1">{children}</main>
+      </div>
     </body>
   </html>
 );
 
 export default RootLayout;
-
