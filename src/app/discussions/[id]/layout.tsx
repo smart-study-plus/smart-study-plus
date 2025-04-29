@@ -5,12 +5,13 @@
 import type { Metadata } from 'next';
 import React from 'react';
 
+// todo: get post title here
 export const metadata: Metadata = {
-  title: 'Discussions Index - SmartStudy+',
+  title: 'Viewing Post - SmartStudy+',
   description: 'Study better',
 };
 
-const DiscussionsLayout = ({
+const DiscussionPostLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -20,4 +21,4 @@ const DiscussionsLayout = ({
   </div>
 );
 
-export default DiscussionsLayout;
+export default DiscussionPostLayout;
